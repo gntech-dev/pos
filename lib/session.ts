@@ -15,7 +15,7 @@ export async function setSessionCookie(userId: string, role: string) {
   const cookieStore = await cookies()
   cookieStore.set("session", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: false, // Set to false for HTTP in local/production if needed
     sameSite: "lax",
     maxAge: 24 * 60 * 60, // 24 hours
   })
