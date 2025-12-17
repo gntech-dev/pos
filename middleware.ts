@@ -10,11 +10,17 @@ export async function middleware(request: NextRequest) {
   let isAuthenticated = false
   if (token) {
     try {
-      await jwtVerify(token)
-      isAuthenticated = true
-    } catch {
+      const payload = await jwtVerify(token)
+      isAuthenticated = !!payload
+      if (!isAuthenticated) {
+        console.log('Middleware: JWT verification returned null for token:', token.substring(0, 20) + '...')
+      }
+    } catch (error) {
+      console.log('Middleware: JWT verification error:', error)
       // Invalid token, treat as not authenticated
     }
+  } else {
+    console.log('Middleware: No session token found')
   }
 
   // If user is authenticated and trying to access login, redirect to dashboard

@@ -19,7 +19,8 @@ export async function jwtVerify(token: string) {
   try {
     const verified = await joseVerify(token, secret)
     return verified.payload
-  } catch {
+  } catch (error) {
+    console.error('JWT verification failed:', error)
     // Verification failed — return null so callers can handle unauthenticated state
     return null
   }

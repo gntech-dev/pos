@@ -30,8 +30,21 @@ export default function LoginPage() {
         return
       }
 
-      router.push('/dashboard')
-      router.refresh()
+      const data = await response.json()
+      console.log('Login successful:', data)
+      
+      // Force a small delay to ensure cookie is set
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Navigate and force page reload
+      try {
+        await router.push('/dashboard')
+        // Force a page reload to ensure middleware picks up the session
+        window.location.href = '/dashboard'
+      } catch (error) {
+        console.error('Navigation error:', error)
+        setError('Error al navegar. Intente nuevamente.')
+      }
     } catch (err) {
       setError('Ocurrió un error. Por favor intente nuevamente.')
       console.error(err)
