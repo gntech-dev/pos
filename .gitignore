@@ -43,6 +43,16 @@ dev.db
 cache/
 !cache/.gitkeep
 
+# user-generated content
+backups/
+!backups/.gitkeep
+uploads/
+!uploads/.gitkeep
+temp/
+!temp/.gitkeep
+restore/
+!restore/.gitkeep
+
 # vercel
 .vercel
 
