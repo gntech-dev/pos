@@ -69,6 +69,8 @@ NEXTAUTH_SECRET="your-super-secure-random-secret-here"
 NODE_ENV="production"
 ```
 
+**Note:** Update the SMTP settings with your actual email credentials if email functionality is needed. Generate a secure random string for `NEXTAUTH_SECRET`.
+
 #### Database Setup
 ```bash
 # Run migrations
@@ -99,6 +101,7 @@ module.exports = {
     env: {
       NODE_ENV: 'production',
       PORT: 3000
+        HOST: '0.0.0.0',
     },
     error_file: '/home/gntech/pos-system/logs/err.log',
     out_file: '/home/gntech/pos-system/logs/out.log',
