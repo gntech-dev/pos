@@ -54,8 +54,8 @@ module.exports = {
       host: ['your-server.com'],
       ref: 'origin/main',
       repo: 'git@github.com:your-username/pos-system.git',
-      path: '/opt/pos-system',
-      'post-deploy': 'npm install && npm run build && pm2 reload ecosystem.config.js --env production',
+      path: '/home/gntech/pos',
+      'post-deploy': 'cp ecosystem.config.example.js ecosystem.config.js && npm install && npm run build && pm2 reload ecosystem.config.js --env production',
       'pre-setup': ''
     }
   }

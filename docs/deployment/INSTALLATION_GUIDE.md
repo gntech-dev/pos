@@ -186,8 +186,8 @@ module.exports = {
       max_memory_restart: '1G',
       env: {
         NODE_ENV: 'production',
-        PORT: 3000
-        HOST: '0.0.0.0',
+        PORT: 3000,
+        HOST: '0.0.0.0'
       },
       error_file: '/var/log/pos-system/error.log',
       out_file: '/var/log/pos-system/out.log',
