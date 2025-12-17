@@ -28,10 +28,8 @@ A production-ready Point of Sale system for small businesses in the Dominican Re
 ### 1. Clone the repository
 
 ```bash
-cd /home/gntech/PS
-git init
-git add .
-git commit -m "Initial commit - POS System"
+git clone https://github.com/gntech-dev/pos.git
+cd pos
 ```
 
 ### 2. Install dependencies
