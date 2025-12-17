@@ -309,8 +309,8 @@ npx prisma generate
 - [Developer Guide](./docs/DEVELOPER_GUIDE.md) - Technical documentation
 - [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md) - Production deployment
 - [Wiki](./docs/wiki/) - Knowledge base and FAQ
-- [Development Plan](./DEVELOPMENT_PLAN.md)
-- [Tech Stack](./TECH_STACK.md)
+- [Deployment Documentation](./docs/deployment/) - Server installation and deployment guides
+- [Development Documentation](./docs/development/) - Internal development docs and plans
 
 ---
 
