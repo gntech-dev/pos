@@ -27,26 +27,26 @@ module.exports = {
       kill_timeout: 5000,
       listen_timeout: 8000,
       shutdown_with_message: true,
-      
+
       // Advanced configuration
       exp_backoff_restart_delay: 100,
       wait_ready: true,
       listen_timeout: 8000,
-      
+
       // Logging configuration
       log_type: 'json',
       combine_logs: true,
-      
+
       // Process management
       exec_mode: 'fork', // 'fork' or 'cluster'
-      
+
       // Health monitoring
       health_check_grace_period: 3000,
       health_check_fatal_timeout: 5000
     }
   ],
 
-  // Deployment configuration
+  // Deployment configuration (optional)
   deploy: {
     production: {
       user: 'posuser',
@@ -56,15 +56,6 @@ module.exports = {
       path: '/opt/pos-system',
       'post-deploy': 'npm install && npm run build && pm2 reload ecosystem.config.js --env production',
       'pre-setup': ''
-    },
-    
-    staging: {
-      user: 'posuser',
-      host: ['staging-server.com'],
-      ref: 'origin/develop',
-      repo: 'git@github.com:your-username/pos-system.git',
-      path: '/opt/pos-system-staging',
-      'post-deploy': 'npm install && npm run build && pm2 reload ecosystem.config.js --env staging',
     }
   }
 }

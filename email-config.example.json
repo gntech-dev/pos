@@ -1,0 +1,10 @@
+{
+  "host": "smtp.gmail.com",
+  "port": "587",
+  "secure": false,
+  "tls": true,
+  "timeout": "30000",
+  "user": "your-email@gmail.com",
+  "senderName": "Sistema POS - Your Business Name",
+  "password": "your-app-password"
+}
