@@ -42,6 +42,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { username, password } = body
 
+    console.log('Login attempt for', username)
+
     if (!username || !password) {
       await BruteForceProtection.recordFailure(clientIP, username)
       return NextResponse.json(
@@ -53,6 +55,7 @@ export async function POST(req: NextRequest) {
     const user = await authenticateUser(username, password)
 
     if (!user) {
+      console.log('Auth failed for', username)
       await BruteForceProtection.recordFailure(clientIP, username)
       const remainingAttempts = BruteForceProtection.getRemainingAttempts(clientIP, username)
       
@@ -73,6 +76,8 @@ export async function POST(req: NextRequest) {
 
     // Success - reset brute force counter
     await BruteForceProtection.recordSuccess(clientIP, username)
+
+    console.log('Auth success for', username)
 
     const response = NextResponse.json(
       { message: "Login successful", user },
