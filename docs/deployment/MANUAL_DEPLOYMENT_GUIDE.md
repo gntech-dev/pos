@@ -122,7 +122,30 @@ npx prisma generate
 npx prisma migrate deploy
 ```
 
-### 3.3 Seed Initial Data (Optional)
+### 3.3 CRITICAL: Fix Seed Script (If Needed)
+**⚠️ IMPORTANT**: If you encounter "Environment variable not found: DATABASE_URL" during seeding, you need to fix the seed script:
+
+```bash
+# Check if the error occurs
+npm run db:seed
+
+# If error occurs, fix the seed script
+nano prisma/seed.ts
+```
+
+Add this line at the **top** of the file (line 1):
+```typescript
+import "dotenv/config"
+```
+
+Your file should start with:
+```typescript
+import "dotenv/config"
+import { PrismaClient } from "@prisma/client"
+import bcrypt from "bcryptjs"
+```
+
+### 3.4 Seed Initial Data (CRITICAL - DO NOT SKIP)
 ```bash
 npm run db:seed
 ```
