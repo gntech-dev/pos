@@ -1,0 +1,306 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User & Auth Models
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String    @unique
+  password      String
+  name          String
+  role          String    @default("CASHIER") // ADMIN, MANAGER, CASHIER, ACCOUNTANT
+  isActive      Boolean   @default(true)
+  lastLogin     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  sales         Sale[]
+  refunds       Refund[]
+  quotations    Quotation[]
+  auditLogs     AuditLog[]
+}
+
+// Customer Model
+model Customer {
+  id              String    @id @default(cuid())
+  name            String
+  rnc             String?   @unique
+  cedula          String?   @unique
+  email           String?
+  phone           String?
+  address         String?
+  isCompany       Boolean   @default(false)
+  emailPreference Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  sales           Sale[]
+  quotations      Quotation[]
+  refunds         Refund[]
+}
+
+// Product & Inventory Models
+model Product {
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  barcode         String?   @unique
+  sku             String    @unique
+  price           Float
+  cost            Float     @default(0)
+  taxRate         Float     @default(0.18) // 18% ITBIS
+  category        String?
+  unit            String    @default("UND") // Unidad, Caja, etc.
+  minStock        Int       @default(0)
+  stock           Int       @default(0)
+  isActive        Boolean   @default(true)
+  trackInventory  Boolean   @default(true)
+  hasBatch        Boolean   @default(false)
+  hasExpiration   Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  batches         ProductBatch[]
+  saleItems       SaleItem[]
+  quotationItems  QuotationItem[]
+  refundItems     RefundItem[]
+  stockMovements  StockMovement[]
+}
+
+model ProductBatch {
+  id              String    @id @default(cuid())
+  productId       String
+  batchNumber     String
+  quantity        Int
+  expirationDate  DateTime?
+  receivedDate    DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([productId, batchNumber])
+}
+
+model StockMovement {
+  id              String    @id @default(cuid())
+  productId       String
+  type            String    // SALE, REFUND, ADJUSTMENT, PURCHASE, LOSS, TRANSFER
+  quantity        Int
+  reason          String?
+  reference       String?   // Sale ID, Purchase ID, etc.
+  createdAt       DateTime  @default(now())
+  createdBy       String?
+  
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+// Sales & Invoicing Models
+model Sale {
+  id              String    @id @default(cuid())
+  saleNumber      String    @unique
+  customerId      String?
+  cashierId       String
+  subtotal        Float
+  tax             Float
+  discount        Float     @default(0)
+  total           Float
+  status          String    @default("COMPLETED") // COMPLETED, PENDING, CANCELLED, REFUNDED
+  ncf             String?   @unique
+  ncfType         String?   // B01, B02, B14, B15, B16
+  paymentMethod   String    // CASH, CARD, TRANSFER, MIXED, CHECK, OTHER
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  customer        Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  cashier         User      @relation(fields: [cashierId], references: [id], onDelete: Restrict)
+  items           SaleItem[]
+  payments        Payment[]
+  refunds         Refund[]
+}
+
+model SaleItem {
+  id              String    @id @default(cuid())
+  saleId          String
+  productId       String
+  quantity        Int
+  unitPrice       Float
+  taxRate         Float
+  discount        Float     @default(0)
+  subtotal        Float
+  total           Float
+  
+  sale            Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+}
+
+// Payment Model
+model Payment {
+  id              String    @id @default(cuid())
+  saleId          String?
+  refundId        String?
+  amount          Float
+  method          String    // CASH, CARD, TRANSFER, MIXED, CHECK, OTHER
+  reference       String?   // Card ref, check number, etc.
+  status          String    @default("COMPLETED") // COMPLETED, PENDING, FAILED, REFUNDED
+  createdAt       DateTime  @default(now())
+  
+  sale            Sale?     @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  refund          Refund?   @relation(fields: [refundId], references: [id], onDelete: SetNull)
+}
+
+// Quotation Model
+model Quotation {
+  id              String    @id @default(cuid())
+  quotationNumber String    @unique
+  customerId      String?
+  userId          String
+  subtotal        Float
+  tax             Float
+  discount        Float     @default(0)
+  total           Float
+  status          String    @default("PENDING") // PENDING, APPROVED, REJECTED, EXPIRED, CONVERTED
+  expiresAt       DateTime
+  notes           String?
+  convertedToSale Boolean   @default(false)
+  saleId          String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  customer        Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items           QuotationItem[]
+}
+
+model QuotationItem {
+  id              String    @id @default(cuid())
+  quotationId     String
+  productId       String
+  quantity        Int
+  unitPrice       Float
+  taxRate         Float
+  discount        Float     @default(0)
+  subtotal        Float
+  total           Float
+  
+  quotation       Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+}
+
+// Refund Model
+model Refund {
+  id              String    @id @default(cuid())
+  refundNumber    String    @unique
+  saleId          String
+  customerId      String?
+  userId          String
+  subtotal        Float
+  tax             Float
+  total           Float
+  reason          String?
+  ncf             String?   @unique // Credit note NCF
+  status          String    @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
+  createdAt       DateTime  @default(now())
+  
+  sale            Sale      @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  customer        Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items           RefundItem[]
+  payments        Payment[]
+}
+
+model RefundItem {
+  id              String    @id @default(cuid())
+  refundId        String
+  productId       String
+  quantity        Int
+  unitPrice       Float
+  taxRate         Float
+  subtotal        Float
+  total           Float
+  
+  refund          Refund    @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+}
+
+// NCF Management
+model NCFSequence {
+  id              String    @id @default(cuid())
+  type            String    @unique // B01, B02, B14, B15, B16
+  prefix          String
+  currentNumber   Int       @default(0)
+  startNumber     Int       @default(1)
+  endNumber       Int
+  expiryDate      DateTime
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Audit Log
+model AuditLog {
+  id              String    @id @default(cuid())
+  userId          String
+  action          String
+  entity          String    // Table name
+  entityId        String
+  oldValue        String?
+  newValue        String?
+  ipAddress       String?
+  createdAt       DateTime  @default(now())
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// RNC Registry from DGII
+model RNCRegistry {
+  id              String    @id @default(cuid())
+  rnc             String    @unique
+  businessName    String
+  businessType    String?
+  status          String    @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  address         String?
+  province        String?
+  municipality    String?
+  sector          String?
+  phone           String?
+  email           String?
+  lastSyncDate    DateTime  @default(now())
+  syncStatus      String    @default("SYNCED") // SYNCED, PENDING, FAILED
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// System Settings
+model Setting {
+   id              String    @id @default(cuid())
+   key             String    @unique
+   value           String
+   description     String?
+   updatedAt       DateTime  @updatedAt
+}
+
+// Sync Status Tracking
+model SyncStatus {
+   id              String    @id @default(cuid())
+   type            String    // 'RNC', 'EMAIL', 'BACKUP', etc.
+   status          String    // 'IDLE', 'RUNNING', 'COMPLETED', 'FAILED'
+   progress        Int       @default(0) // 0-100
+   message         String?
+   startedAt       DateTime?
+   completedAt     DateTime?
+   errorMessage    String?
+   createdAt       DateTime  @default(now())
+   updatedAt       DateTime  @updatedAt
+
+   @@unique([type])
+}

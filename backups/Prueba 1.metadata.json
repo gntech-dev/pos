@@ -1,0 +1,42 @@
+{
+  "id": "a3448183-5f4b-4199-9b28-89dfe911e279",
+  "name": "Prueba 1",
+  "type": "full",
+  "size": 25300464,
+  "compressed": true,
+  "encrypted": true,
+  "checksum": "422753fa67b531e2908372558b66e5d9565e9cd92463554cede8f05730ca37f9",
+  "createdAt": "2025-12-16T18:40:48.775Z",
+  "createdBy": "cmj381o8q0000sj8qbvezx8p5",
+  "components": [
+    {
+      "name": "database",
+      "type": "database",
+      "size": 208896,
+      "checksum": "5255d62c1969de27a32e5e844c5392dabc14afdad7f0c3788dd9d10e46df5a52"
+    },
+    {
+      "name": "config",
+      "type": "config",
+      "size": 1789,
+      "checksum": "42ab8912a3353112fdd9cbb3b6124f134e8dbd1494fbd8fdc68da8afbd14d105"
+    },
+    {
+      "name": "cache",
+      "type": "cache",
+      "size": 25283215,
+      "checksum": "29b9e9c4b8fd5e2b5817c609f04ba1739ea0cf7b3726c614e972c4d6f1c5db4d"
+    },
+    {
+      "name": "files",
+      "type": "files",
+      "size": 2331,
+      "checksum": "7802cd509c849211e790492b7863661e8a3b7283a87588099ca490972515c5ed"
+    }
+  ],
+  "retention": {
+    "keepUntil": "2026-01-15T18:40:48.775Z",
+    "autoDelete": true
+  },
+  "status": "completed"
+}
