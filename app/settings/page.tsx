@@ -367,6 +367,18 @@ export default function SettingsPage() {
     }
   }
 
+  const loadBusinessConfig = async () => {
+    try {
+      const response = await fetch('/api/settings/business')
+      if (response.ok) {
+        const config = await response.json()
+        setBusinessData(config)
+      }
+    } catch (error) {
+      console.error('Error loading business config:', error)
+    }
+  }
+
   const loadUsers = async () => {
     try {
       const response = await fetch('/api/users')
@@ -408,6 +420,9 @@ export default function SettingsPage() {
   }, [rncStats.syncStatus?.status])
 
   useEffect(() => {
+    if (activeTab === 'business') {
+      loadBusinessConfig()
+    }
     if (activeTab === 'system') {
       loadEmailConfig()
     }
@@ -552,8 +567,24 @@ export default function SettingsPage() {
     }
   }
 
-  const handleSaveBusiness = () => {
-    alert('Configuración de empresa guardada')
+  const handleSaveBusiness = async () => {
+    try {
+      const response = await fetch('/api/settings/business', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(businessData)
+      })
+
+      if (response.ok) {
+        alert('✅ Configuración de empresa guardada exitosamente')
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error saving business config:', error)
+      alert('Error al guardar la configuración de empresa')
+    }
   }
 
   const handleSaveNCF = async () => {

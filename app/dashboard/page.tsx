@@ -51,6 +51,13 @@ interface AlertItem {
 export default function DashboardPage() {
   const [ncfAlerts, setNcfAlerts] = useState<NCFAlert | null>(null)
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
+  const [businessConfig, setBusinessConfig] = useState({
+    name: 'GNTech Demo',
+    rnc: '000-00000-0',
+    address: 'Santo Domingo, República Dominicana',
+    phone: '809-555-5555',
+    email: 'info@gntech.com'
+  })
   const [loading, setLoading] = useState(true)
   const [statsLoading, setStatsLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
@@ -88,9 +95,21 @@ export default function DashboardPage() {
     }
   }, [])
 
+  const loadBusinessConfig = useCallback(async () => {
+    try {
+      const response = await fetch('/api/settings/business')
+      if (response.ok) {
+        const config = await response.json()
+        setBusinessConfig(config)
+      }
+    } catch (error) {
+      console.error('Error loading business config:', error)
+    }
+  }, [])
+
   const refreshAllData = useCallback(async (isAutomatic = false) => {
     setIsRefreshing(true)
-    await Promise.all([loadNCFAlerts(), loadDashboardStats()])
+    await Promise.all([loadNCFAlerts(), loadDashboardStats(), loadBusinessConfig()])
     setLastUpdated(new Date())
     setTimeUntilNext(30) // Reset countdown
     setIsRefreshing(false)
@@ -100,7 +119,7 @@ export default function DashboardPage() {
       setShowRefreshNotification(true)
       setTimeout(() => setShowRefreshNotification(false), 3000)
     }
-  }, [loadNCFAlerts, loadDashboardStats])
+  }, [loadNCFAlerts, loadDashboardStats, loadBusinessConfig])
 
   useEffect(() => {
     // Initialize the lastUpdated date only on client-side to avoid hydration mismatch
@@ -221,7 +240,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3">
               <div className="bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-lg p-3 border border-white border-opacity-50 shadow-xl">
                 <p className="text-xs font-bold text-white mb-1 uppercase tracking-wide">Empresa</p>
-                <p className="text-lg font-bold text-white">🏪 GNTech Demo</p>
+                <p className="text-lg font-bold text-white">🏪 {businessConfig.name}</p>
               </div>
               
               <div className="bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-lg p-3 border border-white border-opacity-50 shadow-xl">
@@ -471,7 +490,7 @@ export default function DashboardPage() {
         )}
 
         {/* Quick Actions - Compactas */}
-        <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-100 flex-1 overflow-hidden flex flex-col">
+        <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-100 flex flex-col">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-3 flex-shrink-0">
             ⚡ Acciones Rápidas
           </h2>

@@ -1,49 +1,166 @@
-# 🚀 Guía Rápida de Producción - Sistema POS
+# 🚀 Guía Rápida de Inicio - Sistema POS
 
-## ¡Bienvenido a su Sistema POS en Producción!
+## ¡Bienvenido a su Sistema POS!
 
-Esta guía está diseñada para que pueda **desplegar el sistema en un servidor de producción en menos de 60 minutos**, incluso si es su primera vez configurando un servidor.
+Esta guía está diseñada para que pueda comenzar a usar el sistema en **menos de 30 minutos**, tanto en un entorno local de desarrollo como en un servidor de producción para acceso remoto.
+
+**⚠️ Requisito del Sistema**: Este sistema está diseñado exclusivamente para **Linux** (Ubuntu/Debian recomendado). No es compatible con Windows o macOS para producción.
 
 ---
 
-## 📋 Antes de Empezar
+## 📋 Antes de Elegir su Opción
 
-### ✅ Requisitos del Servidor
+### 🔍 ¿Cuál Opción Elegir?
 
-- **Servidor**: Ubuntu 20.04+ o CentOS 7+ (recomendado: Ubuntu 22.04)
-- **RAM**: 2GB mínimo, 4GB recomendado
-- **Almacenamiento**: 20GB mínimo
-- **Dominio**: Nombre de dominio apuntando al servidor (opcional pero recomendado)
-- **Acceso**: Usuario con permisos sudo
-- **Tiempo**: 45-60 minutos para configuración completa
+| Característica | Entorno Local (Linux) | Servidor de Producción (Linux) |
+|---------------|----------------------|-----------------------------|
+| **Ubicación** | Su computadora Linux | Servidor dedicado remoto |
+| **Acceso** | Solo desde su PC | Desde cualquier dispositivo con internet |
+| **Usuarios** | 1 usuario local | Múltiples usuarios remotos |
+| **Configuración** | 15-30 minutos | 45-60 minutos |
+| **Costo** | Gratis | Costo de servidor (~$5-20/mes) |
+| **Uso recomendado** | Pruebas, desarrollo, tienda pequeña | Negocio real, múltiples empleados |
 
-### 🎯 Lo que Necesitará Preparar
+### ✅ Requisitos Generales
 
-Antes de instalar, reúna esta información:
+**Para ambas opciones:**
+- **Sistema Operativo**: Ubuntu 18.04+ o Debian 10+ (Linux)
+- **Navegador**: Chrome, Firefox, o Edge (actualizado)
+- **Conexión**: Internet para activación inicial
+- **Información**: RNC, datos de empresa, NCF (para producción)
 
-1. **Información del Servidor**:
-   - Dirección IP del servidor
-   - Usuario SSH (normalmente `root` o usuario con sudo)
-   - Contraseña o clave SSH
-   - Nombre de dominio (si tiene)
+> **⚠️ Importante**: Este sistema está diseñado para ejecutarse en servidores Linux. Para desarrollo local, use Ubuntu nativo, WSL2 en Windows, VirtualBox/VMware, o una máquina Linux dedicada.
 
-2. **Información de su Empresa**:
+### 🎯 Información que Necesitará Preparar
+
+1. **Información de su Empresa**:
    - Nombre legal de la empresa
    - RNC (Registro Nacional del Contribuyente)
    - Dirección completa
    - Teléfono y email
 
-3. **Secuencias NCF** (obligatorio para producción):
+2. **Secuencias NCF** (obligatorio para producción, opcional para desarrollo):
    - Números de comprobantes fiscales de la DGII
    - Fechas de expiración
 
-4. **Configuración SSL** (recomendado):
-   - Certificado SSL (Let's Encrypt gratuito)
-   - Dominio configurado
+3. **Productos Iniciales** (opcional):
+   - Lista de productos para cargar
+   - Precios y códigos de barras
 
 ---
 
-## 🛠️ Instalación en Servidor Paso a Paso
+# 💻 Opción A: Instalación en Entorno Local Linux (Desarrollo)
+
+**Tiempo estimado**: 15-30 minutos
+**Acceso**: Solo desde su computadora
+**Ideal para**: Pruebas, aprendizaje, tienda pequeña
+**Sistema**: Linux (Ubuntu/Debian)
+
+## Requisitos Específicos
+
+- **Sistema Operativo**: Ubuntu 18.04+ o Debian 10+
+- **RAM**: 4GB mínimo
+- **Espacio**: 2GB libre
+- **Permisos**: Usuario con sudo
+
+## 🛠️ Instalación Paso a Paso - Local
+
+### Paso 1: Instalar Node.js (5 minutos)
+
+```bash
+# Actualizar sistema
+sudo apt update
+
+# Instalar Node.js 18.x
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+**Verificar instalación:**
+```bash
+node --version  # Debe mostrar v18.x.x
+npm --version   # Debe mostrar 8.x.x
+```
+
+### Paso 2: Instalar Git (2 minutos)
+
+```bash
+sudo apt install -y git
+```
+
+**Verificar:**
+```bash
+git --version
+```
+
+### Paso 3: Descargar el Sistema (3 minutos)
+
+```bash
+# Abrir terminal
+# En Ubuntu/Debian: Ctrl + Alt + T
+
+# Copiar y pegar:
+git clone https://github.com/gntech-dev/pos.git
+cd pos-system
+```
+
+### Paso 4: Instalar Dependencias (5 minutos)
+
+```bash
+npm install --legacy-peer-deps
+```
+
+### Paso 5: Configurar Base de Datos (2 minutos)
+
+```bash
+# Ejecutar migraciones
+npm run db:migrate
+
+# Cargar datos iniciales
+npm run db:seed
+```
+
+### Paso 6: Iniciar el Sistema (2 minutos)
+
+```bash
+npm run dev
+```
+
+### Paso 7: Acceder al Sistema
+
+Abra su navegador y vaya a: **http://localhost:3000**
+
+**Credenciales iniciales:**
+- Usuario: `admin`
+- Contraseña: `admin123`
+
+> **⚠️ Importante:** Cambie la contraseña inmediatamente
+
+## ⚙️ Configuración Inicial - Local
+
+Siga los mismos pasos que en la sección de configuración más abajo, pero use:
+- **URL del sistema**: `http://localhost:3000`
+- **Base de datos**: Se crea automáticamente en su PC
+
+---
+
+# 🌐 Opción B: Despliegue en Servidor Linux (Acceso Remoto)
+
+**Tiempo estimado**: 45-60 minutos
+**Acceso**: Desde cualquier dispositivo con internet
+**Ideal para**: Negocio real, múltiples empleados
+**Sistema**: Linux únicamente (Ubuntu recomendado)
+
+## Requisitos Específicos
+
+- **Servidor**: VPS o dedicado (DigitalOcean, AWS, Linode, etc.)
+- **Sistema Operativo**: Ubuntu 20.04+ (recomendado) o Debian 11+
+- **RAM**: 2GB mínimo, 4GB recomendado
+- **Espacio**: 20GB mínimo
+- **Dominio**: Opcional pero recomendado
+- **Acceso**: SSH al servidor
+
+> **⚠️ Importante**: Este sistema requiere un servidor Linux. No es compatible con Windows Server.
 
 ### Paso 1: Conectar al Servidor (2 minutos)
 
