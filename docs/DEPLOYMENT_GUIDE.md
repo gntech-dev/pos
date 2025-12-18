@@ -1,20 +1,22 @@
 # Deployment Guide - POS System
 
-This guide covers deploying the POS system to production environments.
+This guide covers deploying the POS system to production Linux environments.
+
+**⚠️ System Requirements**: This system is designed exclusively for **Linux servers**. Not compatible with Windows Server.
 
 ## Prerequisites
 
 ### System Requirements
-- Ubuntu 20.04+ or CentOS 7+
-- Node.js 18+ (LTS recommended)
-- 2GB RAM minimum, 4GB recommended
-- 20GB storage minimum
-- Domain name (optional but recommended)
+- **Operating System**: Ubuntu 20.04+ or Debian 11+ (recommended)
+- **Node.js**: 18+ (LTS recommended)
+- **Memory**: 2GB RAM minimum, 4GB recommended
+- **Storage**: 20GB minimum
+- **Domain**: Domain name (optional but recommended)
 
 ### Network Requirements
 - Port 80/443 for web access
 - Port 3000 for application (internal)
-- Database access (SQLite local or external)
+- Database access (SQLite local)
 
 ## Production Deployment
 
@@ -46,7 +48,7 @@ sudo apt install nginx -y
 #### Clone Repository
 ```bash
 cd /home/gntech
-git clone <your-repo-url> pos-system
+git clone https://github.com/gntech-dev/pos.git pos-system
 cd pos-system
 ```
 

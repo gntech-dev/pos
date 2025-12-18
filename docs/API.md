@@ -255,6 +255,46 @@ Get DGII compliance reports.
 
 ### Settings
 
+#### GET /settings/business
+Get business/company settings.
+
+**Response (200):**
+```json
+{
+  "name": "Company Name",
+  "rnc": "123456789",
+  "address": "Company Address",
+  "phone": "809-555-5555",
+  "email": "info@company.com"
+}
+```
+
+#### POST /settings/business
+Update business/company settings.
+
+**Request Body:**
+```json
+{
+  "name": "Company Name",
+  "rnc": "123456789",
+  "address": "Company Address",
+  "phone": "809-555-5555",
+  "email": "info@company.com"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Configuración de empresa guardada exitosamente"
+}
+```
+
+**Error Responses:**
+- 400: Missing required fields (name, rnc)
+- 401: Unauthorized
+
 #### GET /settings/email
 Get email settings.
 

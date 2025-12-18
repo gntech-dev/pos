@@ -2,26 +2,34 @@
 
 A production-ready Point of Sale system for small businesses in the Dominican Republic with full DGII compliance.
 
+**⚠️ System Requirements**: This system is designed exclusively for **Linux servers** (Ubuntu/Debian recommended). Not compatible with Windows or macOS for production deployment.
+
 ## 🚀 Features
 
 - ✅ **User Management** - Admin, Manager, Cashier, and Accountant roles
 - ✅ **Authentication** - Secure login with NextAuth.js
 - ✅ **Database** - SQLite with Prisma ORM
-- 🚧 **Sales Management** - Process sales with NCF generation
-- 🚧 **Inventory Control** - Product management with barcode scanning
-- 🚧 **Customer Management** - RNC/Cédula validation
-- 🚧 **Quotations** - Create and manage price quotes
-- 🚧 **Refunds** - Process returns with credit notes
-- 🚧 **Reporting** - Sales, inventory, and tax reports
+- ✅ **Sales Management** - Process sales with NCF generation
+- ✅ **Inventory Control** - Product management with barcode scanning
+- ✅ **Customer Management** - RNC/Cédula validation
+- ✅ **Business Configuration** - Persistent company settings
+- ✅ **Quotations** - Create and manage price quotes
+- ✅ **Refunds** - Process returns with credit notes
+- ✅ **Reporting** - Sales, inventory, and tax reports
+- ✅ **Receipt Printing** - ESC/POS thermal printer support
+- ✅ **DGII Compliance** - NCF, RNC validation, tax reports
 - 🚧 **Offline Mode** - Works without internet connection
-- 🚧 **Receipt Printing** - ESC/POS thermal printer support
-- 🚧 **DGII Compliance** - NCF, RNC validation, tax reports
+- 🚧 **Email Notifications** - Automated customer communications
 
 ## 📋 Prerequisites
 
-- Node.js 18+ (v20.19.6 recommended)
-- npm or pnpm
-- Git
+- **Operating System**: Ubuntu 18.04+ or Debian 10+ (Linux only)
+- **Node.js**: 18+ (v20.19.6 recommended)
+- **Package Manager**: npm or pnpm
+- **Version Control**: Git
+- **Server**: VPS/Dedicated server for production (2GB RAM minimum)
+
+> **⚠️ Important**: This system requires Linux. For development, use Ubuntu natively, WSL2, or a Linux VM.
 
 ## 🛠️ Installation
 
@@ -187,25 +195,22 @@ server {
 
 ## 🔧 Configuration
 
+### Business Settings
+
+Configure company information through the web interface:
+1. Go to **Settings** → **Business**
+2. Fill in company details (name, RNC, address, phone, email)
+3. Click **Save** - settings are automatically persisted
+
 ### DGII Settings
 
-Update business information in the database:
-
-```sql
-UPDATE Setting SET value = 'Your Business Name' WHERE key = 'business_name';
-UPDATE Setting SET value = '123456789' WHERE key = 'business_rnc';
-UPDATE Setting SET value = 'Your Address' WHERE key = 'business_address';
-```
-
-### NCF Sequences
-
-Configure NCF ranges in `NCFSequence` table:
-
-- B01: Crédito Fiscal (Invoices with tax credit)
-- B02: Consumo (Final consumer)
-- B14: Regímenes Especiales (Special regimes)
-- B15: Gubernamental (Government)
-- B16: Exportaciones (Exports)
+NCF sequences are configured through the web interface:
+1. Go to **Settings** → **NCF**
+2. Add your DGII-issued NCF ranges for each type:
+   - B01: Crédito Fiscal (Invoices with tax credit)
+   - B02: Consumo (Final consumer)
+   - B14: Regímenes Especiales (Special regimes)
+   - B15: Gubernamental (Government)
 
 ## 📊 Database Schema
 
@@ -255,26 +260,29 @@ For issues or questions, please contact the development team.
 - [x] Database design
 - [x] Authentication
 - [x] RBAC
+- [x] Business configuration persistence
 
-### Phase 2: Core Features 🚧
-- [ ] Sales module
-- [ ] Inventory management
-- [ ] Customer management
-- [ ] NCF generation
-- [ ] Receipt printing
+### Phase 2: Core Features ✅
+- [x] Sales module with NCF generation
+- [x] Inventory management
+- [x] Customer management with RNC validation
+- [x] Quotations system
+- [x] Refunds processing
+- [x] Reporting dashboard
+- [x] Receipt printing
+- [x] DGII compliance features
 
-### Phase 3: Advanced Features 📋
-- [ ] Quotations
-- [ ] Refunds
-- [ ] Reporting
-- [ ] Analytics
-- [ ] Email notifications
+### Phase 3: Advanced Features 🚧
+- [ ] Email notifications system
+- [ ] Advanced analytics
+- [ ] Multi-location support
+- [ ] API integrations
 
 ### Phase 4: Optimization 🔮
 - [ ] Offline mode
 - [ ] Performance tuning
-- [ ] Mobile optimization
-- [ ] Backup automation
+- [ ] Mobile app
+- [ ] Automated backups
 
 ## 🚨 Troubleshooting
 
@@ -325,6 +333,6 @@ npx prisma generate
 
 ---
 
-**Version**: 1.0.0  
+**Version**: 1.1.0  
 **Last Updated**: December 18, 2025  
-**Status**: Phase 2 in Development 🚧
+**Status**: Production Ready ✅

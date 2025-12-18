@@ -31,13 +31,16 @@ pos-system/
 ## Development Setup
 
 ### Prerequisites
-- Node.js 18+
-- npm or pnpm
-- Git
+- **Operating System**: Ubuntu 18.04+ or Debian 10+ (Linux only)
+- **Node.js**: 18+ (v20.19.6 recommended)
+- **Package Manager**: npm or pnpm
+- **Version Control**: Git
+
+> **⚠️ Important**: This system is designed exclusively for Linux. Development should be done on Linux natively, WSL2, or Linux VMs.
 
 ### Installation
 ```bash
-git clone <repository-url>
+git clone https://github.com/gntech-dev/pos.git
 cd pos-system
 npm install --legacy-peer-deps
 ```
