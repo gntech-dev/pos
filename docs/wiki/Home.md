@@ -6,6 +6,7 @@ Welcome to the POS System Wiki! This knowledge base contains detailed informatio
 
 - [[Installation Guide|Installation]]
 - [[User Manual|User-Guide]]
+- [[Email Invoices|Email-Invoices]]
 - [[API Reference|API-Documentation]]
 - [[Developer Guide|Developer-Documentation]]
 
@@ -15,6 +16,7 @@ Welcome to the POS System Wiki! This knowledge base contains detailed informatio
 - **Sales Processing**: Complete POS with NCF generation
 - **Inventory Management**: Product tracking with batch control
 - **Customer Management**: RNC/Cédula validation
+- **Email Invoices**: Professional PDF invoice delivery
 - **Reporting**: Comprehensive business reports
 - **Quotations**: Price quote generation and management
 
@@ -44,6 +46,10 @@ Welcome to the POS System Wiki! This knowledge base contains detailed informatio
 
 ## Recent Updates
 
+- Version 1.0.1 - Email invoice functionality
+- Professional PDF generation with html2canvas
+- Spanish character encoding fixes
+- Enhanced sales history management
 - Version 1.0.0 - Initial release
 - NCF compliance implementation
 - Multi-user role system

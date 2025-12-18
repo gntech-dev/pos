@@ -192,10 +192,35 @@ Elija el tipo apropiado según el cliente:
 4. El sistema calculará el cambio automáticamente
 
 #### Paso 8: Finalizar la Venta
-1. Haga clic en **"Procesar Venta"**
-2. El sistema generará el NCF automáticamente
-3. Se mostrará un resumen de la transacción
-4. Haga clic en **"Imprimir Recibo"** si es necesario
+3. Haga clic en **"Procesar Venta"**
+4. El sistema generará el NCF automáticamente
+5. Se mostrará un resumen de la transacción
+6. Haga clic en **"Imprimir Recibo"** si es necesario
+
+### Historial de Ventas y Envío por Email
+
+#### Ver Historial de Ventas
+1. Haga clic en **"Ventas"** en el menú lateral
+2. Verá una lista de todas las ventas procesadas
+3. Use los filtros para buscar ventas específicas:
+   - Por fecha
+   - Por número de NCF
+   - Por cliente
+   - Por cajero
+
+#### Enviar Factura por Email
+1. En la lista de ventas, haga clic en el botón **"⋮"** (más opciones)
+2. Seleccione **"Enviar por Email"**
+3. Ingrese la dirección de email del destinatario
+4. Elija el tipo de documento:
+   - **Factura**: Formato profesional A4 con detalles completos
+   - **Recibo**: Formato térmico simplificado
+
+5. Haga clic en **"Enviar"**
+6. El sistema generará automáticamente un PDF profesional
+7. Se enviará por email con el asunto apropiado
+
+> **💡 Tip**: Las facturas por email incluyen toda la información fiscal, NCF, y tienen el mismo formato profesional que las impresas.
 
 ### Gestión de Devoluciones
 

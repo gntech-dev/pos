@@ -298,6 +298,43 @@ Common log patterns:
 - `INFO`: General information
 - `DEBUG`: Detailed debugging info
 
+## Email Issues
+
+### PDF Generation Fails
+
+**Problem**: Error when sending invoice emails
+
+**Symptoms**:
+- "Maximum call stack size exceeded"
+- PDF appears corrupted
+- Weird characters in payment method
+
+**Solutions**:
+1. Check browser compatibility (Chrome/Firefox recommended)
+2. Clear browser cache and cookies
+3. Ensure stable internet connection
+4. Try refreshing the page
+
+### Email Not Received
+
+**Problem**: Invoice emails not arriving
+
+**Solutions**:
+1. Check spam/junk folder
+2. Verify email address is correct
+3. Check email configuration in settings
+4. Test email settings with `/api/email/test`
+
+### Character Encoding Issues
+
+**Problem**: Spanish characters appear garbled
+
+**Solutions**:
+1. Use modern browser (Chrome 90+)
+2. Ensure UTF-8 encoding
+3. Check email client settings
+4. Try different email client
+
 ## Getting Help
 
 If you can't resolve an issue:

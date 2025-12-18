@@ -17,9 +17,9 @@ A production-ready Point of Sale system for small businesses in the Dominican Re
 - ✅ **Refunds** - Process returns with credit notes
 - ✅ **Reporting** - Sales, inventory, and tax reports
 - ✅ **Receipt Printing** - ESC/POS thermal printer support
+- ✅ **Email Invoices** - Send professional PDF invoices via email
 - ✅ **DGII Compliance** - NCF, RNC validation, tax reports
 - 🚧 **Offline Mode** - Works without internet connection
-- 🚧 **Email Notifications** - Automated customer communications
 
 ## 📋 Prerequisites
 

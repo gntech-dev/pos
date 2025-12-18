@@ -235,6 +235,66 @@ Delete a quotation.
 #### POST /quotations/email
 Send quotation via email.
 
+### Sales
+
+#### GET /sales
+Get all sales with pagination.
+
+**Query Parameters:**
+- `page`: Page number (default: 1)
+- `limit`: Items per page (default: 20)
+- `search`: Search term
+
+**Response (200):**
+```json
+{
+  "data": [
+    {
+      "id": "string",
+      "saleNumber": "string",
+      "total": "number",
+      "createdAt": "string",
+      "ncf": "string",
+      "paymentMethod": "string",
+      "customer": {
+        "name": "string",
+        "rnc": "string",
+        "cedula": "string"
+      },
+      "cashier": {
+        "name": "string"
+      }
+    }
+  ],
+  "total": "number",
+  "page": "number",
+  "pages": "number"
+}
+```
+
+#### GET /sales/[id]
+Get a specific sale.
+
+#### POST /sales/email
+Send invoice PDF via email.
+
+**Request Body:**
+```json
+{
+  "saleId": "string",
+  "email": "string",
+  "type": "receipt|invoice",
+  "pdfData": "string"
+}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Email sent successfully"
+}
+```
+
 ### Reports
 
 #### GET /reports/sales

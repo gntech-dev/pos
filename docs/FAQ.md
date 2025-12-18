@@ -9,6 +9,7 @@
 ### [👥 Clientes](#-clientes)
 ### [📊 Reportes](#-reportes)
 ### [🖨️ Impresión](#️-impresión)
+### [📧 Email y Facturación](#-email-y-facturación)
 ### [💾 Backup y Datos](#-backup-y-datos)
 ### [⚙️ Configuración](#️-configuración)
 ### [🚨 Problemas Técnicos](#-problemas-técnicos)
@@ -196,6 +197,52 @@
 ### ¿Qué pasa si no tengo impresora?
 
 **Respuesta:** Puede operar sin impresora inicialmente. Los recibos se pueden enviar por email o mostrar en pantalla.
+
+---
+
+## 📧 Email y Facturación
+
+### ¿Cómo envío facturas por email?
+
+**Respuesta:** En la sección de Ventas, después de procesar una venta:
+1. Haga clic en "Enviar por Email"
+2. Ingrese el email del cliente
+3. El sistema genera automáticamente un PDF con la factura
+4. Se envía inmediatamente al cliente
+
+### ¿Qué incluye la factura por email?
+
+**Respuesta:** La factura incluye:
+- Información completa de la venta
+- Detalles del cliente
+- Lista de productos con precios
+- Totales e impuestos
+- Código QR para validación DGII
+- Logo de su empresa (si configurado)
+
+### ¿Puedo personalizar las facturas por email?
+
+**Respuesta:** Sí, puede configurar:
+- Logo de empresa
+- Información de contacto
+- Mensajes personalizados
+- Formatos de fecha y moneda
+
+### ¿Qué pasa si el email no llega?
+
+**Respuesta:** Verifique:
+1. Que el email esté escrito correctamente
+2. La carpeta de spam/junk
+3. La configuración de email en Ajustes
+4. Contacte soporte si persiste el problema
+
+### ¿Hay límite en envíos de email?
+
+**Respuesta:** No hay límite técnico, pero recomendamos no enviar más de 50 emails por hora para evitar bloqueos de spam.
+
+### ¿Las facturas por email cumplen con DGII?
+
+**Respuesta:** Sí, incluyen toda la información requerida por la DGII y el código QR para validación digital.
 
 ---
 
