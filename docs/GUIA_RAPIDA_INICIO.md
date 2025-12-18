@@ -1,55 +1,622 @@
-# 🚀 Guía Rápida de Inicio - Sistema POS
+# 🚀 Guía Rápida de Producción - Sistema POS
 
-## ¡Bienvenido a su Sistema POS!
+## ¡Bienvenido a su Sistema POS en Producción!
 
-Esta guía está diseñada para que pueda comenzar a usar el sistema en **menos de 30 minutos**, incluso si es su primera vez con un sistema de punto de venta.
+Esta guía está diseñada para que pueda **desplegar el sistema en un servidor de producción en menos de 60 minutos**, incluso si es su primera vez configurando un servidor.
 
 ---
 
 ## 📋 Antes de Empezar
 
-### ✅ Requisitos Mínimos
+### ✅ Requisitos del Servidor
 
-- **Computadora**: Windows 10+, macOS 10.15+, o Ubuntu 18.04+
-- **Navegador**: Chrome, Firefox, o Edge (actualizado)
-- **Conexión**: Internet para activación inicial
-- **Tiempo**: 15-30 minutos para configuración inicial
+- **Servidor**: Ubuntu 20.04+ o CentOS 7+ (recomendado: Ubuntu 22.04)
+- **RAM**: 2GB mínimo, 4GB recomendado
+- **Almacenamiento**: 20GB mínimo
+- **Dominio**: Nombre de dominio apuntando al servidor (opcional pero recomendado)
+- **Acceso**: Usuario con permisos sudo
+- **Tiempo**: 45-60 minutos para configuración completa
 
 ### 🎯 Lo que Necesitará Preparar
 
 Antes de instalar, reúna esta información:
 
-1. **Información de su Empresa**:
+1. **Información del Servidor**:
+   - Dirección IP del servidor
+   - Usuario SSH (normalmente `root` o usuario con sudo)
+   - Contraseña o clave SSH
+   - Nombre de dominio (si tiene)
+
+2. **Información de su Empresa**:
    - Nombre legal de la empresa
    - RNC (Registro Nacional del Contribuyente)
    - Dirección completa
    - Teléfono y email
 
-2. **Secuencias NCF** (si ya las tiene):
+3. **Secuencias NCF** (obligatorio para producción):
    - Números de comprobantes fiscales de la DGII
    - Fechas de expiración
 
-3. **Productos Iniciales** (opcional):
-   - Lista de productos para cargar
-   - Precios y códigos de barras
+4. **Configuración SSL** (recomendado):
+   - Certificado SSL (Let's Encrypt gratuito)
+   - Dominio configurado
 
 ---
 
-## 🛠️ Instalación Paso a Paso
+## 🛠️ Instalación en Servidor Paso a Paso
 
-### Paso 1: Descargar el Sistema (2 minutos)
+### Paso 1: Conectar al Servidor (2 minutos)
 
 ```bash
-# Abrir terminal/línea de comandos
-# Copiar y pegar este comando:
-
-git clone https://github.com/gntech-dev/pos.git
-cd pos-system
+# Conectar via SSH (reemplaza con tu IP/servidor)
+ssh usuario@tu-servidor.com
+# O si es root:
+ssh root@tu-servidor.com
 ```
 
 **¿Qué hace esto?**
-- Descarga todos los archivos del sistema
-- Entra a la carpeta del proyecto
+- Establece conexión segura con tu servidor
+- Todo el trabajo se hace en el servidor remoto
+
+### Paso 2: Preparar el Servidor (5 minutos)
+
+```bash
+# Actualizar el sistema
+sudo apt update && sudo apt upgrade -y
+
+# Instalar herramientas básicas
+sudo apt install -y curl wget git unzip ufw
+```
+
+**¿Qué hace esto?**
+- Actualiza el sistema operativo
+- Instala herramientas necesarias para el despliegue
+
+### Paso 3: Instalar Node.js (3 minutos)
+
+```bash
+# Instalar Node.js 18.x
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Verificar instalación
+node --version  # Debe mostrar v18.x.x
+npm --version   # Debe mostrar 8.x.x
+```
+
+**¿Qué hace esto?**
+- Instala Node.js versión 18 (LTS)
+- Verifica que esté correctamente instalado
+
+### Paso 4: Instalar PM2 (2 minutos)
+
+```bash
+# Instalar PM2 globalmente
+sudo npm install -g pm2
+
+# Verificar instalación
+pm2 --version
+
+# Configurar PM2 para auto-inicio
+pm2 startup
+# Sigue las instrucciones que aparecen
+```
+
+**¿Qué hace esto?**
+- Instala PM2 para manejar la aplicación en producción
+- Configura que la aplicación inicie automáticamente al reiniciar el servidor
+
+### Paso 5: Instalar Nginx (3 minutos)
+
+```bash
+# Instalar Nginx
+sudo apt install -y nginx
+
+# Verificar instalación
+sudo systemctl status nginx
+```
+
+**¿Qué hace esto?**
+- Instala Nginx como servidor web reverso
+- Nginx manejará las conexiones HTTP/HTTPS
+
+### Paso 6: Configurar Firewall (2 minutos)
+
+```bash
+# Habilitar UFW
+sudo ufw enable
+
+# Permitir SSH, HTTP y HTTPS
+sudo ufw allow ssh
+sudo ufw allow 'Nginx Full'
+
+# Verificar estado
+sudo ufw status
+```
+
+**¿Qué hace esto?**
+- Configura firewall básico
+- Permite acceso a SSH, HTTP (80) y HTTPS (443)
+
+### Paso 7: Descargar la Aplicación (3 minutos)
+
+```bash
+# Crear directorio para la aplicación
+sudo mkdir -p /opt/pos-system
+sudo chown $USER:$USER /opt/pos-system
+cd /opt/pos-system
+
+# Clonar el repositorio
+git clone https://github.com/gntech-dev/pos.git .
+```
+
+**¿Qué hace esto?**
+- Crea directorio dedicado para la aplicación
+- Descarga todo el código fuente
+
+### Paso 8: Instalar Dependencias (5 minutos)
+
+```bash
+# Instalar dependencias de Node.js
+npm install --legacy-peer-deps --production
+```
+
+**¿Qué hace esto?**
+- Instala todas las librerías necesarias
+- `--production` instala solo dependencias de producción
+
+### Paso 9: Configurar Variables de Entorno (5 minutos)
+
+```bash
+# Copiar archivo de configuración
+cp .env.example .env
+
+# Editar configuración de producción
+nano .env
+```
+
+**Contenido del archivo .env:**
+```env
+# Base de datos
+DATABASE_URL="file:./prod.db"
+
+# Autenticación (¡IMPORTANTE: Cambia esto!)
+NEXTAUTH_URL="https://tu-dominio.com"
+NEXTAUTH_SECRET="tu-clave-super-secreta-muy-larga-aqui-min-32-caracteres"
+
+# Entorno
+NODE_ENV="production"
+
+# Puerto (interno)
+PORT=3000
+```
+
+**¿Qué hace esto?**
+- Configura la base de datos para producción
+- Establece URLs de producción
+- Configura secreto seguro para autenticación
+
+> **⚠️ IMPORTANTE:** Genera un NEXTAUTH_SECRET seguro. Puedes usar: `openssl rand -base64 32`
+
+### Paso 10: Configurar Base de Datos (3 minutos)
+
+```bash
+# Ejecutar migraciones
+npm run db:migrate
+
+# Cargar datos iniciales
+npm run db:seed
+```
+
+**¿Qué hace esto?**
+- Crea todas las tablas de la base de datos
+- Carga datos básicos del sistema
+
+### Paso 11: Construir la Aplicación (5 minutos)
+
+```bash
+# Construir para producción
+npm run build
+```
+
+**¿Qué hace esto?**
+- Optimiza el código para producción
+- Crea archivos estáticos optimizados
+
+### Paso 12: Configurar PM2 (3 minutos)
+
+```bash
+# Crear archivo de configuración PM2
+nano ecosystem.config.js
+```
+
+**Contenido del archivo ecosystem.config.js:**
+```javascript
+module.exports = {
+  apps: [{
+    name: 'pos-system',
+    script: 'npm start',
+    instances: 1,
+    autorestart: true,
+    watch: false,
+    max_memory_restart: '1G',
+    env: {
+      NODE_ENV: 'production',
+      PORT: 3000,
+      HOST: '0.0.0.0',
+    },
+    error_file: '/opt/pos-system/logs/err.log',
+    out_file: '/opt/pos-system/logs/out.log',
+    log_file: '/opt/pos-system/logs/combined.log',
+    time: true
+  }]
+}
+```
+
+**¿Qué hace esto?**
+- Configura cómo PM2 manejará la aplicación
+- Define logs y reinicio automático
+
+### Paso 13: Crear Directorio de Logs (1 minuto)
+
+```bash
+# Crear directorio para logs
+mkdir -p logs
+```
+
+### Paso 14: Iniciar la Aplicación (2 minutos)
+
+```bash
+# Iniciar con PM2
+pm2 start ecosystem.config.js
+
+# Guardar configuración
+pm2 save
+
+# Verificar estado
+pm2 status
+```
+
+**¿Qué hace esto?**
+- Inicia la aplicación en segundo plano
+- Guarda configuración para reinicio automático
+- Verifica que esté ejecutándose
+
+### Paso 15: Configurar Nginx (5 minutos)
+
+```bash
+# Crear configuración de sitio
+sudo nano /etc/nginx/sites-available/pos-system
+```
+
+**Contenido del archivo de configuración:**
+```nginx
+server {
+    listen 80;
+    server_name tu-dominio.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+
+    # Cache para archivos estáticos
+    location /_next/static/ {
+        proxy_pass http://localhost:3000;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+**¿Qué hace esto?**
+- Configura Nginx como proxy reverso
+- Maneja conexiones HTTP al puerto 3000 interno
+
+### Paso 16: Habilitar Sitio y Reiniciar Nginx (2 minutos)
+
+```bash
+# Habilitar sitio
+sudo ln -s /etc/nginx/sites-available/pos-system /etc/nginx/sites-enabled/
+
+# Probar configuración
+sudo nginx -t
+
+# Reiniciar Nginx
+sudo systemctl reload nginx
+```
+
+**¿Qué hace esto?**
+- Activa la configuración del sitio
+- Reinicia Nginx para aplicar cambios
+
+### Paso 17: Configurar SSL (Opcional pero Recomendado - 5 minutos)
+
+```bash
+# Instalar Certbot
+sudo apt install -y certbot python3-certbot-nginx
+
+# Obtener certificado SSL gratuito
+sudo certbot --nginx -d tu-dominio.com
+
+# Seguir las instrucciones en pantalla
+```
+
+**¿Qué hace esto?**
+- Instala certificado SSL gratuito de Let's Encrypt
+- Configura HTTPS automáticamente
+
+---
+
+## ⚙️ Configuración Inicial de la Aplicación
+
+### Paso 1: Acceder al Sistema
+
+Abra su navegador y vaya a:
+- **Con SSL**: `https://tu-dominio.com`
+- **Sin SSL**: `http://tu-dominio.com`
+
+### Paso 2: Primer Login
+
+**Usuario:** `admin`  
+**Contraseña:** `admin123`
+
+> **⚠️ IMPORTANTE:** Cambie esta contraseña inmediatamente.
+
+### Paso 3: Configurar Empresa
+
+1. Vaya a **Configuración** → **Empresa**
+2. Complete:
+   - Nombre legal
+   - RNC
+   - Dirección
+   - Teléfono y email
+3. Guarde
+
+### Paso 4: Configurar NCF (Obligatorio)
+
+1. Vaya a **Configuración** → **NCF**
+2. Agregue sus secuencias de la DGII:
+   - Tipo (B01, B02, etc.)
+   - Rango de números
+   - Fecha de expiración
+3. Guarde
+
+### Paso 5: Cambiar Contraseña
+
+1. Vaya a **Configuración** → **Mi Perfil**
+2. Cambie la contraseña por una segura
+
+---
+
+## 👥 Crear Usuarios
+
+### Paso 1: Acceder a Gestión de Usuarios
+
+1. Vaya a **Configuración** → **Usuarios**
+
+### Paso 2: Crear Usuario
+
+1. Haga clic en **"Nuevo Usuario"**
+2. Complete:
+   - Nombre de usuario
+   - Nombre completo
+   - Rol (Gerente, Cajero)
+   - Contraseña temporal
+3. Guarde
+
+### Paso 3: Repetir para Todos los Usuarios
+
+Cree cuentas para todos sus empleados.
+
+---
+
+## 📦 Agregar Productos
+
+### Paso 1: Ir a Inventario
+
+1. Haga clic en **"Inventario"** → **"Productos"**
+
+### Paso 2: Agregar Producto
+
+1. Haga clic en **"Agregar Producto"**
+2. Complete información básica
+3. Guarde
+
+### Paso 3: Importar Productos (Opcional)
+
+Si tiene muchos productos, considere importar desde Excel.
+
+---
+
+## 💾 Configurar Backup Automático
+
+### Paso 1: Crear Script de Backup
+
+```bash
+# Crear archivo de backup
+nano /opt/pos-system/backup.sh
+```
+
+**Contenido del script:**
+```bash
+#!/bin/bash
+
+BACKUP_DIR="/opt/pos-system/backups"
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="$BACKUP_DIR/pos_backup_$DATE.db"
+
+mkdir -p $BACKUP_DIR
+
+# Detener aplicación
+pm2 stop pos-system
+
+# Copiar base de datos
+cp prod.db $BACKUP_FILE
+
+# Iniciar aplicación
+pm2 start pos-system
+
+# Limpiar backups antiguos (mantener últimos 30)
+find $BACKUP_DIR -name "pos_backup_*.db" -mtime +30 -delete
+
+echo "Backup completado: $BACKUP_FILE"
+```
+
+### Paso 2: Hacer Ejecutable
+
+```bash
+chmod +x backup.sh
+```
+
+### Paso 3: Programar Backup Diario
+
+```bash
+# Editar crontab
+crontab -e
+
+# Agregar esta línea para backup diario a las 2 AM:
+0 2 * * * /opt/pos-system/backup.sh
+```
+
+---
+
+## 🎯 Verificación Final
+
+### Checklist de Producción
+
+- [ ] ✅ Servidor accesible via dominio
+- [ ] ✅ SSL configurado (HTTPS)
+- [ ] ✅ Aplicación ejecutándose (pm2 status)
+- [ ] ✅ Nginx funcionando (sudo systemctl status nginx)
+- [ ] ✅ Firewall activo (sudo ufw status)
+- [ ] ✅ Backup automático configurado
+- [ ] ✅ Información de empresa configurada
+- [ ] ✅ NCF configurados
+- [ ] ✅ Al menos un usuario adicional creado
+- [ ] ✅ Contraseña admin cambiada
+
+### Comandos de Verificación
+
+```bash
+# Verificar aplicación
+pm2 status
+
+# Verificar Nginx
+sudo systemctl status nginx
+
+# Verificar logs
+pm2 logs pos-system --lines 20
+
+# Verificar backup
+ls -la /opt/pos-system/backups/
+```
+
+---
+
+## 🚨 Solución de Problemas en Producción
+
+### Aplicación no inicia
+```bash
+# Ver logs
+pm2 logs pos-system
+
+# Reiniciar
+pm2 restart pos-system
+```
+
+### Sitio web no carga
+```bash
+# Verificar Nginx
+sudo nginx -t
+sudo systemctl reload nginx
+
+# Verificar puerto
+netstat -tlnp | grep :80
+```
+
+### Base de datos bloqueada
+```bash
+# Reiniciar aplicación
+pm2 restart pos-system
+```
+
+### SSL no funciona
+```bash
+# Renovar certificado
+sudo certbot renew
+sudo systemctl reload nginx
+```
+
+---
+
+## 📊 Monitoreo y Mantenimiento
+
+### Comandos Útiles
+
+```bash
+# Ver estado del sistema
+pm2 monit
+
+# Ver logs en tiempo real
+pm2 logs pos-system --follow
+
+# Reiniciar aplicación
+pm2 restart pos-system
+
+# Ver uso de recursos
+htop
+```
+
+### Actualizaciones
+
+```bash
+# Actualizar aplicación
+cd /opt/pos-system
+git pull origin main
+npm install --legacy-peer-deps --production
+npm run build
+pm2 restart pos-system
+```
+
+---
+
+## 🎉 ¡Su Sistema Está Listo!
+
+Ahora puede:
+- ✅ Procesar ventas desde cualquier dispositivo
+- ✅ Gestionar inventario en tiempo real
+- ✅ Generar reportes fiscales automáticamente
+- ✅ Mantener backup automático
+- ✅ Escalar según crezca su negocio
+
+**¿Necesita ayuda?** Contacte a soporte técnico.
+
+---
+
+## 📞 Soporte y Contacto
+
+- **Email**: soporte@gntech.dev
+- **Teléfono**: (809) 555-POS1
+- **Documentación Completa**: [docs/](docs/) folder
+
+---
+
+**GNTech - Tecnología para su Éxito Empresarial**
+
+*Guía actualizada: Diciembre 2025*
 
 ### Paso 2: Instalar Dependencias (5 minutos)
 

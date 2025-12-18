@@ -303,23 +303,23 @@ npx prisma generate
 ## 📚 Documentation
 
 ### 🚀 Guías para Principiantes
-- **[Guía Rápida de Inicio](./docs/GUIA_RAPIDA_INICIO.md)** - Configuración en 30 minutos (¡Comience aquí!)
+- **[Guía Rápida de Producción](./docs/GUIA_RAPIDA_INICIO.md)** - Despliegue en servidor en 60 minutos (¡Comience aquí!)
 - **[Preguntas Frecuentes (FAQ)](./docs/FAQ.md)** - Respuestas a dudas comunes
 - **[Guía del Usuario](./docs/USER_GUIDE.md)** - Manual completo paso a paso
 
 ### 🛠️ Documentación Técnica
+- **[Guía de Instalación en Servidor](./docs/deployment/INSTALLATION_GUIDE.md)** - Instalación detallada paso a paso
 - **[API REST](./docs/API.md)** - Referencia completa de endpoints
 - **[Guía del Desarrollador](./docs/DEVELOPER_GUIDE.md)** - Desarrollo y contribución
-- **[Guía de Instalación](./docs/deployment/INSTALLATION_GUIDE.md)** - Instalación en servidor
+- **[Guía de Despliegue](./docs/DEPLOYMENT_GUIDE.md)** - Configuración de producción avanzada
 
 ### 📋 Documentos Adicionales
-- **[Guía de Despliegue](./docs/DEPLOYMENT_GUIDE.md)** - Configuración de producción
 - **[Wiki](./docs/wiki/)** - Base de conocimientos y FAQ
 - **[Documentación de Desarrollo](./docs/development/)** - Docs internos y planes
 
 ---
 
-**¿Nuevo usuario?** Comience con la **[Guía Rápida de Inicio](./docs/GUIA_RAPIDA_INICIO.md)** - estará operativo en 30 minutos.
+**¿Nuevo en producción?** Comience con la **[Guía Rápida de Producción](./docs/GUIA_RAPIDA_INICIO.md)** - despliegue completo en 60 minutos.
 
 **¿Tiene dudas?** Consulte las **[Preguntas Frecuentes](./docs/FAQ.md)**.
 
