@@ -28,9 +28,16 @@ interface Quotation {
 
 interface QuotationThermalProps {
   quotation: Quotation
+  businessSettings?: {
+    name: string
+    rnc: string
+    address: string
+    phone: string
+    email: string
+  }
 }
 
-export default function QuotationThermal({ quotation }: QuotationThermalProps) {
+export default function QuotationThermal({ quotation, businessSettings }: QuotationThermalProps) {
   return (
     <div className="thermal-receipt bg-white p-4 max-w-[80mm] mx-auto text-black">
       {/* Header */}
@@ -117,7 +124,7 @@ export default function QuotationThermal({ quotation }: QuotationThermalProps) {
       {/* Footer */}
       <div className="text-center">
         <p className="text-xs font-bold mb-1">Cotización válida por 30 días 📋</p>
-        <p className="text-xs text-gray-600">www.gntech.com</p>
+        <p className="text-xs text-gray-600">{businessSettings?.email || 'info@gntech.com'}</p>
       </div>
 
       <style jsx>{`

@@ -53,13 +53,22 @@ interface NCFExpirationInfo {
   isExpired: boolean
 }
 
+interface BusinessSettings {
+  name: string
+  rnc: string
+  address: string
+  phone: string
+  email: string
+}
+
 interface PrintDocumentProps {
   sale: Sale
   type: 'thermal' | 'invoice'
   ncfExpiration?: NCFExpirationInfo | null
+  businessSettings?: BusinessSettings
 }
 
-export default function PrintDocument({ sale, type, ncfExpiration }: PrintDocumentProps) {
+export default function PrintDocument({ sale, type, ncfExpiration, businessSettings }: PrintDocumentProps) {
   useEffect(() => {
     // Auto-print when component mounts
     const timer = setTimeout(() => {
@@ -76,9 +85,9 @@ export default function PrintDocument({ sale, type, ncfExpiration }: PrintDocume
   return (
     <div className="print-container">
       {type === 'thermal' ? (
-        <ThermalReceipt sale={sale} ncfExpiration={ncfExpiration} />
+        <ThermalReceipt sale={sale} ncfExpiration={ncfExpiration} businessSettings={businessSettings} />
       ) : (
-        <A4Invoice sale={sale} ncfExpiration={ncfExpiration} />
+        <A4Invoice sale={sale} ncfExpiration={ncfExpiration} businessSettings={businessSettings} />
       )}
 
       <style jsx global>{`

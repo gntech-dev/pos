@@ -37,7 +37,21 @@ interface NCFExpirationInfo {
   isExpired: boolean
 }
 
-export default function ThermalReceipt({ sale, ncfExpiration }: ThermalReceiptProps) {
+interface BusinessSettings {
+  name: string
+  rnc: string
+  address: string
+  phone: string
+  email: string
+}
+
+interface ThermalReceiptProps {
+  sale: Sale
+  ncfExpiration?: NCFExpirationInfo | null
+  businessSettings?: BusinessSettings
+}
+
+export default function ThermalReceipt({ sale, ncfExpiration, businessSettings }: ThermalReceiptProps) {
   // Use passed ncfExpiration data or fallback to default values
   const ncfInfo: NCFExpirationInfo = ncfExpiration || {
     expiryDate: null,
@@ -136,7 +150,7 @@ export default function ThermalReceipt({ sale, ncfExpiration }: ThermalReceiptPr
       {/* Footer */}
       <div className="text-center">
         <p className="text-xs font-bold mb-1">¡Gracias por su compra! 🎉</p>
-        <p className="text-xs text-gray-600">www.gntech.com</p>
+        <p className="text-xs text-gray-600">{businessSettings?.email || 'info@gntech.com'}</p>
       </div>
 
       <style jsx>{`

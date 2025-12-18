@@ -36,9 +36,16 @@ interface Quotation {
 interface QuotationPrintDocumentProps {
   quotation: Quotation
   type: 'quotation' | 'quotation_a4'
+  businessSettings?: {
+    name: string
+    rnc: string
+    address: string
+    phone: string
+    email: string
+  }
 }
 
-export default function QuotationPrintDocument({ quotation, type }: QuotationPrintDocumentProps) {
+export default function QuotationPrintDocument({ quotation, type, businessSettings }: QuotationPrintDocumentProps) {
   useEffect(() => {
     // Auto-print when component mounts
     const timer = setTimeout(() => {
@@ -55,9 +62,9 @@ export default function QuotationPrintDocument({ quotation, type }: QuotationPri
   return (
     <div className="print-container">
       {type === 'quotation' ? (
-        <QuotationThermal quotation={quotation} />
+        <QuotationThermal quotation={quotation} businessSettings={businessSettings} />
       ) : (
-        <QuotationA4 quotation={quotation} />
+        <QuotationA4 quotation={quotation} businessSettings={businessSettings} />
       )}
 
       <style jsx global>{`

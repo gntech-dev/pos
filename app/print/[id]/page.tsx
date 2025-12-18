@@ -33,6 +33,45 @@ export default async function PrintPage({ params, searchParams }: PrintPageProps
     notFound()
   }
 
+  // Fetch business settings
+  const businessSettings = await prisma.setting.findMany({
+    where: {
+      key: {
+        in: ['business_name', 'business_rnc', 'business_address', 'business_phone', 'business_email']
+      }
+    }
+  })
+
+  // Transform to object format
+  const businessData = {
+    name: 'GNTech Demo',
+    rnc: '000-00000-0',
+    address: 'Santo Domingo, República Dominicana',
+    phone: '809-555-5555',
+    email: 'info@gntech.com'
+  }
+
+  // Override with database values
+  businessSettings.forEach(setting => {
+    switch (setting.key) {
+      case 'business_name':
+        businessData.name = setting.value
+        break
+      case 'business_rnc':
+        businessData.rnc = setting.value
+        break
+      case 'business_address':
+        businessData.address = setting.value
+        break
+      case 'business_phone':
+        businessData.phone = setting.value
+        break
+      case 'business_email':
+        businessData.email = setting.value
+        break
+    }
+  })
+
   // Fetch NCF expiration data server-side
   let ncfExpiration = null
   if (sale.ncf) {
@@ -45,6 +84,6 @@ export default async function PrintPage({ params, searchParams }: PrintPageProps
   }
 
   return (
-    <PrintDocument sale={sale} type={type as 'thermal' | 'invoice'} ncfExpiration={ncfExpiration} />
+    <PrintDocument sale={sale} type={type as 'thermal' | 'invoice'} ncfExpiration={ncfExpiration} businessSettings={businessData} />
   )
 }

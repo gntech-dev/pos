@@ -45,12 +45,21 @@ interface NCFExpirationInfo {
   isExpired: boolean
 }
 
+interface BusinessSettings {
+  name: string
+  rnc: string
+  address: string
+  phone: string
+  email: string
+}
+
 interface A4InvoiceProps {
   sale: Sale
   ncfExpiration?: NCFExpirationInfo | null
+  businessSettings?: BusinessSettings
 }
 
-export default function A4Invoice({ sale, ncfExpiration }: A4InvoiceProps) {
+export default function A4Invoice({ sale, ncfExpiration, businessSettings }: A4InvoiceProps) {
   // Use passed ncfExpiration data or fallback to default values
   const ncfInfo: NCFExpirationInfo = ncfExpiration || {
     expiryDate: null,
@@ -180,7 +189,7 @@ export default function A4Invoice({ sale, ncfExpiration }: A4InvoiceProps) {
       <div className="text-center text-xs text-gray-600 border-t border-gray-300 pt-4">
         <p className="mb-2">¡Gracias por su preferencia!</p>
         <p>Este documento es una representación impresa de una factura electrónica</p>
-        <p className="mt-2">www.gntech.com | info@gntech.com</p>
+        <p className="mt-2">{businessSettings?.email || 'info@gntech.com'}</p>
       </div>
 
       <style jsx>{`

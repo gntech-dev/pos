@@ -33,9 +33,16 @@ interface Quotation {
 
 interface QuotationA4Props {
   quotation: Quotation
+  businessSettings?: {
+    name: string
+    rnc: string
+    address: string
+    phone: string
+    email: string
+  }
 }
 
-export default function QuotationA4({ quotation }: QuotationA4Props) {
+export default function QuotationA4({ quotation, businessSettings }: QuotationA4Props) {
   return (
     <div className="a4-quotation bg-white p-12 max-w-[210mm] mx-auto text-black">
       {/* Header */}
@@ -149,7 +156,7 @@ export default function QuotationA4({ quotation }: QuotationA4Props) {
       <div className="text-center text-xs text-gray-600 border-t border-gray-300 pt-4">
         <p className="mb-2">Esta cotización es válida por 30 días a partir de la fecha de emisión.</p>
         <p>Para aprobar esta cotización, por favor contacte a nuestro equipo de ventas.</p>
-        <p className="mt-2">www.gntech.com | info@gntech.com | Tel: 809-555-5555</p>
+        <p className="mt-2">{businessSettings?.email || 'info@gntech.com'}</p>
       </div>
 
       <style jsx>{`

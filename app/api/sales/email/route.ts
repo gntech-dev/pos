@@ -71,7 +71,7 @@ function loadEmailConfig() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { saleId, email } = await req.json()
+    const { saleId, email, pdfData } = await req.json()
 
     if (!saleId || !email) {
       return NextResponse.json(
@@ -135,6 +135,45 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Get business settings for email
+    const businessSettings = await prisma.setting.findMany({
+      where: {
+        key: {
+          in: ['business_name', 'business_rnc', 'business_address', 'business_phone', 'business_email']
+        }
+      }
+    })
+
+    // Transform to object format
+    const businessData = {
+      name: 'GNTech Demo',
+      rnc: '000-00000-0',
+      address: 'Santo Domingo, República Dominicana',
+      phone: '809-555-5555',
+      email: 'info@gntech.com'
+    }
+
+    // Override with database values
+    businessSettings.forEach(setting => {
+      switch (setting.key) {
+        case 'business_name':
+          businessData.name = setting.value
+          break
+        case 'business_rnc':
+          businessData.rnc = setting.value
+          break
+        case 'business_address':
+          businessData.address = setting.value
+          break
+        case 'business_phone':
+          businessData.phone = setting.value
+          break
+        case 'business_email':
+          businessData.email = setting.value
+          break
+      }
+    })
+
     // Load current email configuration
     const emailConfig = loadEmailConfig()
 
@@ -174,6 +213,33 @@ export async function POST(req: NextRequest) {
     // Generate email HTML (for invoice only)
     const emailHTML = generateInvoiceHTML(sale, type)
 
+    // Prepare PDF attachment from client-generated data
+    const attachments = []
+    if (pdfData) {
+      console.log('PDF data received, length:', pdfData.length)
+      console.log('PDF data preview:', pdfData.substring(0, 100))
+      
+      // Remove data:pdf/application;base64, prefix if present
+      const base64Data = pdfData.replace(/^data:application\/pdf;base64,/, '')
+      console.log('Base64 data length after prefix removal:', base64Data.length)
+      
+      try {
+        const pdfBuffer = Buffer.from(base64Data, 'base64')
+        console.log('PDF buffer created, length:', pdfBuffer.length)
+        
+        attachments.push({
+          filename: `Factura_${sale.saleNumber}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf'
+        })
+        console.log('PDF attachment added successfully')
+      } catch (bufferError) {
+        console.error('Error creating PDF buffer:', bufferError)
+      }
+    } else {
+      console.log('No PDF data received')
+    }
+
     // Send email with enhanced options
     const senderName = emailConfig.senderName || 'GNTech POS'
     const senderEmail = emailConfig.user
@@ -183,6 +249,7 @@ export async function POST(req: NextRequest) {
       to: email,
       subject: `Factura #${sale.saleNumber} - ${senderName}`,
       html: emailHTML,
+      attachments: attachments,
       // Additional headers for better deliverability
       headers: {
         'X-Mailer': 'GNTech POS System',
