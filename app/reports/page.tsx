@@ -176,7 +176,15 @@ function SalesReports() {
       headers.map(header => {
         const key = header.toLowerCase().replace(/\s+/g, '')
         const value = row[key] || row[header] || ''
-        return typeof value === 'number' ? formatCurrency(value) : String(value)
+        
+        // Don't format as currency for quantity/count/percentage fields
+        const noCurrencyFields = [
+          'Total Ventas', 'Total Items', 'Días Restantes', 'Restantes', 'Uso %',
+          'Stock', 'Mínimo', 'Cantidad', 'Productos', 'Stock Total',
+          'Número de Ventas', 'Cantidad Total', 'Total Productos'
+        ];
+        
+        return typeof value === 'number' && !noCurrencyFields.includes(header) ? formatCurrency(value) : String(value)
       })
     )
   
@@ -1254,7 +1262,13 @@ function CustomerReports() {
       headers.map(header => {
         const key = header.toLowerCase().replace(/\s+/g, '')
         const value = row[key] || row[header] || ''
-        return typeof value === 'number' ? formatCurrency(value) : String(value)
+        
+        // Don't format as currency for quantity/count fields
+        const noCurrencyFields = [
+          'Productos', 'Stock Total', 'Total Clientes', 'Clientes Activos', 'Clientes con Ventas'
+        ];
+        
+        return typeof value === 'number' && !noCurrencyFields.includes(header) ? formatCurrency(value) : String(value)
       })
     )
 
