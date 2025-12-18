@@ -1,227 +1,591 @@
-# User Guide - POS System
+# Guía del Usuario - Sistema POS
 
-This guide provides instructions for using the Point of Sale system for Dominican Republic businesses.
+## Introducción
 
-## Getting Started
+Bienvenido al **Sistema de Punto de Venta (POS)** diseñado específicamente para empresas dominicanas. Este sistema cumple con todas las normativas de la Dirección General de Impuestos Internos (DGII), incluyendo la gestión de NCF, validación de RNC y reportes fiscales.
 
-### Login
-1. Open your browser and navigate to the POS system URL
-2. Enter your username and password
-3. Click "Iniciar Sesión"
+Esta guía está diseñada para usuarios principiantes y proporciona instrucciones detalladas paso a paso para utilizar todas las funciones del sistema.
 
-### User Roles
-- **Admin**: Full system access, user management, settings
-- **Manager**: Sales, inventory, reports, customer management
-- **Cashier**: Sales processing, basic customer lookup
+### ¿Qué es un Sistema POS?
 
-## Dashboard
+Un Sistema de Punto de Venta es una herramienta digital que permite:
+- Procesar ventas de manera eficiente
+- Gestionar inventario en tiempo real
+- Generar facturas electrónicas válidas fiscalmente
+- Mantener registros precisos para cumplimiento tributario
+- Generar reportes detallados de ventas y ganancias
 
-The dashboard provides an overview of:
-- Today's sales and revenue
-- Low stock alerts
-- Recent transactions
-- Top-selling products
+### Características Principales
 
-## Sales Management
+- ✅ **Cumplimiento DGII**: NCF, validación RNC, reportes fiscales
+- ✅ **Gestión de Inventario**: Control de stock, alertas de bajo inventario
+- ✅ **Gestión de Clientes**: Validación automática de RNC y cédula
+- ✅ **Múltiples Tipos de Venta**: Facturas de crédito fiscal, consumo, gubernamental
+- ✅ **Reportes Avanzados**: Ventas, inventario, clientes, fiscales
+- ✅ **Impresión**: Recibos térmicos y facturas A4
+- ✅ **Backup y Restauración**: Seguridad de datos
+- ✅ **Interfaz Intuitiva**: Fácil de usar para principiantes
 
-### Processing a Sale
-1. Go to the POS page
-2. Search for products by name or barcode
-3. Add items to the cart
-4. Enter customer information (optional)
-5. Select payment method
-6. Process the payment
-7. Print receipt
+## Primeros Pasos
 
-### Sale Types
-- **Factura de Crédito Fiscal (B01)**: For businesses (with ITBIS)
-- **Factura de Consumo (B02)**: For final consumers
-- **Factura Gubernamental (B15)**: For government entities
+### Requisitos del Sistema
 
-### Refunds
-1. Go to Refunds page
-2. Search for the original sale
-3. Select items to refund
-4. Process the refund
-5. Generate credit note
+Antes de comenzar, asegúrese de tener:
 
-## Inventory Management
+- **Navegador Web**: Chrome, Firefox, Safari o Edge (versión reciente)
+- **Conexión a Internet**: Para sincronización con DGII y envío de correos
+- **Impresora**: Para imprimir recibos (opcional pero recomendado)
+- **Lector de Código de Barras**: Para escaneo rápido de productos (opcional)
 
-### Adding Products
-1. Go to Products page
-2. Click "Add Product"
-3. Enter product details:
-   - Name
-   - Price
-   - Stock quantity
-   - Category
-   - Barcode (optional)
-4. Save the product
+### Acceso al Sistema
 
-### Managing Stock
-- View current stock levels
-- Set low stock alerts
-- Track batch numbers and expiration dates
-- Generate inventory reports
+#### Paso 1: Abrir el Navegador
+1. Abra su navegador web preferido
+2. En la barra de direcciones, escriba la URL del sistema POS
+   - **Desarrollo**: `http://localhost:3000`
+   - **Producción**: La URL proporcionada por su administrador
 
-### Product Categories
-- Create and manage product categories
-- Filter products by category
-- Generate category-based reports
+#### Paso 2: Iniciar Sesión
+1. En la página de login, verá dos campos:
+   - **Usuario**: Su nombre de usuario asignado
+   - **Contraseña**: Su contraseña
 
-## Customer Management
+2. Ingrese sus credenciales
+3. Haga clic en el botón **"Iniciar Sesión"**
 
-### Adding Customers
-1. Go to Customers page
-2. Click "Add Customer"
-3. Enter customer information:
-   - Name
-   - Email
-   - Phone
-   - RNC (for businesses)
-   - Cédula (for individuals)
-4. Save the customer
+> **💡 Consejos para Principiantes:**
+> - Si no recuerda su contraseña, contacte al administrador del sistema
+> - Asegúrese de que la tecla Caps Lock esté desactivada
+> - Las contraseñas distinguen entre mayúsculas y minúsculas
 
-### Customer Validation
-- RNC validation against DGII database
-- Cédula validation
-- Automatic tax exemption checks
+#### Paso 3: Verificación de Acceso
+Después de iniciar sesión correctamente:
+- Será redirigido al dashboard principal
+- Verá el menú lateral con las opciones disponibles
+- Su nombre de usuario aparecerá en la esquina superior derecha
 
-## Quotations
+### Entendiendo los Roles de Usuario
 
-### Creating Quotations
-1. Go to Quotations page
-2. Click "New Quotation"
-3. Add products and quantities
-4. Enter customer information
-5. Set validity period
-6. Save and optionally email to customer
+El sistema tiene diferentes niveles de acceso según su rol:
 
-### Managing Quotations
-- View all quotations
-- Convert quotations to sales
-- Email quotations to customers
-- Track quotation status
+| Rol | Permisos | Uso Típico |
+|-----|----------|------------|
+| **Administrador** | Acceso completo a todas las funciones | Configuración del sistema, gestión de usuarios |
+| **Gerente** | Ventas, inventario, reportes, clientes | Supervisión diaria de operaciones |
+| **Cajero** | Procesamiento de ventas básico | Operaciones de caja en tienda |
 
-## Reports
+> **Nota**: Su rol determina qué funciones puede acceder. Si necesita permisos adicionales, contacte al administrador.
 
-### Available Reports
-- **Sales Reports**: Daily, weekly, monthly sales data
-- **Inventory Reports**: Stock levels, low stock alerts
-- **Customer Reports**: Customer purchase history
-- **DGII Reports**: Tax compliance reports
+## Navegación por el Sistema
 
-### Generating Reports
-1. Go to Reports page
-2. Select report type
-3. Set date range
-4. Apply filters
-5. Export to PDF or Excel
+### Menú Principal
 
-## Settings
+El menú lateral izquierdo contiene todas las funciones principales:
 
-### System Settings
-- Business information (name, address, RNC)
-- Tax settings
-- NCF sequence configuration
-- Email settings
+- **🏠 Dashboard**: Vista general del negocio
+- **💰 POS**: Procesar ventas
+- **📦 Inventario**: Gestionar productos
+- **👥 Clientes**: Base de datos de clientes
+- **📄 Cotizaciones**: Crear presupuestos
+- **🔄 Devoluciones**: Procesar reembolsos
+- **📊 Reportes**: Análisis y reportes
+- **⚙️ Configuración**: Ajustes del sistema
+- **💾 Backup**: Copias de seguridad
 
-### User Management (Admin Only)
-- Create new users
-- Assign roles
-- Reset passwords
-- View user activity logs
+### Barra Superior
 
-## NCF Management
+En la parte superior derecha encontrará:
+- **Notificaciones**: Alertas importantes
+- **Usuario**: Menú desplegable con opciones personales
+- **Cerrar Sesión**: Para salir del sistema de forma segura
 
-### NCF Sequences
-The system manages different NCF types:
-- B01: Crédito Fiscal
-- B02: Consumo
-- B14: Regímenes Especiales
-- B15: Gubernamental
-- B16: Exportaciones
+## Dashboard - Vista General
 
-### NCF Alerts
-- Automatic alerts for expiring NCF sequences
-- Low sequence warnings
-- Expiration tracking
+El dashboard es la página principal que se carga al iniciar sesión.
 
-## Backup and Restore
+### Información Mostrada
 
-### Creating Backups
-1. Go to Backup page
-2. Click "Create Backup"
-3. Choose backup type (full or incremental)
-4. Download or store the backup file
+1. **Métricas del Día**:
+   - Ventas totales del día
+   - Ingresos generados
+   - Número de transacciones
+   - Impuestos recaudados (ITBIS)
 
-### Restoring Data
-1. Go to Restore page
-2. Upload a backup file
-3. Select restore options
-4. Confirm and execute restore
+2. **Alertas de Inventario**:
+   - Productos con stock bajo
+   - Productos agotados
+   - Alertas de expiración
 
-## Printing
+3. **Transacciones Recientes**:
+   - Últimas ventas procesadas
+   - Estado de cada transacción
 
-### Receipt Printing
-- Thermal printer support
-- A4 invoice printing
-- Customizable receipt templates
+4. **Productos Más Vendidos**:
+   - Ranking de productos por popularidad
+   - Cantidades vendidas
 
-### Supported Printers
-- ESC/POS thermal printers
-- Standard A4 printers
-- Network and USB printers
+### Navegación Rápida
 
-## Troubleshooting
+Desde el dashboard puede acceder rápidamente a:
+- Procesar una nueva venta
+- Ver productos con bajo stock
+- Generar reportes diarios
+- Gestionar clientes
 
-### Common Issues
+## Gestión de Ventas
 
-#### Login Problems
-- Check username and password
-- Ensure caps lock is off
-- Contact admin if account is locked
+### Procesamiento de una Venta Básica
 
-#### Printing Issues
-- Check printer connection
-- Verify printer settings
-- Restart print spooler
+#### Paso 1: Acceder al Módulo POS
+1. Haga clic en **"POS"** en el menú lateral
+2. Se abrirá la interfaz de punto de venta
 
-#### NCF Errors
-- Check NCF sequence availability
-- Verify business RNC settings
-- Contact DGII if needed
+#### Paso 2: Buscar Productos
+Existen varias formas de agregar productos:
 
-#### Database Errors
-- Check database connection
-- Run backup before troubleshooting
-- Contact technical support
+**Opción A: Búsqueda por Nombre**
+1. Haga clic en el campo de búsqueda
+2. Escriba el nombre del producto
+3. Seleccione de la lista desplegable
 
-### Support
-For technical issues, contact your system administrator or GNTech support.
+**Opción B: Escaneo de Código de Barras**
+1. Enfoque el lector en el código de barras
+2. El producto se agregará automáticamente
 
-## Security Best Practices
+**Opción C: Navegación por Categorías**
+1. Haga clic en las pestañas de categorías
+2. Seleccione el producto deseado
 
-- Change default passwords immediately
-- Use strong passwords
-- Log out when not using the system
-- Keep software updated
-- Regular backups
-- Monitor user activity logs
+#### Paso 3: Agregar al Carrito
+1. Una vez seleccionado el producto, haga clic en **"Agregar"**
+2. El producto aparecerá en el carrito a la derecha
+3. Puede ajustar la cantidad usando los botones + y -
 
-## Keyboard Shortcuts
+#### Paso 4: Información del Cliente (Opcional)
+1. Haga clic en **"Agregar Cliente"**
+2. Busque por nombre, RNC o cédula
+3. Seleccione el cliente de la lista
 
-- `F1`: Help
-- `F2`: Search products
-- `F3`: Customer lookup
-- `F4`: Payment
-- `F5`: Print receipt
-- `F12`: Logout
+> **Nota**: Para facturas de crédito fiscal, la información del cliente es obligatoria.
 
-## Mobile Usage
+#### Paso 5: Seleccionar Tipo de Factura
+Elija el tipo apropiado según el cliente:
 
-The system is optimized for mobile devices:
-- Touch-friendly interface
-- Responsive design
-- Mobile receipt printing
-- Offline capability (future feature)
+- **B01 - Crédito Fiscal**: Para empresas (incluye ITBIS)
+- **B02 - Consumo**: Para consumidores finales
+- **B15 - Gubernamental**: Para entidades gubernamentales
+
+#### Paso 6: Aplicar Descuentos (Opcional)
+1. Haga clic en el ícono de descuento junto al producto
+2. Ingrese el porcentaje o monto de descuento
+3. El sistema recalculará automáticamente
+
+#### Paso 7: Procesar el Pago
+1. Revise el total en la sección de pago
+2. Seleccione el método de pago:
+   - Efectivo
+   - Tarjeta de crédito/débito
+   - Transferencia bancaria
+   - Mixto (combinación de métodos)
+
+3. Si paga en efectivo, ingrese el monto recibido
+4. El sistema calculará el cambio automáticamente
+
+#### Paso 8: Finalizar la Venta
+1. Haga clic en **"Procesar Venta"**
+2. El sistema generará el NCF automáticamente
+3. Se mostrará un resumen de la transacción
+4. Haga clic en **"Imprimir Recibo"** si es necesario
+
+### Gestión de Devoluciones
+
+#### Paso 1: Acceder a Devoluciones
+1. Haga clic en **"Devoluciones"** en el menú lateral
+
+#### Paso 2: Buscar la Venta Original
+1. Use el campo de búsqueda para encontrar la venta
+2. Puede buscar por:
+   - Número de NCF
+   - Nombre del cliente
+   - Fecha de la venta
+
+#### Paso 3: Seleccionar Productos a Devolver
+1. Marque los productos que desea devolver
+2. Ajuste las cantidades si es necesario
+3. Especifique el motivo de la devolución
+
+#### Paso 4: Procesar la Devolución
+1. Haga clic en **"Procesar Devolución"**
+2. El sistema generará una nota de crédito
+3. Se actualizará el inventario automáticamente
+
+## Gestión de Inventario
+
+### Agregar un Nuevo Producto
+
+#### Paso 1: Acceder al Inventario
+1. Haga clic en **"Inventario"** en el menú lateral
+2. Seleccione la pestaña **"Productos"**
+
+#### Paso 2: Crear Producto
+1. Haga clic en **"Agregar Producto"**
+2. Complete la información requerida:
+
+**Información Básica:**
+- **Nombre**: Nombre descriptivo del producto
+- **Código/SKU**: Identificador único
+- **Descripción**: Detalles adicionales (opcional)
+
+**Precios y Costos:**
+- **Precio de Venta**: Precio al público
+- **Costo**: Precio de compra (para márgenes)
+- **Precio Mínimo**: Precio mínimo permitido (opcional)
+
+**Inventario:**
+- **Stock Inicial**: Cantidad actual
+- **Stock Mínimo**: Nivel para alertas
+- **Unidad de Medida**: Pieza, kg, litro, etc.
+
+**Categorización:**
+- **Categoría**: Grupo del producto
+- **Proveedor**: Empresa proveedora
+- **Código de Barras**: Para escaneo (opcional)
+
+#### Paso 3: Configurar Opciones Avanzadas
+1. **Impuestos**: Configure si aplica ITBIS y porcentaje
+2. **Lotes**: Para productos con fechas de expiración
+3. **Imágenes**: Suba fotos del producto (opcional)
+
+#### Paso 4: Guardar el Producto
+1. Revise toda la información
+2. Haga clic en **"Guardar"**
+3. El producto estará disponible para ventas
+
+### Gestión de Categorías
+
+#### Crear una Nueva Categoría
+1. En la sección de inventario, vaya a **"Categorías"**
+2. Haga clic en **"Nueva Categoría"**
+3. Ingrese nombre y descripción
+4. Asigne un color para identificación visual
+5. Guarde los cambios
+
+### Alertas de Inventario
+
+El sistema le notificará automáticamente cuando:
+- Un producto llegue al stock mínimo
+- Un producto se agote completamente
+- Un lote esté próximo a expirar
+
+Para ver todas las alertas:
+1. Vaya al dashboard
+2. Revise la sección **"Alertas de Inventario"**
+3. Haga clic en cualquier alerta para ver detalles
+
+## Gestión de Clientes
+
+### Agregar un Nuevo Cliente
+
+#### Paso 1: Acceder a Clientes
+1. Haga clic en **"Clientes"** en el menú lateral
+
+#### Paso 2: Crear Cliente
+1. Haga clic en **"Agregar Cliente"**
+2. Complete la información:
+
+**Información Personal:**
+- **Nombre Completo**: Nombre y apellidos
+- **Tipo**: Persona física o jurídica
+- **RNC**: Para empresas (válido para DGII)
+- **Cédula**: Para individuos
+
+**Información de Contacto:**
+- **Teléfono**: Número de contacto
+- **Email**: Dirección de correo electrónico
+- **Dirección**: Dirección completa
+
+**Información Fiscal:**
+- **Exento de ITBIS**: Si aplica exoneración
+- **Límite de Crédito**: Monto máximo de crédito (opcional)
+
+#### Paso 3: Validación Automática
+1. Al ingresar RNC o cédula, el sistema validará automáticamente
+2. Si hay errores, se mostrará una advertencia
+3. Para RNC, se consultará la base de datos de DGII
+
+#### Paso 4: Guardar Cliente
+1. Revise toda la información
+2. Haga clic en **"Guardar"**
+3. El cliente estará disponible para ventas
+
+### Búsqueda de Clientes
+
+Para encontrar clientes existentes:
+1. Use el campo de búsqueda
+2. Puede buscar por nombre, RNC, cédula o teléfono
+3. Seleccione de la lista de resultados
+
+## Cotizaciones
+
+### Crear una Nueva Cotización
+
+#### Paso 1: Acceder a Cotizaciones
+1. Haga clic en **"Cotizaciones"** en el menú lateral
+
+#### Paso 2: Nueva Cotización
+1. Haga clic en **"Nueva Cotización"**
+
+#### Paso 3: Agregar Productos
+1. Busque y agregue productos como en una venta normal
+2. Ajuste cantidades y precios si es necesario
+
+#### Paso 4: Información del Cliente
+1. Seleccione o agregue el cliente destinatario
+
+#### Paso 5: Configurar Validez
+1. Establezca fecha de expiración
+2. Agregue notas o términos especiales
+
+#### Paso 6: Guardar y Enviar
+1. Guarde la cotización
+2. Opcionalmente, envíe por email al cliente
+
+### Convertir Cotización en Venta
+
+Cuando el cliente acepte la cotización:
+1. Abra la cotización
+2. Haga clic en **"Convertir a Venta"**
+3. El sistema creará una venta con los mismos productos
+4. Procese el pago normalmente
+
+## Reportes y Análisis
+
+### Tipos de Reportes Disponibles
+
+#### Reportes de Ventas
+- **Resumen de Ventas**: Totales por período
+- **Ventas por Fecha**: Análisis diario
+- **Ventas por Cliente**: Historial de compras
+- **Ventas por Producto**: Rendimiento de productos
+
+#### Reportes de Inventario
+- **Niveles de Stock**: Estado actual del inventario
+- **Movimientos de Inventario**: Entradas y salidas
+- **Productos por Categoría**: Análisis por grupos
+
+#### Reportes de Clientes
+- **Lista de Clientes**: Base de datos completa
+- **Clientes Activos**: Con compras recientes
+- **Historial de Compras**: Detalle por cliente
+
+#### Reportes DGII
+- **Formulario 606**: Compras y servicios
+- **Formulario 607**: Ventas
+- **Formulario 608**: ITBIS
+
+### Generar un Reporte
+
+#### Paso 1: Acceder a Reportes
+1. Haga clic en **"Reportes"** en el menú lateral
+
+#### Paso 2: Seleccionar Tipo
+1. Elija la categoría de reporte
+2. Seleccione el reporte específico
+
+#### Paso 3: Configurar Filtros
+1. **Rango de Fechas**: Período a analizar
+2. **Filtros Adicionales**: Cliente, producto, categoría
+3. **Agrupamiento**: Diario, semanal, mensual
+
+#### Paso 4: Generar Reporte
+1. Haga clic en **"Generar Reporte"**
+2. Revise los resultados en pantalla
+
+#### Paso 5: Exportar Reporte
+1. **PDF**: Para impresión o archivo
+2. **Excel/CSV**: Para análisis en hoja de cálculo
+
+> **💡 Tip**: Los reportes PDF mantienen el formato correcto, incluyendo números como cantidades (no moneda) donde corresponde.
+
+## Configuración del Sistema
+
+### Configuración Básica
+
+#### Información de la Empresa
+1. Vaya a **"Configuración"** > **"Empresa"**
+2. Complete:
+   - Nombre de la empresa
+   - RNC de la empresa
+   - Dirección completa
+   - Información de contacto
+
+#### Configuración de Impuestos
+1. Configure el porcentaje de ITBIS
+2. Establezca reglas de exoneración
+3. Configure tipos de NCF disponibles
+
+### Gestión de Usuarios (Solo Administrador)
+
+#### Crear Nuevo Usuario
+1. Vaya a **"Configuración"** > **"Usuarios"**
+2. Haga clic en **"Nuevo Usuario"**
+3. Complete:
+   - Nombre de usuario
+   - Contraseña inicial
+   - Rol asignado
+   - Información personal
+
+#### Gestionar Permisos
+1. Seleccione un usuario existente
+2. Modifique permisos según sea necesario
+3. Guarde los cambios
+
+## Gestión de NCF
+
+### Entendiendo los NCF
+
+Los NCF (Números de Comprobante Fiscal) son obligatorios en República Dominicana:
+
+- **B01**: Crédito Fiscal (empresas)
+- **B02**: Consumo (consumidores finales)
+- **B14**: Regímenes Especiales
+- **B15**: Gubernamental
+- **B16**: Exportaciones
+
+### Monitoreo de NCF
+
+#### Ver Estado de Secuencias
+1. Vaya a **"Configuración"** > **"NCF"**
+2. Revise el estado de cada secuencia
+3. Verifique fechas de expiración
+
+#### Alertas Automáticas
+El sistema alertará cuando:
+- Una secuencia esté próxima a agotarse
+- Una secuencia esté a punto de expirar
+- No haya secuencias disponibles
+
+### Solicitar Nuevas Secuencias
+
+Cuando necesite nuevas secuencias:
+1. Contacte a la DGII
+2. Solicite nuevas secuencias según su RNC
+3. Configure las nuevas secuencias en el sistema
+
+## Backup y Seguridad
+
+### Crear Copia de Seguridad
+
+#### Paso 1: Acceder a Backup
+1. Haga clic en **"Backup"** en el menú lateral
+
+#### Paso 2: Crear Backup
+1. Haga clic en **"Crear Backup"**
+2. Seleccione tipo:
+   - **Completo**: Toda la base de datos
+   - **Incremental**: Solo cambios recientes
+
+#### Paso 3: Descargar Backup
+1. Espere a que se complete el proceso
+2. Haga clic en **"Descargar"**
+3. Guarde el archivo en lugar seguro
+
+### Restaurar Datos
+
+#### Importante: Solo en caso de emergencia
+1. Vaya a **"Restaurar"**
+2. Suba el archivo de backup
+3. Seleccione qué datos restaurar
+4. Confirme la operación
+
+> **⚠️ Advertencia**: La restauración sobrescribirá datos existentes. Asegúrese de tener un backup adicional antes de restaurar.
+
+## Impresión y Dispositivos
+
+### Configuración de Impresoras
+
+#### Impresora Térmica
+1. Conecte la impresora USB o de red
+2. Configure en **"Configuración"** > **"Impresoras"**
+3. Seleccione tipo de impresora (ESC/POS)
+4. Pruebe la impresión
+
+#### Impresora A4
+1. Configure como impresora predeterminada del sistema
+2. Seleccione plantillas de factura
+3. Configure márgenes y formato
+
+### Tipos de Impresión
+
+- **Recibo Térmico**: Para ventas rápidas
+- **Factura A4**: Para clientes empresariales
+- **Cotizaciones**: Con formato profesional
+
+## Solución de Problemas
+
+### Problemas Comunes
+
+#### No puedo iniciar sesión
+- Verifique usuario y contraseña
+- Asegúrese de que Caps Lock esté desactivado
+- Contacte al administrador si la cuenta está bloqueada
+
+#### Error al procesar venta
+- Verifique que haya NCF disponibles
+- Confirme que el cliente esté correctamente registrado
+- Revise conexión a internet para validación DGII
+
+#### Problemas de impresión
+- Verifique conexión de impresora
+- Confirme que esté encendida y con papel
+- Pruebe impresión de prueba
+
+#### Productos no aparecen en búsqueda
+- Verifique que estén en stock
+- Confirme que no estén marcados como inactivos
+- Revise filtros de categoría
+
+### Soporte Técnico
+
+Si necesita ayuda adicional:
+1. Contacte al administrador del sistema
+2. Proporcione detalles del error
+3. Incluya capturas de pantalla si es posible
+
+## Mejores Prácticas
+
+### Seguridad
+- Cambie contraseñas regularmente
+- No comparta credenciales
+- Cierre sesión al terminar
+- Monitoree logs de actividad
+
+### Operaciones Diarias
+- Realice backups diarios
+- Verifique alertas de inventario
+- Confirme secuencias NCF
+- Revise reportes semanales
+
+### Mantenimiento
+- Mantenga software actualizado
+- Limpie base de datos periódicamente
+- Archive datos antiguos
+- Realice mantenimiento preventivo
+
+## Glosario de Términos
+
+- **NCF**: Número de Comprobante Fiscal
+- **ITBIS**: Impuesto sobre Transferencias de Bienes Industrializados y Servicios
+- **DGII**: Dirección General de Impuestos Internos
+- **RNC**: Registro Nacional del Contribuyente
+- **POS**: Point of Sale (Punto de Venta)
+- **SKU**: Stock Keeping Unit (Unidad de mantenimiento de stock)
+- **ESC/POS**: Protocolo estándar para impresoras térmicas
+
+---
+
+**Versión del Documento**: 2.0
+**Última Actualización**: Diciembre 2025
+**Sistema**: POS v1.0
+
+Para más información, contacte a soporte técnico.

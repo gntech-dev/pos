@@ -302,16 +302,29 @@ npx prisma generate
 
 ## 📚 Documentation
 
-- [User Guide](./docs/USER_GUIDE.md) - Complete user manual
-- [API Documentation](./docs/API.md) - REST API reference
-- [Developer Guide](./docs/DEVELOPER_GUIDE.md) - Technical documentation
-- [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md) - Production deployment
-- [Wiki](./docs/wiki/) - Knowledge base and FAQ
-- [Deployment Documentation](./docs/deployment/) - Server installation and deployment guides
-- [Development Documentation](./docs/development/) - Internal development docs and plans
+### 🚀 Guías para Principiantes
+- **[Guía Rápida de Inicio](./docs/GUIA_RAPIDA_INICIO.md)** - Configuración en 30 minutos (¡Comience aquí!)
+- **[Preguntas Frecuentes (FAQ)](./docs/FAQ.md)** - Respuestas a dudas comunes
+- **[Guía del Usuario](./docs/USER_GUIDE.md)** - Manual completo paso a paso
+
+### 🛠️ Documentación Técnica
+- **[API REST](./docs/API.md)** - Referencia completa de endpoints
+- **[Guía del Desarrollador](./docs/DEVELOPER_GUIDE.md)** - Desarrollo y contribución
+- **[Guía de Instalación](./docs/deployment/INSTALLATION_GUIDE.md)** - Instalación en servidor
+
+### 📋 Documentos Adicionales
+- **[Guía de Despliegue](./docs/DEPLOYMENT_GUIDE.md)** - Configuración de producción
+- **[Wiki](./docs/wiki/)** - Base de conocimientos y FAQ
+- **[Documentación de Desarrollo](./docs/development/)** - Docs internos y planes
+
+---
+
+**¿Nuevo usuario?** Comience con la **[Guía Rápida de Inicio](./docs/GUIA_RAPIDA_INICIO.md)** - estará operativo en 30 minutos.
+
+**¿Tiene dudas?** Consulte las **[Preguntas Frecuentes](./docs/FAQ.md)**.
 
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: December 12, 2025  
-**Status**: Phase 1 Complete
+**Last Updated**: December 18, 2025  
+**Status**: Phase 2 in Development 🚧
