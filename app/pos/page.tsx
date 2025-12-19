@@ -71,7 +71,7 @@ interface ZXingCodeReader {
 }
 
 interface ZXingLib {
-  BrowserMultiFormatReader: new (...args: any[]) => ZXingCodeReader
+  BrowserMultiFormatReader: typeof import('@zxing/browser').BrowserMultiFormatReader
 }
 
 let ZXing: ZXingLib | null = null
