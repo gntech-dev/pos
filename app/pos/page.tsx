@@ -269,7 +269,7 @@ export default function POSPage() {
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (product.barcode && product.barcode.includes(searchQuery))
+    (product.barcode && product.barcode.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
   const { subtotal, tax, total } = calculateTotals()
