@@ -62,12 +62,20 @@ interface CustomerSearchResult {
 }
 
 // Import ZXing dynamically to avoid SSR issues
+interface ZXingResult {
+  getText(): string
+}
+
+interface ZXingCodeReader {
+  decodeOnceFromVideoDevice(deviceId: string | undefined, videoElement: HTMLVideoElement): Promise<ZXingResult>
+}
+
 interface ZXingLib {
-  BrowserMultiFormatReader: any
+  BrowserMultiFormatReader: new (...args: any[]) => ZXingCodeReader
 }
 
 let ZXing: ZXingLib | null = null
-let codeReader: any = null
+let codeReader: ZXingCodeReader | null = null
 
 interface CartItem {
   product: Product
@@ -97,7 +105,7 @@ export default function POSPage() {
   const [customerSearchQuery, setCustomerSearchQuery] = useState('')
   const [customerSearchResults, setCustomerSearchResults] = useState<CustomerSearchResult[]>([])
   const [searchingCustomers, setSearchingCustomers] = useState(false)
-  const scannerRef = useRef<HTMLDivElement>(null)
+  const scannerRef = useRef<HTMLVideoElement>(null)
 
   // Load products on mount
   useEffect(() => {
@@ -299,7 +307,7 @@ export default function POSPage() {
 
   const stopBarcodeScanner = () => {
     if (codeReader) {
-      codeReader.reset()
+      codeReader = null
     }
     setScannerActive(false)
   }
@@ -308,7 +316,7 @@ export default function POSPage() {
   useEffect(() => {
     return () => {
       if (scannerActive && codeReader) {
-        codeReader.reset()
+        codeReader = null
       }
     }
   }, [scannerActive])
@@ -467,9 +475,7 @@ export default function POSPage() {
               {/* Barcode Scanner */}
               {scannerActive && (
                 <div className="mb-6 bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 shadow-inner">
-                  <div ref={scannerRef} className="w-full h-64 bg-black rounded-lg overflow-hidden">
-                    <div id="interactive" className="viewport"></div>
-                  </div>
+                  <video ref={scannerRef} className="w-full h-64 bg-black rounded-lg" playsInline muted></video>
                   <p className="text-sm text-gray-300 mt-3 text-center">📱 Apunta la cámara al código de barras</p>
                 </div>
               )}
