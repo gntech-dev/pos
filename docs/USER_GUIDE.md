@@ -66,15 +66,97 @@ Después de iniciar sesión correctamente:
 
 ### Entendiendo los Roles de Usuario
 
-El sistema tiene diferentes niveles de acceso según su rol:
+El sistema tiene diferentes niveles de acceso según su rol. Cada rol está diseñado para responsabilidades específicas dentro del negocio.
 
-| Rol | Permisos | Uso Típico |
-|-----|----------|------------|
-| **Administrador** | Acceso completo a todas las funciones | Configuración del sistema, gestión de usuarios |
-| **Gerente** | Ventas, inventario, reportes, clientes | Supervisión diaria de operaciones |
-| **Cajero** | Procesamiento de ventas básico | Operaciones de caja en tienda |
+#### 👑 **Administrador**
+**Responsabilidades**: Configuración completa del sistema, gestión de usuarios, seguridad.
 
-> **Nota**: Su rol determina qué funciones puede acceder. Si necesita permisos adicionales, contacte al administrador.
+**Capacidades Detalladas:**
+- ✅ **Gestión de Usuarios**: Crear, editar, eliminar usuarios y asignar roles
+- ✅ **Configuración del Sistema**: Ajustes generales, empresa, NCF, email
+- ✅ **Acceso Completo**: Todas las funciones del sistema sin restricciones
+- ✅ **Reportes Avanzados**: Todos los reportes incluyendo financieros y fiscales
+- ✅ **Backup y Restauración**: Copias de seguridad y recuperación de datos
+- ✅ **Configuración de Seguridad**: Contraseñas, permisos, auditoría
+- ✅ **Integraciones**: Configuración de servicios externos (email, etc.)
+
+**Uso Típico**: Propietario del negocio, gerente general, administrador de TI.
+
+#### 👔 **Gerente**
+**Responsabilidades**: Supervisión diaria, control de inventario, análisis de ventas.
+
+**Capacidades Detalladas:**
+- ✅ **Procesamiento de Ventas**: Todas las funciones de venta y facturación
+- ✅ **Gestión de Inventario**: Agregar, editar, eliminar productos y categorías
+- ✅ **Control de Clientes**: Gestión completa de base de datos de clientes
+- ✅ **Cotizaciones y Presupuestos**: Crear y gestionar cotizaciones
+- ✅ **Devoluciones y Reembolsos**: Procesar todas las operaciones de devolución
+- ✅ **Reportes Completos**: Ventas, inventario, clientes, rentabilidad
+- ✅ **Dashboard Ejecutivo**: Vista completa del estado del negocio
+- ✅ **Configuración de Productos**: Precios, descuentos, promociones
+- ❌ **Gestión de Usuarios**: No puede crear/editar usuarios
+- ❌ **Configuración del Sistema**: Solo lectura de configuraciones críticas
+
+**Uso Típico**: Gerente de tienda, supervisor de ventas, encargado de inventario.
+
+#### 🧑‍💼 **Cajero**
+**Responsabilidades**: Procesamiento eficiente de ventas en el punto de venta.
+
+**Capacidades Detalladas:**
+- ✅ **Procesamiento de Ventas**: Escanear productos, aplicar descuentos, cobrar
+- ✅ **Búsqueda de Productos**: Buscar productos por nombre, SKU o código de barras
+- ✅ **Gestión de Clientes**: Buscar clientes existentes, aplicar descuentos por cliente
+- ✅ **Impresión de Recibos**: Imprimir facturas térmicas y enviar por email
+- ✅ **Vista de Inventario**: Consultar stock disponible (solo lectura)
+- ✅ **Reportes Básicos**: Ventas del día, productos más vendidos
+- ✅ **Cambio de Contraseña**: Gestionar su propia contraseña
+- ❌ **Modificación de Productos**: No puede agregar/editar productos
+- ❌ **Configuración de Precios**: No puede cambiar precios o descuentos
+- ❌ **Gestión de Usuarios**: Sin acceso
+- ❌ **Reportes Avanzados**: Sin acceso a reportes financieros detallados
+- ❌ **Backup/Restauración**: Sin acceso
+
+**Uso Típico**: Cajero de tienda, vendedor en mostrador, operador de POS.
+
+#### 📋 **Matriz de Permisos Detallada**
+
+| Función | Administrador | Gerente | Cajero |
+|---------|---------------|---------|--------|
+| **Ventas** | | | |
+| Procesar ventas | ✅ | ✅ | ✅ |
+| Aplicar descuentos | ✅ | ✅ | ✅ |
+| Enviar facturas por email | ✅ | ✅ | ✅ |
+| Devoluciones | ✅ | ✅ | ❌ |
+| **Inventario** | | | |
+| Ver productos | ✅ | ✅ | ✅ |
+| Agregar productos | ✅ | ✅ | ❌ |
+| Editar productos | ✅ | ✅ | ❌ |
+| Eliminar productos | ✅ | ❌ | ❌ |
+| Control de stock | ✅ | ✅ | ❌ |
+| **Clientes** | | | |
+| Ver clientes | ✅ | ✅ | ✅ |
+| Agregar clientes | ✅ | ✅ | ❌ |
+| Editar clientes | ✅ | ✅ | ❌ |
+| Validar RNC | ✅ | ✅ | ✅ |
+| **Reportes** | | | |
+| Dashboard | ✅ | ✅ | ✅ |
+| Reportes de ventas | ✅ | ✅ | ✅ |
+| Reportes de inventario | ✅ | ✅ | ❌ |
+| Reportes financieros | ✅ | ✅ | ❌ |
+| Reportes fiscales DGII | ✅ | ✅ | ❌ |
+| **Configuración** | | | |
+| Configuración empresa | ✅ | ❌ | ❌ |
+| Configuración NCF | ✅ | ❌ | ❌ |
+| Configuración email | ✅ | ❌ | ❌ |
+| Gestión de usuarios | ✅ | ❌ | ❌ |
+| Backup | ✅ | ❌ | ❌ |
+
+> **💡 Consejos sobre Roles:**
+> - **Asigne el rol mínimo necesario** para cada usuario (principio de menor privilegio)
+> - **El rol de Cajero** es ideal para empleados de primera línea
+> - **El rol de Gerente** es perfecto para supervisores y encargados
+> - **Reserve Administrador** solo para personal de confianza con conocimientos técnicos
+> - **Los roles se pueden cambiar** en cualquier momento por un administrador
 
 ## Navegación por el Sistema
 

@@ -4,9 +4,31 @@ A production-ready Point of Sale system for small businesses in the Dominican Re
 
 **⚠️ System Requirements**: This system is designed exclusively for **Linux servers** (Ubuntu/Debian recommended). Not compatible with Windows or macOS for production deployment.
 
+## 📁 Project Structure
+
+```
+pos-system/
+├── app/                    # Next.js application pages and API routes
+├── components/             # Reusable React components
+├── config/                 # Configuration files (PM2, email, etc.)
+├── database/               # Database schema and migrations (Prisma)
+├── docs/                   # Documentation and guides
+├── lib/                    # Utility functions and configurations
+├── public/                 # Static assets (images, icons)
+├── scripts/                # Deployment and maintenance scripts
+├── storage/                # Persistent data storage
+│   ├── backups/           # Database backup files
+│   ├── cache/             # Temporary cache files
+│   ├── restore/           # Restore operation files
+│   ├── temp/              # Temporary files
+│   └── uploads/           # User uploaded files
+├── types/                  # TypeScript type definitions
+└── [config files]         # Package.json, tsconfig.json, etc.
+```
+
 ## 🚀 Features
 
-- ✅ **User Management** - Admin, Manager, Cashier, and Accountant roles
+- ✅ **User Management** - Admin, Manager, Cashier roles with granular permissions
 - ✅ **Authentication** - Secure login with NextAuth.js
 - ✅ **Database** - SQLite with Prisma ORM
 - ✅ **Sales Management** - Process sales with NCF generation

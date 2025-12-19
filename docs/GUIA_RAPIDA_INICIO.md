@@ -136,6 +136,41 @@ Abra su navegador y vaya a: **http://localhost:3000**
 
 > **⚠️ Importante:** Cambie la contraseña inmediatamente
 
+### Paso 8: Configurar Variables de Entorno para Desarrollo Local (3 minutos)
+
+```bash
+# Copiar archivo de configuración
+cp .env.example .env
+
+# Editar configuración de desarrollo
+nano .env
+```
+
+**Contenido del archivo .env para desarrollo local:**
+```env
+# Base de datos (SQLite local)
+DATABASE_URL="file:./dev.db"
+
+# Autenticación para desarrollo
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="desarrollo-local-clave-secreta-temporal-cambiar-en-produccion"
+
+# Entorno
+NODE_ENV="development"
+
+# Puerto de desarrollo
+PORT=3000
+```
+
+**¿Qué hace esto?**
+- Configura base de datos SQLite local para desarrollo
+- Establece URLs para desarrollo local
+- Puerto 3000 para acceso desde navegador
+
+> **⚠️ IMPORTANTE:** 
+> - El NEXTAUTH_SECRET es temporal. Para producción, genera uno seguro: `openssl rand -base64 32`
+> - La base de datos se crea automáticamente en `./dev.db`
+
 ## ⚙️ Configuración Inicial - Local
 
 Siga los mismos pasos que en la sección de configuración más abajo, pero use:

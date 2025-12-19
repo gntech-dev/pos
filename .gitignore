@@ -40,22 +40,22 @@ ecosystem.config.js
 # database files
 *.db
 *.db-journal
-prisma/*.db
+database/prisma/*.db
 dev.db
 
 # cache files (populated during RNC sync)
-cache/
-!cache/.gitkeep
+storage/cache/
+!storage/cache/.gitkeep
 
 # user-generated content
-backups/
-!backups/.gitkeep
-uploads/
-!uploads/.gitkeep
-temp/
-!temp/.gitkeep
-restore/
-!restore/.gitkeep
+storage/backups/
+!storage/backups/.gitkeep
+storage/uploads/
+!storage/uploads/.gitkeep
+storage/temp/
+!storage/temp/.gitkeep
+storage/restore/
+!storage/restore/.gitkeep
 
 # vercel
 .vercel
