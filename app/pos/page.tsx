@@ -61,43 +61,13 @@ interface CustomerSearchResult {
   source: 'manual' | 'dgii'
 }
 
-interface QuaggaResult {
-  codeResult: {
-    code: string
-  }
+// Import ZXing dynamically to avoid SSR issues
+interface ZXingLib {
+  BrowserMultiFormatReader: any
 }
 
-interface QuaggaConfig {
-  inputStream: {
-    name: string
-    type: string
-    target: HTMLDivElement
-    constraints: {
-      width: number
-      height: number
-      facingMode: string
-    }
-  }
-  locator: {
-    patchSize: string
-    halfSample: boolean
-  }
-  numOfWorkers: number
-  decoder: {
-    readers: string[]
-  }
-  locate: boolean
-}
-
-// Import quagga dynamically to avoid SSR issues
-interface QuaggaLib {
-  init: (config: QuaggaConfig, callback: (err: unknown) => void) => void
-  start: () => void
-  stop: () => void
-  onDetected: (callback: (result: QuaggaResult) => void) => void
-}
-
-let Quagga: QuaggaLib | null = null
+let ZXing: ZXingLib | null = null
+let codeReader: any = null
 
 interface CartItem {
   product: Product
@@ -300,43 +270,16 @@ export default function POSPage() {
     if (!scannerRef.current) return
 
     // Dynamic import to avoid SSR issues
-    if (!Quagga) {
-      const { default: QuaggaLib } = await import('quagga')
-      Quagga = QuaggaLib as QuaggaLib
+    if (!ZXing) {
+      const { BrowserMultiFormatReader } = await import('@zxing/browser')
+      ZXing = { BrowserMultiFormatReader }
+      codeReader = new BrowserMultiFormatReader()
     }
 
-    if (Quagga) {
-      Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: scannerRef.current,
-          constraints: {
-            width: 640,
-            height: 480,
-            facingMode: "environment"
-          }
-        },
-        locator: {
-          patchSize: "medium",
-          halfSample: true
-        },
-        numOfWorkers: 2,
-        decoder: {
-          readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"]
-        },
-        locate: true
-      }, (err: unknown) => {
-        if (err) {
-          console.error('Quagga init error:', err)
-          return
-        }
-        Quagga?.start()
-        setScannerActive(true)
-      })
-
-      Quagga.onDetected((result: QuaggaResult) => {
-        const code = result.codeResult.code
+    if (codeReader && scannerRef.current) {
+      try {
+        const result = await codeReader.decodeOnceFromVideoDevice(undefined, scannerRef.current)
+        const code = result.getText()
         if (code) {
           // Find product by barcode
           const product = products.find(p => p.barcode === code)
@@ -347,13 +290,16 @@ export default function POSPage() {
             alert(`Producto con código de barras ${code} no encontrado`)
           }
         }
-      })
+      } catch (err) {
+        console.error('ZXing scan error:', err)
+      }
+      setScannerActive(true)
     }
   }
 
   const stopBarcodeScanner = () => {
-    if (Quagga) {
-      Quagga.stop()
+    if (codeReader) {
+      codeReader.reset()
     }
     setScannerActive(false)
   }
@@ -361,8 +307,8 @@ export default function POSPage() {
   // Cleanup scanner on unmount
   useEffect(() => {
     return () => {
-      if (scannerActive && Quagga) {
-        Quagga.stop()
+      if (scannerActive && codeReader) {
+        codeReader.reset()
       }
     }
   }, [scannerActive])
