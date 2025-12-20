@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 import fs from 'fs'
 import path from 'path'
+import puppeteer from 'puppeteer'
 import { prisma } from '@/lib/prisma'
+import { getNCFExpirationInfo } from '@/lib/ncf'
 
 interface SaleItem {
   id: string
@@ -41,9 +43,302 @@ interface Sale {
   updatedAt: Date
   items: SaleItem[]
   customer: Customer | null
+  cashier: {
+    name: string
+    email: string
+    username: string
+  }
+}
+
+interface BusinessSettings {
+  name: string;
+  rnc: string;
+  address: string;
+  phone: string;
+  email: string;
+}
+
+interface NCFExpirationInfo {
+  expiryDate: Date | null;
+  daysUntilExpiry: number | null;
+  isExpired: boolean;
 }
 
 const CONFIG_FILE = path.join(process.cwd(), 'email-config.json')
+
+function generateA4InvoiceHTML(sale: Sale, ncfExpiration: NCFExpirationInfo | null, businessSettings: BusinessSettings): string {
+  const itemsHTML = sale.items.map((item: SaleItem) => `
+    <tr>
+      <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.product.name}</td>
+      <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
+      <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right;">RD$${item.unitPrice.toFixed(2)}</td>
+      <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right;">RD$${(item.quantity * item.unitPrice).toFixed(2)}</td>
+    </tr>
+  `).join('')
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {
+          font-family: 'Times New Roman', serif;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+          line-height: 1.4;
+        }
+        .header {
+          text-align: center;
+          border-bottom: 3px solid #1f2937;
+          padding-bottom: 10px;
+          margin-bottom: 20px;
+        }
+        .company-name {
+          color: #1f2937;
+          font-size: 28px;
+          font-weight: bold;
+          margin-bottom: 5px;
+        }
+        .company-info {
+          color: #6b7280;
+          font-size: 14px;
+          margin: 2px 0;
+        }
+        .invoice-title {
+          font-size: 32px;
+          font-weight: bold;
+          color: #1f2937;
+          text-align: center;
+          margin: 20px 0;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 20px 0;
+        }
+        th {
+          background: #f3f4f6;
+          padding: 12px;
+          text-align: left;
+          font-weight: bold;
+          border: 1px solid #e5e7eb;
+        }
+        td {
+          padding: 10px;
+          border: 1px solid #e5e7eb;
+        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .totals {
+          text-align: right;
+          margin-top: 20px;
+          max-width: 300px;
+          margin-left: auto;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 40px;
+          padding-top: 20px;
+          border-top: 2px solid #e5e7eb;
+          color: #6b7280;
+          font-size: 12px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="company-name">${businessSettings.name}</div>
+        <div class="company-info">${businessSettings.address}</div>
+        <div class="company-info">RNC: ${businessSettings.rnc}</div>
+        <div class="company-info">Tel: ${businessSettings.phone} | Email: ${businessSettings.email}</div>
+      </div>
+
+      <div class="invoice-title">FACTURA</div>
+
+      <div style="display: flex; justify-content: space-between; margin: 20px 0; padding: 15px; background: #f9fafb; border-radius: 8px;">
+        <div>
+          <h3 style="margin-top: 0;">NÚMERO DE FACTURA</h3>
+          <p style="font-weight: bold; font-size: 18px;">#${sale.saleNumber}</p>
+          ${sale.ncf ? `<p><strong>NCF:</strong> ${sale.ncf}</p>` : ''}
+        </div>
+        <div>
+          <h3 style="margin-top: 0;">FECHA DE EMISIÓN</h3>
+          <p style="font-weight: bold;">${new Date(sale.createdAt).toLocaleDateString('es-DO')}</p>
+          <p>${new Date(sale.createdAt).toLocaleTimeString('es-DO')}</p>
+        </div>
+      </div>
+
+      ${sale.customer ? `
+      <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+        <h3 style="margin-top: 0;">FACTURADO A:</h3>
+        <p style="font-weight: bold; margin: 0;">${sale.customer.name}</p>
+        ${sale.customer.rnc ? `<p style="margin: 0;">RNC: ${sale.customer.rnc}</p>` : ''}
+        ${sale.customer.cedula ? `<p style="margin: 0;">Cédula: ${sale.customer.cedula}</p>` : ''}
+        ${sale.customer.address ? `<p style="margin: 0;">Dirección: ${sale.customer.address}</p>` : ''}
+        ${sale.customer.phone ? `<p style="margin: 0;">Teléfono: ${sale.customer.phone}</p>` : ''}
+      </div>
+      ` : ''}
+
+      <table>
+        <thead>
+          <tr>
+            <th>Descripción del Producto</th>
+            <th class="text-center">Cantidad</th>
+            <th class="text-right">Precio Unitario</th>
+            <th class="text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHTML}
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <div style="display: flex; justify-content: space-between; padding: 5px;">
+          <span>Subtotal:</span>
+          <span>RD$${sale.subtotal.toFixed(2)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 5px;">
+          <span>ITBIS:</span>
+          <span>RD$${sale.tax.toFixed(2)}</span>
+        </div>
+        ${sale.discount > 0 ? `<div style="display: flex; justify-content: space-between; padding: 5px;">
+          <span>Descuento:</span>
+          <span>-RD$${sale.discount.toFixed(2)}</span>
+        </div>` : ''}
+        <div style="border-top: 2px solid #1f2937; padding: 10px; font-size: 18px; font-weight: bold;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>TOTAL:</span>
+            <span>RD$${sale.total.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin: 20px 0;">
+        <p><strong>Método de Pago:</strong> ${sale.paymentMethod === 'CASH' ? 'Efectivo' : sale.paymentMethod === 'CARD' ? 'Tarjeta' : sale.paymentMethod === 'TRANSFER' ? 'Transferencia' : 'Mixto'}</p>
+      </div>
+
+      <div class="footer">
+        <p><strong>¡Gracias por su preferencia!</strong></p>
+        <p>Documento generado electrónicamente por ${businessSettings.name}</p>
+        <p>Sistema de Punto de Venta Autorizado - República Dominicana</p>
+      </div>
+    </body>
+    </html>
+  `
+}
+
+// Generate PDF using Puppeteer
+async function generateInvoicePDF(saleId: string, type: string = 'invoice'): Promise<Buffer> {
+  // Get sale data directly from database
+  const sale = await prisma.sale.findUnique({
+    where: { id: saleId },
+    include: {
+      items: {
+        include: {
+          product: true
+        }
+      },
+      customer: true,
+      cashier: true
+    }
+  })
+
+  if (!sale) {
+    throw new Error('Sale not found')
+  }
+
+  // Get business settings
+  const businessSettings = await prisma.setting.findMany({
+    where: {
+      key: {
+        in: ['business_name', 'business_rnc', 'business_address', 'business_phone', 'business_email']
+      }
+    }
+  })
+
+  // Transform to object format
+  const businessData = {
+    name: 'GNTech Demo',
+    rnc: '000-00000-0',
+    address: 'Santo Domingo, República Dominicana',
+    phone: '809-555-5555',
+    email: 'info@gntech.com'
+  }
+
+  // Override with database values
+  businessSettings.forEach(setting => {
+    switch (setting.key) {
+      case 'business_name':
+        businessData.name = setting.value
+        break
+      case 'business_rnc':
+        businessData.rnc = setting.value
+        break
+      case 'business_address':
+        businessData.address = setting.value
+        break
+      case 'business_phone':
+        businessData.phone = setting.value
+        break
+      case 'business_email':
+        businessData.email = setting.value
+        break
+    }
+  })
+
+  // Get NCF expiration info
+  let ncfExpiration = null
+  if (sale.ncf) {
+    try {
+      ncfExpiration = await getNCFExpirationInfo(sale.ncf)
+    } catch (error) {
+      console.error('Error fetching NCF expiration:', error)
+      ncfExpiration = null
+    }
+  }
+
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  })
+
+  try {
+    const page = await browser.newPage()
+
+    // Set viewport for A4
+    await page.setViewport({ width: 794, height: 1123 }) // A4 dimensions in pixels
+
+    // Generate HTML content directly
+    const htmlContent = type === 'thermal'
+      ? generateThermalReceiptHTML(sale, ncfExpiration, businessData)
+      : generateA4InvoiceHTML(sale, ncfExpiration, businessData)
+
+    // Set the HTML content
+    await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' })
+
+    // Wait a bit for any dynamic content
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // Generate PDF
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '0.5cm',
+        right: '0.5cm',
+        bottom: '0.5cm',
+        left: '0.5cm'
+      }
+    })
+
+    return Buffer.from(pdfBuffer)
+  } finally {
+    await browser.close()
+  }
+}
 
 // Load email configuration from file
 function loadEmailConfig() {
@@ -71,7 +366,7 @@ function loadEmailConfig() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { saleId, email, pdfData } = await req.json()
+    const { saleId, email, type = 'invoice' } = await req.json()
 
     if (!saleId || !email) {
       return NextResponse.json(
@@ -79,9 +374,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-
-    // Only allow invoice type for email
-    const type = 'invoice'
 
     // Get sale details
     const sale = await prisma.sale.findUnique({
@@ -123,6 +415,13 @@ export async function POST(req: NextRequest) {
             cedula: true,
             address: true,
             phone: true
+          }
+        },
+        cashier: {
+          select: {
+            name: true,
+            email: true,
+            username: true
           }
         }
       }
@@ -211,33 +510,25 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate email HTML (for invoice only)
-    const emailHTML = generateInvoiceHTML(sale, type)
+    const emailHTML = generateInvoiceHTML(sale, type, businessData)
 
-    // Prepare PDF attachment from client-generated data
+    // Generate PDF attachment server-side
     const attachments = []
-    if (pdfData) {
-      console.log('PDF data received, length:', pdfData.length)
-      console.log('PDF data preview:', pdfData.substring(0, 100))
-      
-      // Remove data:pdf/application;base64, prefix if present
-      const base64Data = pdfData.replace(/^data:application\/pdf;base64,/, '')
-      console.log('Base64 data length after prefix removal:', base64Data.length)
-      
-      try {
-        const pdfBuffer = Buffer.from(base64Data, 'base64')
-        console.log('PDF buffer created, length:', pdfBuffer.length)
-        
-        attachments.push({
-          filename: `Factura_${sale.saleNumber}.pdf`,
-          content: pdfBuffer,
-          contentType: 'application/pdf'
-        })
-        console.log('PDF attachment added successfully')
-      } catch (bufferError) {
-        console.error('Error creating PDF buffer:', bufferError)
-      }
-    } else {
-      console.log('No PDF data received')
+    try {
+      console.log('Generating PDF server-side for sale:', sale.id)
+      const pdfBuffer = await generateInvoicePDF(sale.id, type)
+      console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes')
+
+      attachments.push({
+        filename: `Factura_${sale.saleNumber}.pdf`,
+        content: pdfBuffer,
+        contentType: 'application/pdf'
+      })
+      console.log('PDF attachment added successfully')
+    } catch (pdfError) {
+      console.error('Error generating PDF:', pdfError)
+      // Continue without PDF attachment if generation fails
+      console.log('Continuing without PDF attachment')
     }
 
     // Send email with enhanced options
@@ -267,8 +558,104 @@ export async function POST(req: NextRequest) {
   }
 }
 
+function generateThermalReceiptHTML(sale: Sale, ncfExpiration: NCFExpirationInfo | null, businessSettings: BusinessSettings): string {
+  const ncfInfo = ncfExpiration || { expiryDate: null, daysUntilExpiry: null, isExpired: false }
 
-function generateInvoiceHTML(sale: Sale, type: string): string {
+  const itemsHTML = sale.items.map((item: SaleItem) => `
+    <div style="display: flex; justify-content: space-between; margin: 4px 0; font-size: 12px;">
+      <span>${item.product.name}</span>
+      <span>${item.quantity}x RD$${item.unitPrice.toFixed(2)}</span>
+    </div>
+    <div style="text-align: right; font-size: 12px; margin-bottom: 8px;">
+      RD$${(item.quantity * item.unitPrice).toFixed(2)}
+    </div>
+  `).join('')
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {
+          font-family: 'Courier New', monospace;
+          max-width: 80mm;
+          margin: 0 auto;
+          padding: 10px;
+          font-size: 12px;
+          line-height: 1.2;
+          background: white;
+          color: black;
+        }
+        .center { text-align: center; }
+        .bold { font-weight: bold; }
+        .line { border-top: 1px dashed #000; margin: 10px 0; }
+        .double-line { border-top: 2px solid #000; margin: 10px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="center">
+        <h1 style="font-size: 16px; margin: 5px 0;">${businessSettings.name}</h1>
+        <p style="margin: 2px 0;">${businessSettings.address}</p>
+        <p style="margin: 2px 0;">RNC: ${businessSettings.rnc}</p>
+      </div>
+
+      <div class="line"></div>
+
+      <div class="center">
+        <p class="bold">RECIBO #${sale.saleNumber}</p>
+        <p>${new Date(sale.createdAt).toLocaleString('es-DO')}</p>
+        ${sale.cashier ? `<p>Cajero: ${sale.cashier.name}</p>` : ''}
+      </div>
+
+      <div class="line"></div>
+
+      ${itemsHTML}
+
+      <div class="line"></div>
+
+      <div style="display: flex; justify-content: space-between;">
+        <span>Subtotal:</span>
+        <span>RD$${sale.subtotal.toFixed(2)}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>ITBIS:</span>
+        <span>RD$${sale.tax.toFixed(2)}</span>
+      </div>
+      ${sale.discount > 0 ? `<div style="display: flex; justify-content: space-between;">
+        <span>Descuento:</span>
+        <span>-RD$${sale.discount.toFixed(2)}</span>
+      </div>` : ''}
+      <div class="double-line"></div>
+      <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px;">
+        <span>TOTAL:</span>
+        <span>RD$${sale.total.toFixed(2)}</span>
+      </div>
+
+      <div class="line"></div>
+
+      <div class="center">
+        <p>Pago: ${sale.paymentMethod === 'CASH' ? 'Efectivo' : sale.paymentMethod === 'CARD' ? 'Tarjeta' : sale.paymentMethod === 'TRANSFER' ? 'Transferencia' : 'Mixto'}</p>
+      </div>
+
+      ${sale.ncf ? `
+      <div class="center" style="margin: 10px 0;">
+        <p class="bold">NCF</p>
+        <p style="font-family: monospace;">${sale.ncf}</p>
+        ${ncfInfo.expiryDate ? `<p style="font-size: 10px;">Vence: ${new Date(ncfInfo.expiryDate).toLocaleDateString('es-DO')}</p>` : ''}
+      </div>
+      ` : ''}
+
+      <div class="center" style="margin-top: 15px;">
+        <p class="bold">¡Gracias por su compra!</p>
+        <p style="font-size: 10px;">${businessSettings.email || 'info@gntech.com'}</p>
+      </div>
+    </body>
+    </html>
+  `
+}
+
+function generateInvoiceHTML(sale: Sale, type: string, businessSettings?: BusinessSettings): string {
   const isInvoice = type === 'invoice'
 
   if (isInvoice) {
@@ -366,8 +753,12 @@ function generateInvoiceHTML(sale: Sale, type: string): string {
             padding: 10px;
             border: 1px solid #e5e7eb;
           }
-          .text-right { text-align: right; }
-          .text-center { text-align: center; }
+          .text-right { 
+            text-align: right; 
+          }
+          .text-center { 
+            text-align: center; 
+          }
           .totals {
             text-align: right;
             margin-top: 20px;
@@ -415,55 +806,51 @@ function generateInvoiceHTML(sale: Sale, type: string): string {
       <body>
         <div class="invoice-container">
           <div class="header">
-          <div class="company-name">🏪 GNTECH POS</div>
-          <div class="company-info">Sistema de Punto de Venta Profesional</div>
-          <div class="company-info">RNC: 000-00000-0</div>
-          <div class="company-info">Santo Domingo, República Dominicana</div>
-          <div class="company-info">Tel: 809-555-5555 | Email: info@gntech.com</div>
-        </div>
-
-        <div class="invoice-title">FACTURA</div>
-
-        <div class="invoice-details">
-          <div class="detail-section">
-            <h3>Número de Factura</h3>
-            <p><strong>${sale.saleNumber}</strong></p>
-            ${sale.ncf ? `<p><strong>NCF:</strong> ${sale.ncf}</p>` : ''}
+            <div class="company-name">${businessSettings?.name || 'GNTech POS'}</div>
+            <div class="company-info">${businessSettings?.address || 'Sistema de Punto de Venta Profesional'}</div>
+            <div class="company-info">RNC: ${businessSettings?.rnc || '000-00000-0'}</div>
+            <div class="company-info">${businessSettings?.address || 'Santo Domingo, República Dominicana'}</div>
+            <div class="company-info">Tel: ${businessSettings?.phone || '809-555-5555'} | Email: ${businessSettings?.email || 'info@gntech.com'}</div>
           </div>
-          <div class="detail-section">
-            <h3>Fecha de Emisión</h3>
-            <p><strong>${new Date(sale.createdAt).toLocaleDateString('es-DO', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}</strong></p>
-            <p>${new Date(sale.createdAt).toLocaleTimeString('es-DO')}</p>
-          </div>
-        </div>
 
-        ${sale.customer ? `
+          <div class="invoice-title">FACTURA</div>
+
+          <div class="invoice-details">
+            <div class="detail-section">
+              <h3>Número de Factura</h3>
+              <p><strong>${sale.saleNumber}</strong></p>
+              ${sale.ncf ? `<p><strong>NCF:</strong> ${sale.ncf}</p>` : ''}
+            </div>
+            <div class="detail-section">
+              <h3>Fecha de Emisión</h3>
+              <p><strong>${new Date(sale.createdAt).toLocaleDateString('es-DO')}</strong></p>
+              <p>${new Date(sale.createdAt).toLocaleTimeString('es-DO')}</p>
+            </div>
+          </div>
+
+          ${sale.customer ? `
           <div class="customer-info">
-            <h3>FACTURADO A:</h3>
-            <p><strong>${sale.customer.name}</strong></p>
-            ${sale.customer.rnc ? `<p><strong>RNC:</strong> ${sale.customer.rnc}</p>` : ''}
-            ${sale.customer.cedula ? `<p><strong>Cédula:</strong> ${sale.customer.cedula}</p>` : ''}
-            ${sale.customer.address ? `<p><strong>Dirección:</strong> ${sale.customer.address}</p>` : ''}
-            ${sale.customer.phone ? `<p><strong>Teléfono:</strong> ${sale.customer.phone}</p>` : ''}
+            <h3 style="margin-top: 0;">FACTURADO A:</h3>
+            <p style="font-weight: bold; margin: 0;">${sale.customer.name}</p>
+            ${sale.customer.rnc ? `<p style="margin: 0;">RNC: ${sale.customer.rnc}</p>` : ''}
+            ${sale.customer.cedula ? `<p style="margin: 0;">Cédula: ${sale.customer.cedula}</p>` : ''}
+            ${sale.customer.address ? `<p style="margin: 0;">Dirección: ${sale.customer.address}</p>` : ''}
+            ${sale.customer.phone ? `<p style="margin: 0;">Teléfono: ${sale.customer.phone}</p>` : ''}
           </div>
-        ` : ''}
+          ` : ''}
 
-        <table>
-          <thead>
-            <tr>
-              <th>Descripción del Producto</th>
-              <th class="text-center">Cantidad</th>
-              <th class="text-right">Precio Unitario</th>
-              <th class="text-right">Descuento</th>
-              <th class="text-right">Valor Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${(sale.items || []).map((item: SaleItem) => `
+          <table>
+            <thead>
+              <tr>
+                <th>Descripción del Producto</th>
+                <th class="text-center">Cantidad</th>
+                <th class="text-right">Precio Unitario</th>
+                <th class="text-right">Descuento</th>
+                <th class="text-right">Valor Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sale.items.map((item) => `
               <tr>
                 <td>
                   <strong>${item.product.name}</strong><br>
@@ -471,155 +858,55 @@ function generateInvoiceHTML(sale: Sale, type: string): string {
                 </td>
                 <td class="text-center">${item.quantity}</td>
                 <td class="text-right">RD$ ${item.unitPrice.toFixed(2)}</td>
-                <td class="text-right">${item.discount > 0 ? `RD$ ${item.discount.toFixed(2)}` : '-'}</td>
+                <td class="text-right">${item.discount > 0 ? `-RD$ ${item.discount.toFixed(2)}` : '-'}</td>
                 <td class="text-right"><strong>RD$ ${(item.unitPrice * item.quantity - item.discount).toFixed(2)}</strong></td>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
-
-        <div class="totals">
-          <table>
-            <tr>
-              <td>Subtotal:</td>
-              <td class="text-right">RD$ ${sale.subtotal.toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td>ITBIS (18%):</td>
-              <td class="text-right">RD$ ${sale.tax.toFixed(2)}</td>
-            </tr>
-            ${sale.discount > 0 ? `
-              <tr style="color: #dc2626;">
-                <td>Descuento Aplicado:</td>
-                <td class="text-right">-RD$ ${sale.discount.toFixed(2)}</td>
-              </tr>
-            ` : ''}
-            <tr class="total-row">
-              <td><strong>TOTAL A PAGAR:</strong></td>
-              <td class="text-right"><strong>RD$ ${sale.total.toFixed(2)}</strong></td>
-            </tr>
+              `).join('')}
+            </tbody>
           </table>
-        </div>
 
-        <div class="payment-info">
-          <p><strong>Método de Pago:</strong> ${
-            sale.paymentMethod === 'CASH' ? 'Efectivo' :
-            sale.paymentMethod === 'CARD' ? 'Tarjeta de Crédito/Débito' :
-            sale.paymentMethod === 'TRANSFER' ? 'Transferencia Bancaria' : 'Pago Mixto'
-          }</p>
-        </div>
+          <div class="totals">
+            <table>
+              <tr>
+                <td>Subtotal:</td>
+                <td class="text-right">RD$ ${sale.subtotal.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td>ITBIS (18%):</td>
+                <td class="text-right">RD$ ${sale.tax.toFixed(2)}</td>
+              </tr>
+              ${sale.discount > 0 ? `
+              <tr>
+                <td>Descuento:</td>
+                <td class="text-right" style="color: #dc2626;">-RD$ ${sale.discount.toFixed(2)}</td>
+              </tr>
+              ` : ''}
+              <tr class="total-row">
+                <td><strong>TOTAL A PAGAR:</strong></td>
+                <td class="text-right"><strong>RD$ ${sale.total.toFixed(2)}</strong></td>
+              </tr>
+            </table>
+          </div>
 
-        <div class="terms">
-          <p><strong>Términos y Condiciones:</strong></p>
-          <p>Esta factura es un documento oficial generado electrónicamente. Los bienes y servicios facturados han sido entregados conforme a lo acordado. Para cualquier reclamación, contactar dentro de los 30 días siguientes a la emisión.</p>
-        </div>
+          <div class="payment-info">
+            <p><strong>Método de Pago:</strong> ${sale.paymentMethod === 'CASH' ? 'Efectivo' : sale.paymentMethod === 'CARD' ? 'Tarjeta' : sale.paymentMethod === 'TRANSFER' ? 'Transferencia' : 'Mixto'}</p>
+          </div>
 
-        <div class="footer">
-          <p><strong>¡Gracias por su preferencia!</strong></p>
-          <p>Documento generado electrónicamente por GNTech POS</p>
-          <p>Sistema de Punto de Venta Autorizado - República Dominicana</p>
+          <div class="terms">
+            <p><strong>Términos y Condiciones:</strong></p>
+            <p>Esta factura es un documento oficial generado electrónicamente. Los bienes y servicios facturados han sido entregados conforme a lo acordado. Para cualquier reclamación, contactar dentro de los 30 días siguientes a la emisión.</p>
+          </div>
+
+          <div class="footer">
+            <p><strong>¡Gracias por su preferencia!</strong></p>
+            <p>Documento generado electrónicamente por GNTech POS</p>
+            <p>Sistema de Punto de Venta Autorizado - República Dominicana</p>
           </div>
         </div>
       </body>
       </html>
     `
   } else {
-    // Simple Receipt Format (Thermal Printer Style)
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <style>
-          body {
-            font-family: 'Courier New', monospace;
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 10px;
-            font-size: 12px;
-            line-height: 1.2;
-          }
-          .center { text-align: center; }
-          .bold { font-weight: bold; }
-          .line { border-top: 1px dashed #000; margin: 10px 0; }
-          .double-line { border-top: 2px solid #000; margin: 10px 0; }
-          table { width: 100%; border-collapse: collapse; }
-          th, td { padding: 2px; text-align: left; }
-          .right { text-align: right; }
-          .total { font-size: 14px; font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        <div class="center bold">
-          🏪 GNTECH POS<br>
-          Sistema de Punto de Venta<br>
-          RNC: 000-00000-0<br>
-          Santo Domingo, RD<br>
-          Tel: 809-555-5555
-        </div>
-
-        <div class="line"></div>
-
-        <div class="center bold">
-          RECIBO DE VENTA<br>
-          #${sale.saleNumber}
-        </div>
-
-        <div class="center">
-          ${new Date(sale.createdAt).toLocaleString('es-DO')}
-        </div>
-
-        ${sale.ncf ? `<div class="center">NCF: ${sale.ncf}</div>` : ''}
-
-        <div class="line"></div>
-
-        ${sale.customer ? `
-          <div>
-            <strong>Cliente:</strong> ${sale.customer.name}<br>
-            ${sale.customer.rnc ? `RNC: ${sale.customer.rnc}<br>` : ''}
-          </div>
-          <div class="line"></div>
-        ` : ''}
-
-        ${(sale.items || []).map((item: SaleItem) => `
-          <div>
-            ${item.product.name}<br>
-            ${item.quantity} x RD$ ${item.unitPrice.toFixed(2)}
-            ${item.discount > 0 ? ` -RD$ ${item.discount.toFixed(2)}` : ''}
-            <span class="right bold">RD$ ${(item.unitPrice * item.quantity - item.discount).toFixed(2)}</span>
-          </div>
-        `).join('')}
-
-        <div class="line"></div>
-
-        <div>
-          Subtotal: <span class="right">RD$ ${sale.subtotal.toFixed(2)}</span><br>
-          ITBIS (18%): <span class="right">RD$ ${sale.tax.toFixed(2)}</span><br>
-          ${sale.discount > 0 ? `Descuento: <span class="right">-RD$ ${sale.discount.toFixed(2)}</span><br>` : ''}
-          <div class="total">
-            TOTAL: <span class="right">RD$ ${sale.total.toFixed(2)}</span>
-          </div>
-        </div>
-
-        <div class="line"></div>
-
-        <div>
-          <strong>Pago:</strong> ${
-            sale.paymentMethod === 'CASH' ? 'Efectivo' :
-            sale.paymentMethod === 'CARD' ? 'Tarjeta' :
-            sale.paymentMethod === 'TRANSFER' ? 'Transferencia' : 'Mixto'
-          }
-        </div>
-
-        <div class="double-line"></div>
-
-        <div class="center">
-          <strong>¡Gracias por su compra!</strong><br>
-          GNTech POS<br>
-          Documento electrónico
-        </div>
-      </body>
-      </html>
-    `
+    return ''
   }
 }

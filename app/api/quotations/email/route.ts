@@ -4,6 +4,14 @@ import fs from 'fs'
 import path from 'path'
 import { prisma } from '@/lib/prisma'
 
+interface BusinessSettings {
+  name: string;
+  rnc: string;
+  address: string;
+  phone: string;
+  email: string;
+}
+
 const CONFIG_FILE = path.join(process.cwd(), 'email-config.json')
 
 // Load email configuration from file
@@ -62,6 +70,45 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Fetch business settings
+    const businessSettings = await prisma.setting.findMany({
+      where: {
+        key: {
+          in: ['business_name', 'business_rnc', 'business_address', 'business_phone', 'business_email']
+        }
+      }
+    })
+
+    // Transform to object format
+    const businessData = {
+      name: 'GNTech Demo',
+      rnc: '000-00000-0',
+      address: 'Santo Domingo, República Dominicana',
+      phone: '809-555-5555',
+      email: 'info@gntech.com'
+    }
+
+    // Override with database values
+    businessSettings.forEach(setting => {
+      switch (setting.key) {
+        case 'business_name':
+          businessData.name = setting.value
+          break
+        case 'business_rnc':
+          businessData.rnc = setting.value
+          break
+        case 'business_address':
+          businessData.address = setting.value
+          break
+        case 'business_phone':
+          businessData.phone = setting.value
+          break
+        case 'business_email':
+          businessData.email = setting.value
+          break
+      }
+    })
+
     // Load current email configuration
     const emailConfig = loadEmailConfig()
 
@@ -99,7 +146,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate email HTML
-    const emailHTML = generateQuotationHTML(quotation)
+    const emailHTML = generateQuotationHTML(quotation, businessData)
 
     // PDF generation temporarily disabled due to font loading issues in Next.js environment
     // TODO: Implement PDF generation with a more compatible solution
@@ -170,7 +217,7 @@ interface Quotation {
   items: QuotationItem[]
 }
 
-function generateQuotationHTML(quotation: Quotation): string {
+function generateQuotationHTML(quotation: Quotation, businessSettings?: BusinessSettings): string {
   return `
     <!DOCTYPE html>
     <html>
@@ -299,11 +346,11 @@ function generateQuotationHTML(quotation: Quotation): string {
     </head>
     <body>
       <div class="header">
-        <div class="company-name">🏪 GNTECH POS</div>
-        <div class="company-info">Sistema de Punto de Venta Profesional</div>
-        <div class="company-info">RNC: 000-00000-0</div>
-        <div class="company-info">Santo Domingo, República Dominicana</div>
-        <div class="company-info">Tel: 809-555-5555 | Email: info@gntech.com</div>
+        <div class="company-name">${businessSettings?.name || 'GNTECH POS'}</div>
+        <div class="company-info">${businessSettings?.address || 'Sistema de Punto de Venta Profesional'}</div>
+        <div class="company-info">RNC: ${businessSettings?.rnc || '000-00000-0'}</div>
+        <div class="company-info">${businessSettings?.address || 'Santo Domingo, República Dominicana'}</div>
+        <div class="company-info">Tel: ${businessSettings?.phone || '809-555-5555'} | Email: ${businessSettings?.email || 'info@gntech.com'}</div>
       </div>
 
       <div class="quotation-title">COTIZACIÓN</div>
