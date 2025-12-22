@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
+import LogoSelector from '../../components/LogoSelector'
 
 interface User {
   id: string
@@ -251,7 +253,8 @@ export default function SettingsPage() {
     rnc: '000-00000-0',
     address: 'Santo Domingo, República Dominicana',
     phone: '809-555-5555',
-    email: 'info@gntech.com'
+    email: 'info@gntech.com',
+    logo: ''
   })
 
   const [ncfData, setNcfData] = useState({
@@ -567,6 +570,33 @@ export default function SettingsPage() {
     }
   }
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setBusinessData({ ...businessData, logo: result.filePath })
+        alert('✅ Logo subido exitosamente')
+      } else {
+        const error = await response.json()
+        alert(`Error al subir el logo: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error uploading logo:', error)
+      alert('Error al subir el logo')
+    }
+  }
+
   const handleSaveBusiness = async () => {
     try {
       const response = await fetch('/api/settings/business', {
@@ -735,6 +765,40 @@ export default function SettingsPage() {
                       className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                       placeholder="info@empresa.com"
                     />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Logo de la Empresa
+                    </label>
+
+                    {/* Logo Selector Component */}
+                    <div className="mb-6">
+                      <LogoSelector
+                        onLogoSelect={(logoPath) => setBusinessData({ ...businessData, logo: logoPath })}
+                        currentLogo={businessData.logo}
+                      />
+                    </div>
+
+                    {/* Custom Logo Upload */}
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">
+                        O sube tu propio logo personalizado:
+                      </h4>
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleLogoUpload}
+                            className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Formatos permitidos: JPG, PNG, GIF, WebP. Tamaño máximo: 5MB
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="md:col-span-2">

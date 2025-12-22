@@ -48,11 +48,11 @@ export default function QuotationA4({ quotation, businessSettings }: QuotationA4
       {/* Header */}
       <div className="flex justify-between items-start mb-8 pb-6 border-b-4 border-indigo-600">
         <div>
-          <h1 className="text-4xl font-bold text-indigo-600">🏪 GNTech</h1>
-          <p className="text-sm mt-2">Sistema de Punto de Venta</p>
-          <p className="text-sm">RNC: 000-00000-0</p>
-          <p className="text-sm">Santo Domingo, República Dominicana</p>
-          <p className="text-sm">Tel: 809-555-5555</p>
+          <h1 className="text-4xl font-bold text-indigo-600">{businessSettings?.name || 'GNTech POS'}</h1>
+          <p className="text-sm mt-2">{businessSettings?.address || 'Santo Domingo, República Dominicana'}</p>
+          <p className="text-sm">RNC: {businessSettings?.rnc || '000-00000-0'}</p>
+          <p className="text-sm">Tel: {businessSettings?.phone || '809-555-5555'}</p>
+          {businessSettings?.email && <p className="text-sm">Email: {businessSettings.email}</p>}
         </div>
         <div className="text-right">
           <h2 className="text-3xl font-bold text-gray-800">COTIZACIÓN</h2>

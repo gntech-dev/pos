@@ -33,11 +33,18 @@ interface Customer {
   email?: string | null
 }
 
+interface User {
+  id: string
+  name: string
+  username: string
+}
+
 interface Sale {
   id: string
   saleNumber: string
   createdAt: Date | string
   customer?: Customer | null
+  cashier?: User | null
   items: SaleItem[]
   subtotal: number
   tax: number
@@ -59,6 +66,7 @@ interface BusinessSettings {
   address: string
   phone: string
   email: string
+  logo?: string | null
 }
 
 interface PrintDocumentProps {
@@ -70,16 +78,22 @@ interface PrintDocumentProps {
 
 export default function PrintDocument({ sale, type, ncfExpiration, businessSettings }: PrintDocumentProps) {
   useEffect(() => {
-    // Auto-print when component mounts
-    const timer = setTimeout(() => {
-      window.print()
-      // Close window after printing
-      setTimeout(() => {
-        window.close()
-      }, 1000)
-    }, 500)
+    // Check if this is for PDF generation (skip auto-print)
+    const urlParams = new URLSearchParams(window.location.search)
+    const isForPDF = urlParams.get('pdf') === 'true'
 
-    return () => clearTimeout(timer)
+    if (!isForPDF) {
+      // Auto-print when component mounts
+      const timer = setTimeout(() => {
+        window.print()
+        // Close window after printing
+        setTimeout(() => {
+          window.close()
+        }, 1000)
+      }, 500)
+
+      return () => clearTimeout(timer)
+    }
   }, [])
 
   return (

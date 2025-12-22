@@ -1,5 +1,7 @@
 // Removed unused imports: useState, useEffect
 
+import Image from 'next/image'
+
 interface SaleItem {
   product: {
     name: string
@@ -17,6 +19,10 @@ interface Sale {
     name: string
     rnc?: string | null
     cedula?: string | null
+  } | null
+  cashier?: {
+    name: string
+    username: string
   } | null
   items: SaleItem[]
   subtotal: number
@@ -43,6 +49,7 @@ interface BusinessSettings {
   address: string
   phone: string
   email: string
+  logo?: string | null
 }
 
 interface ThermalReceiptProps {
@@ -63,7 +70,19 @@ export default function ThermalReceipt({ sale, ncfExpiration, businessSettings }
     <div className="thermal-receipt bg-white p-4 max-w-[80mm] mx-auto text-black">
       {/* Header */}
       <div className="text-center mb-3 border-b-2 border-dashed border-gray-400 pb-3">
-        <h1 className="text-lg font-bold">🏪 GNTech POS</h1>
+        <div className="flex justify-center items-center gap-2 mb-2">
+          {businessSettings?.logo && (
+            <Image
+              src={businessSettings.logo}
+              alt="Logo"
+              width={32}
+              height={32}
+              className="w-8 h-8 object-contain"
+              unoptimized
+            />
+          )}
+          <h1 className="text-lg font-bold">{businessSettings?.name || 'GNTech POS'}</h1>
+        </div>
         <p className="text-xs mt-1">Sistema de Punto de Venta</p>
         <p className="text-xs">República Dominicana 🇩🇴</p>
       </div>
@@ -72,6 +91,9 @@ export default function ThermalReceipt({ sale, ncfExpiration, businessSettings }
       <div className="text-center mb-3 pb-3 border-b border-dashed border-gray-300">
         <p className="font-bold text-sm">RECIBO #{sale.saleNumber}</p>
         <p className="text-xs">{new Date(sale.createdAt).toLocaleString('es-DO')}</p>
+        {sale.cashier && (
+          <p className="text-xs">Cajero: {sale.cashier.name}</p>
+        )}
         {sale.ncf && (
           <div className="text-xs font-mono mt-1 bg-gray-100 px-2 py-1 inline-block">
             <p>NCF: {sale.ncf}</p>

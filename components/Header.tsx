@@ -2,8 +2,9 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
-export default function Header({ name }: { name?: string }) {
+export default function Header({ name, businessSettings }: { name?: string, businessSettings?: { name: string, logo?: string | null } | null }) {
   const router = useRouter()
 
   async function handleLogout() {
@@ -15,7 +16,19 @@ export default function Header({ name }: { name?: string }) {
     <header className="bg-gradient-to-r from-white to-indigo-50 border-b-2 border-indigo-100 px-6 py-4 flex items-center justify-between shadow-md">
       <div className="flex items-center gap-6">
         <div className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2">
-          🏪 GNTech POS
+          {businessSettings?.logo ? (
+            <Image
+              src={businessSettings.logo}
+              alt="Logo"
+              width={32}
+              height={32}
+              className="w-8 h-8 object-contain"
+              unoptimized
+            />
+          ) : (
+            <span>🏪</span>
+          )}
+          {businessSettings?.name || 'GNTech POS'}
         </div>
         <div className="hidden sm:block relative">
           <input

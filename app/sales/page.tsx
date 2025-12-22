@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 
 interface Sale {
   id: string
@@ -87,20 +85,14 @@ export default function SalesPage() {
     if (!email) return
 
     try {
-      // Generate PDF using jsPDF
-      console.log('Generando PDF para venta:', sale.id)
-      const pdfData = await generateInvoicePDF(sale)
-      console.log('PDF generado, longitud:', pdfData.length)
-      console.log('PDF data preview:', pdfData.substring(0, 100))
-
       const response = await fetch('/api/sales/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ saleId: sale.id, email, type, pdfData })
+        body: JSON.stringify({ saleId: sale.id, email, type })
       })
 
       if (response.ok) {
-        alert('✅ Email enviado exitosamente')
+        alert('✅ Email enviado exitosamente con PDF adjunto')
       } else {
         const error = await response.json()
         alert(`Error: ${error.error}`)
@@ -118,192 +110,7 @@ export default function SalesPage() {
     }).format(amount)
   }
 
-  const generateInvoicePDF = async (sale: Sale): Promise<string> => {
-    // Get business settings
-    const businessResponse = await fetch('/api/settings/business')
-    const businessSettings = await businessResponse.json()
 
-    // Get NCF expiration info if NCF exists
-    let ncfExpiration = null
-    if (sale.ncf) {
-      try {
-        const ncfResponse = await fetch(`/api/ncf/expiration/${sale.ncf}`)
-        if (ncfResponse.ok) {
-          ncfExpiration = await ncfResponse.json()
-        }
-      } catch (error) {
-        console.error('Error fetching NCF expiration:', error)
-      }
-    }
-
-    // Determine payment method text
-    const paymentMethodText = sale.paymentMethod === 'CASH' ? 'Efectivo' :
-      sale.paymentMethod === 'CARD' ? 'Tarjeta' :
-      sale.paymentMethod === 'TRANSFER' ? 'Transferencia' : 'Mixto'
-
-    // Create a temporary container for the invoice component
-    const tempContainer = document.createElement('div')
-    tempContainer.style.position = 'absolute'
-    tempContainer.style.left = '-9999px'
-    tempContainer.style.top = '-9999px'
-    tempContainer.style.width = '210mm'
-    tempContainer.style.backgroundColor = 'white'
-    document.body.appendChild(tempContainer)
-
-    // Create the invoice component
-    const invoiceElement = document.createElement('div')
-    invoiceElement.innerHTML = `
-      <div style="width: 210mm; font-family: Arial, sans-serif; background-color: white; color: black; padding: 3rem; margin: 0 auto; max-width: 210mm;">
-        <!-- Header -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 4px solid #4f46e5;">
-          <div>
-            <h1 style="font-size: 2.25rem; font-weight: bold; color: #4f46e5; margin: 0;">🏪 ${businessSettings.name || 'GNTech'}</h1>
-            <p style="font-size: 0.875rem; margin-top: 0.5rem; margin-bottom: 0;">Sistema de Punto de Venta</p>
-            <p style="font-size: 0.875rem; margin: 0;">RNC: ${businessSettings.rnc || '000-00000-0'}</p>
-            <p style="font-size: 0.875rem; margin: 0;">${businessSettings.address || 'Santo Domingo, República Dominicana'}</p>
-            <p style="font-size: 0.875rem; margin: 0;">Tel: ${businessSettings.phone || '809-555-5555'}</p>
-          </div>
-          <div style="text-align: right;">
-            <h2 style="font-size: 1.875rem; font-weight: bold; color: #1f2937; margin: 0;">FACTURA</h2>
-            <p style="font-size: 0.875rem; margin-top: 0.5rem; margin-bottom: 0;">#${sale.saleNumber}</p>
-            <p style="font-size: 0.875rem; margin: 0;">${formatDate(sale.createdAt)}</p>
-            ${sale.ncf ? `
-            <div style="margin-top: 0.75rem; background-color: #f3f4f6; padding: 0.5rem 1rem; border-radius: 0.375rem;">
-              <p style="font-size: 0.75rem; font-weight: bold; margin: 0;">NCF</p>
-              <p style="font-size: 0.875rem; font-family: monospace; margin: 0;">${sale.ncf}</p>
-              ${ncfExpiration?.expiryDate ? `
-              <div style="margin-top: 0.5rem;">
-                <p style="font-size: 0.75rem; color: #4b5563; margin: 0;">Fecha de Vencimiento:</p>
-                <p style="font-size: 0.875rem; font-weight: 600; color: ${ncfExpiration.daysUntilExpiry !== null && ncfExpiration.daysUntilExpiry < 30 ? '#dc2626' : '#1f2937'}; margin: 0;">
-                  ${new Date(ncfExpiration.expiryDate).toLocaleDateString('es-DO')}
-                </p>
-              </div>
-              ` : ''}
-            </div>
-            ` : ''}
-          </div>
-        </div>
-
-        <!-- Customer Info -->
-        ${sale.customer ? `
-        <div style="margin-bottom: 2rem; background-color: #f9fafb; padding: 1rem; border-radius: 0.5rem;">
-          <h3 style="font-weight: bold; font-size: 0.875rem; margin-bottom: 0.5rem; margin-top: 0;">FACTURADO A:</h3>
-          <p style="font-size: 0.875rem; font-weight: bold; margin: 0;">${sale.customer.name}</p>
-          ${sale.customer.rnc ? `<p style="font-size: 0.875rem; margin: 0;">RNC: ${sale.customer.rnc}</p>` : ''}
-          ${sale.customer.cedula ? `<p style="font-size: 0.875rem; margin: 0;">C&eacute;dula: ${sale.customer.cedula}</p>` : ''}
-          ${sale.customer.address ? `<p style="font-size: 0.875rem; margin: 0;">Direcci&oacute;n: ${sale.customer.address}</p>` : ''}
-          ${sale.customer.phone ? `<p style="font-size: 0.875rem; margin: 0;">Tel&eacute;fono: ${sale.customer.phone}</p>` : ''}
-        </div>
-        ` : ''}
-
-        <!-- Items Table -->
-        <table style="width: 100%; margin-bottom: 2rem; border-collapse: collapse;">
-          <thead>
-            <tr style="background-color: #4f46e5; color: white;">
-              <th style="text-align: left; padding: 0.75rem; font-size: 0.875rem;">Producto</th>
-              <th style="text-align: center; padding: 0.75rem; font-size: 0.875rem;">Cant.</th>
-              <th style="text-align: right; padding: 0.75rem; font-size: 0.875rem;">Precio Unit.</th>
-              <th style="text-align: right; padding: 0.75rem; font-size: 0.875rem;">Descuento</th>
-              <th style="text-align: right; padding: 0.75rem; font-size: 0.875rem;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${sale.items.map((item) => `
-            <tr style="border-bottom: 1px solid #e5e7eb;">
-              <td style="padding: 0.75rem; font-size: 0.875rem;">
-                <p style="font-weight: 600; margin: 0;">${item.product.name}</p>
-                <p style="font-size: 0.75rem; color: #4b5563; margin: 0;">SKU: ${item.product.sku}</p>
-              </td>
-              <td style="text-align: center; padding: 0.75rem; font-size: 0.875rem;">${item.quantity}</td>
-              <td style="text-align: right; padding: 0.75rem; font-size: 0.875rem;">RD$ ${item.unitPrice.toFixed(2)}</td>
-              <td style="text-align: right; padding: 0.75rem; font-size: 0.875rem;">
-                ${item.discount > 0 ? `-RD$ ${item.discount.toFixed(2)}` : '-'}
-              </td>
-              <td style="text-align: right; padding: 0.75rem; font-size: 0.875rem; font-weight: bold;">
-                RD$ ${(item.unitPrice * item.quantity - item.discount).toFixed(2)}
-              </td>
-            </tr>
-            `).join('')}
-          </tbody>
-        </table>
-
-        <!-- Totals -->
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 2rem;">
-          <div style="width: 16rem;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 0.5rem;">
-              <span>Subtotal:</span>
-              <span>RD$ ${sale.subtotal.toFixed(2)}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 0.5rem;">
-              <span>ITBIS (18%):</span>
-              <span>RD$ ${sale.tax.toFixed(2)}</span>
-            </div>
-            ${sale.discount > 0 ? `
-            <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 0.5rem;">
-              <span>Descuento:</span>
-              <span style="color: #dc2626;">-RD$ ${sale.discount.toFixed(2)}</span>
-            </div>
-            ` : ''}
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.25rem; border-top: 2px solid #d1d5db; padding-top: 0.75rem; margin-top: 0.5rem;">
-              <span>TOTAL:</span>
-              <span style="color: #4f46e5;">RD$ ${sale.total.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Payment Info -->
-        <div style="margin-bottom: 2rem; background-color: #f0fdf4; padding: 1rem; border-radius: 0.5rem;">
-          <p style="font-size: 0.875rem; margin: 0;">
-            <span style="font-weight: bold;">M&eacute;todo de Pago:</span> ${paymentMethodText}
-          </p>
-        </div>
-
-        <!-- Footer -->
-        <div style="text-align: center; font-size: 0.75rem; color: #4b5563; border-top: 1px solid #d1d5db; padding-top: 1rem;">
-          <p style="margin-bottom: 0.5rem; margin-top: 0;">&iexcl;Gracias por su preferencia!</p>
-          <p style="margin: 0;">Este documento es una representaci&oacute;n impresa de una factura electr&oacute;nica</p>
-          <p style="margin-top: 0.5rem; margin-bottom: 0;">${businessSettings.email || 'info@gntech.com'}</p>
-        </div>
-      </div>
-    `
-
-    tempContainer.appendChild(invoiceElement)
-
-    try {
-      // Use html2canvas to render the invoice to canvas
-      const canvas = await html2canvas(tempContainer, {
-        scale: 1,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: '#ffffff',
-        logging: false,
-        width: 800,
-        height: Math.min(tempContainer.scrollHeight, 2000) // Limit height to prevent overflow
-      })
-
-      // Create PDF from canvas
-      const imgData = canvas.toDataURL('image/png', 0.8)
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      })
-
-      const imgWidth = 210 // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, '', 'FAST')
-
-      // Generate PDF as array buffer and convert to base64
-      const pdfArrayBuffer = pdf.output('arraybuffer')
-      const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfArrayBuffer)))
-      return `data:application/pdf;base64,${pdfBase64}`
-
-    } finally {
-      // Clean up temporary element
-      document.body.removeChild(tempContainer)
-    }
-  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('es-DO', {

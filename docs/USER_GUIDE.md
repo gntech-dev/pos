@@ -526,6 +526,31 @@ Cuando el cliente acepte la cotización:
    - Dirección completa
    - Información de contacto
 
+#### Configuración de Logo
+1. En la sección **"Logo de la Empresa"**, seleccione uno de los logos pre-generados:
+   - **POS Azul**: Logo moderno con tema azul
+   - **GNTech Verde**: Logo con carrito de compras
+   - **Recibo Naranja**: Logo con diseño de recibo
+   - **GNTech Moderno**: Logo moderno con gradientes
+   - **POS Letters**: Logo limpio con letras POS
+
+2. **O suba su propio logo personalizado**:
+   - Haga clic en **"Seleccionar archivo"**
+   - Elija una imagen (JPG, PNG, GIF, WebP, SVG)
+   - Tamaño máximo: 5MB
+   - Recomendado: 200x200px o más para alta calidad
+
+3. El logo aparecerá automáticamente en:
+   - Facturas A4
+   - Recibos térmicos
+   - Cotizaciones
+   - Reportes
+
+**💡 Consejos para logos:**
+- Los logos SVG son escalables y se ven perfectos en cualquier tamaño
+- Para mejores resultados, use logos con fondo transparente
+- Tamaños recomendados: 200x200px o más para alta calidad
+
 #### Configuración de Impuestos
 1. Configure el porcentaje de ITBIS
 2. Establezca reglas de exoneración

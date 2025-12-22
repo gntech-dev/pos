@@ -25,7 +25,8 @@ export default async function PrintPage({ params, searchParams }: PrintPageProps
           product: true
         }
       },
-      customer: true
+      customer: true,
+      cashier: true
     }
   })
 
@@ -37,7 +38,7 @@ export default async function PrintPage({ params, searchParams }: PrintPageProps
   const businessSettings = await prisma.setting.findMany({
     where: {
       key: {
-        in: ['business_name', 'business_rnc', 'business_address', 'business_phone', 'business_email']
+        in: ['business_name', 'business_rnc', 'business_address', 'business_phone', 'business_email', 'business_logo']
       }
     }
   })
@@ -48,7 +49,8 @@ export default async function PrintPage({ params, searchParams }: PrintPageProps
     rnc: '000-00000-0',
     address: 'Santo Domingo, República Dominicana',
     phone: '809-555-5555',
-    email: 'info@gntech.com'
+    email: 'info@gntech.com',
+    logo: null as string | null
   }
 
   // Override with database values
@@ -68,6 +70,9 @@ export default async function PrintPage({ params, searchParams }: PrintPageProps
         break
       case 'business_email':
         businessData.email = setting.value
+        break
+      case 'business_logo':
+        businessData.logo = setting.value
         break
     }
   })

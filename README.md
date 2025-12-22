@@ -35,6 +35,8 @@ pos-system/
 - ✅ **Inventory Control** - Product management with barcode scanning
 - ✅ **Customer Management** - RNC/Cédula validation
 - ✅ **Business Configuration** - Persistent company settings
+- ✅ **Logo Management** - Pre-generated logos and custom logo upload
+- ✅ **Branding** - Professional appearance on invoices and receipts
 - ✅ **Quotations** - Create and manage price quotes
 - ✅ **Refunds** - Process returns with credit notes
 - ✅ **Reporting** - Sales, inventory, and tax reports
@@ -355,6 +357,20 @@ npx prisma generate
 
 ---
 
-**Version**: 1.1.0  
-**Last Updated**: December 18, 2025  
+## 📋 Changelog
+
+### Version 1.2.0 (December 22, 2025)
+- ✨ **Logo Management System**: Added pre-generated professional logos and custom logo upload functionality
+- 🎨 **Branding Enhancement**: Logos now appear on invoices, receipts, and quotations
+- 🔧 **LogoSelector Component**: New reusable component for logo selection
+- 📁 **File Storage API**: Enhanced `/api/storage/uploads/[filename]` endpoint for serving uploaded files
+- 📚 **Documentation Updates**: Updated user guide, developer guide, and API documentation
+
+### Version 1.1.0 (December 18, 2025)
+- Initial production release with full DGII compliance
+
+---
+
+**Version**: 1.2.0  
+**Last Updated**: December 22, 2025  
 **Status**: Production Ready ✅

@@ -387,6 +387,38 @@ List available restore points.
 #### POST /restore/create
 Create a restore point.
 
+### File Storage
+
+#### POST /upload
+Upload files (logos, images, documents).
+
+**Request**: `multipart/form-data`
+- `file`: File to upload (max 5MB)
+- `type`: File type ('logo', 'document', etc.)
+
+**Response (200)**:
+```json
+{
+  "message": "File uploaded successfully",
+  "filename": "uuid-filename.ext",
+  "path": "/api/storage/uploads/uuid-filename.ext"
+}
+```
+
+**Error Responses**:
+- 400: Invalid file type or size exceeded
+- 500: Upload failed
+
+#### GET /storage/uploads/[filename]
+Serve uploaded files.
+
+**Parameters**:
+- `filename`: The uploaded file name (with UUID prefix)
+
+**Response**: File content with appropriate MIME type and caching headers.
+
+**Supported file types**: Images (JPG, PNG, GIF, WebP, SVG), Documents (PDF)
+
 ### NCF Management
 
 #### GET /ncf/alerts

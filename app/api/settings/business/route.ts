@@ -13,7 +13,7 @@ export async function GET() {
     const settings = await prisma.setting.findMany({
       where: {
         key: {
-          in: ['business_name', 'business_rnc', 'business_address', 'business_phone', 'business_email']
+          in: ['business_name', 'business_rnc', 'business_address', 'business_phone', 'business_email', 'business_logo']
         }
       }
     })
@@ -25,12 +25,14 @@ export async function GET() {
       address: string
       phone: string
       email: string
+      logo?: string
     } = {
       name: 'GNTech Demo',
       rnc: '000-00000-0',
       address: 'Santo Domingo, República Dominicana',
       phone: '809-555-5555',
-      email: 'info@gntech.com'
+      email: 'info@gntech.com',
+      logo: undefined
     }
 
     // Override with database values
@@ -50,6 +52,9 @@ export async function GET() {
           break
         case 'business_email':
           businessData.email = setting.value
+          break
+        case 'business_logo':
+          businessData.logo = setting.value
           break
       }
     })
@@ -81,7 +86,8 @@ export async function POST(request: NextRequest) {
       { key: 'business_rnc', value: businessData.rnc, description: 'RNC de la empresa' },
       { key: 'business_address', value: businessData.address || '', description: 'Dirección de la empresa' },
       { key: 'business_phone', value: businessData.phone || '', description: 'Teléfono de la empresa' },
-      { key: 'business_email', value: businessData.email || '', description: 'Email de la empresa' }
+      { key: 'business_email', value: businessData.email || '', description: 'Email de la empresa' },
+      { key: 'business_logo', value: businessData.logo || '', description: 'Logo de la empresa' }
     ]
 
     // Use upsert to create or update each setting

@@ -138,6 +138,35 @@ export default function ProductForm({ onSubmit }: ProductFormProps) {
 }
 ```
 
+### LogoSelector Component
+The `LogoSelector` component provides a visual interface for selecting pre-generated logos or uploading custom logos.
+
+**Location**: `components/LogoSelector.tsx`
+
+**Props**:
+```typescript
+interface LogoSelectorProps {
+  onLogoSelect: (logoPath: string) => void
+  currentLogo?: string
+}
+```
+
+**Features**:
+- Grid display of 5 pre-generated SVG logos
+- Custom logo upload functionality
+- Visual preview of current logo
+- Responsive design with Tailwind CSS
+
+**Usage**:
+```typescript
+import LogoSelector from '../components/LogoSelector'
+
+<LogoSelector
+  onLogoSelect={(logoPath) => setBusinessData({ ...businessData, logo: logoPath })}
+  currentLogo={businessData.logo}
+/>
+```
+
 ### Styling
 Uses Tailwind CSS with custom design system.
 

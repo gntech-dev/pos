@@ -42,9 +42,9 @@ export default function QuotationThermal({ quotation, businessSettings }: Quotat
     <div className="thermal-receipt bg-white p-4 max-w-[80mm] mx-auto text-black">
       {/* Header */}
       <div className="text-center mb-3 border-b-2 border-dashed border-gray-400 pb-3">
-        <h1 className="text-lg font-bold">🏪 GNTech POS</h1>
-        <p className="text-xs mt-1">Sistema de Punto de Venta</p>
-        <p className="text-xs">República Dominicana 🇩🇴</p>
+        <h1 className="text-lg font-bold">{businessSettings?.name || 'GNTech POS'}</h1>
+        <p className="text-xs mt-1">{businessSettings?.address || 'Sistema de Punto de Venta'}</p>
+        <p className="text-xs">RNC: {businessSettings?.rnc || '000-00000-0'}</p>
       </div>
 
       {/* Quotation Info */}

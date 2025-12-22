@@ -1,5 +1,7 @@
 // Removed unused imports: useState, useEffect
 
+import Image from 'next/image'
+
 interface Product {
   id: string
   name: string
@@ -25,11 +27,18 @@ interface Customer {
   email?: string | null
 }
 
+interface User {
+  id: string
+  name: string
+  username: string
+}
+
 interface Sale {
   id: string
   saleNumber: string
   createdAt: Date | string
   customer?: Customer | null
+  cashier?: User | null
   items: SaleItem[]
   subtotal: number
   tax: number
@@ -51,6 +60,7 @@ interface BusinessSettings {
   address: string
   phone: string
   email: string
+  logo?: string | null
 }
 
 interface A4InvoiceProps {
@@ -71,19 +81,31 @@ export default function A4Invoice({ sale, ncfExpiration, businessSettings }: A4I
     <div className="a4-invoice bg-white p-12 max-w-[210mm] mx-auto text-black">
       {/* Header */}
       <div className="flex justify-between items-start mb-8 pb-6 border-b-4 border-indigo-600">
-        <div>
-          <h1 className="text-4xl font-bold text-indigo-600">🏪 GNTech</h1>
-          <p className="text-sm mt-2">Sistema de Punto de Venta</p>
-          <p className="text-sm">RNC: 000-00000-0</p>
-          <p className="text-sm">Santo Domingo, República Dominicana</p>
-          <p className="text-sm">Tel: 809-555-5555</p>
+        <div className="flex items-center gap-4">
+          {businessSettings?.logo && (
+            <Image
+              src={businessSettings.logo}
+              alt="Logo"
+              width={64}
+              height={64}
+              className="w-16 h-16 object-contain"
+              unoptimized
+            />
+          )}
+          <div>
+            <h2 className="text-3xl font-bold text-gray-800">FACTURA</h2>
+            <p className="text-sm mt-2">#{sale.saleNumber}</p>
+            <p className="text-sm">{new Date(sale.createdAt).toLocaleDateString('es-DO')}</p>
+            {sale.cashier && (
+              <p className="text-sm mt-1">Cajero: {sale.cashier.name}</p>
+            )}
+            <p className="text-sm">Santo Domingo, República Dominicana</p>
+            <p className="text-sm">Tel: 809-555-5555</p>
+          </div>
         </div>
         <div className="text-right">
-          <h2 className="text-3xl font-bold text-gray-800">FACTURA</h2>
-          <p className="text-sm mt-2">#{sale.saleNumber}</p>
-          <p className="text-sm">{new Date(sale.createdAt).toLocaleDateString('es-DO')}</p>
           {sale.ncf && (
-            <div className="mt-3 bg-gray-100 px-4 py-2 rounded">
+            <div className="bg-gray-100 px-4 py-2 rounded">
               <p className="text-xs font-bold">NCF</p>
               <p className="text-sm font-mono">{sale.ncf}</p>
               {ncfInfo.expiryDate && (
