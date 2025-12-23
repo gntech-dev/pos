@@ -159,7 +159,7 @@ ls -la .next/
 #### 3.1 Create Ecosystem Configuration
 ```bash
 # Copy the example ecosystem config
-cp config/ecosystem.config.js ecosystem.config.js
+cp config/ecosystem.config.example.js ecosystem.config.js
 
 # Edit the configuration
 nano ecosystem.config.js
