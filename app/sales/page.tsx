@@ -177,7 +177,7 @@ export default function SalesPage() {
         </div>
 
         {/* Sales Table */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-visible">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
@@ -249,7 +249,7 @@ export default function SalesPage() {
 
                           {/* Popover flotante */}
                           {showActionsPopover === sale.id && (
-                            <div className="absolute top-full mt-2 right-0 z-10 bg-white border border-gray-200 rounded-lg shadow-lg w-64">
+                            <div className="absolute top-full mt-2 right-0 z-50 bg-white border border-gray-200 rounded-lg shadow-xl w-64">
                               <div className="p-4">
                                 <div className="mb-3">
                                   <div className="text-xs text-gray-600 mb-1">
@@ -352,7 +352,7 @@ export default function SalesPage() {
       {/* Backdrop para cerrar popover al hacer clic fuera */}
       {showActionsPopover && (
         <div
-          className="fixed inset-0 z-0"
+          className="fixed inset-0 z-40"
           onClick={() => setShowActionsPopover(null)}
         />
       )}
