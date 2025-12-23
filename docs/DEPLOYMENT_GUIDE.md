@@ -568,7 +568,7 @@ cd ~/apps/pos-system
 # Pull latest changes
 git pull origin main
 
-# Install any new dependencies
+# Install any new dependencies (include dev dependencies for scripts)
 npm install --legacy-peer-deps
 
 # Build updated application
@@ -700,6 +700,16 @@ telnet smtp.your-email-provider.com 587
 
 # Check application logs for email errors
 pm2 logs pos-system | grep -i email
+```
+
+#### Dependency Issues
+```bash
+# If scripts fail with "Cannot find module" errors
+# Install all dependencies (including dev dependencies)
+npm install --legacy-peer-deps
+
+# For production, some scripts need dev dependencies
+# This is normal for database seeding and migrations
 ```
 
 ### Performance Optimization
