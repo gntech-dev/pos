@@ -15,7 +15,7 @@ You are assisting in developing a production-ready Point of Sale (POS) system fo
 ## Tech Stack
 
 - **Frontend**: Next.js 14+ (React), Tailwind CSS, React Hook Form.
-- **Backend**: Next.js API Routes, Node.js 18+.
+- **Backend**: Next.js API Routes, Node.js 20+.
 - **Database**: SQLite with Prisma ORM.
 - **Authentication & RBAC**: NextAuth.js + custom middleware.
 - **Additional Libraries**: QuaggaJS (barcode), ESC/POS (printing), Nodemailer (email), Puppeteer (PDF), Service Workers (offline).

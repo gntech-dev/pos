@@ -36,7 +36,7 @@ Choose the deployment method that best suits your needs:
 ## System Requirements
 
 - **OS**: Ubuntu 20.04+ / CentOS 8+ / Debian 11+
-- **Node.js**: 18.0+
+- **Node.js**: 20.0+
 - **RAM**: 4GB minimum, 8GB recommended
 - **Storage**: 50GB free space
 - **Network**: Stable internet connection

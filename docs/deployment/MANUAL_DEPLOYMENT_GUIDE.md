@@ -7,13 +7,13 @@ This guide provides step-by-step instructions for manually deploying the POS Sys
 
 ### System Requirements
 - **Operating System**: Ubuntu 20.04+ / CentOS 8+ / Debian 11+
-- **Node.js**: Version 18.0 or higher
+- **Node.js**: Version 20.0 or higher
 - **RAM**: 4GB minimum, 8GB recommended
 - **Storage**: 50GB minimum free space
 - **Network**: Stable internet connection
 
 ### Software Dependencies
-- Node.js 18+
+- Node.js 20+
 - npm (comes with Node.js)
 - PM2 (process manager)
 - Git (for cloning repository)
@@ -29,9 +29,9 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install -y curl wget git unzip
 ```
 
-### 1.2 Install Node.js 18
+### 1.2 Install Node.js 20
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
 # Verify installation

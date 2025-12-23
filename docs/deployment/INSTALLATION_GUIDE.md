@@ -13,7 +13,7 @@ This guide provides step-by-step instructions for installing the POS System on a
 
 ### Software Requirements
 - **Operating System**: Ubuntu 20.04+ / CentOS 8+ / Debian 11+
-- **Node.js**: Version 18.0 or higher
+- **Node.js**: Version 20.0 or higher
 - **npm**: Version 8.0 or higher (comes with Node.js)
 - **PM2**: Process manager (installed globally)
 - **Git**: For cloning repository
@@ -37,8 +37,8 @@ sudo apt install -y curl wget git unzip
 
 ### 2. Node.js Installation
 ```bash
-# Install Node.js 18.x
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+# Install Node.js 20.x
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
 # Verify installation

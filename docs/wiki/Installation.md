@@ -22,10 +22,10 @@ This guide covers installing and setting up the POS System for development and b
 
 ### Prerequisites
 
-#### 1. Install Node.js 18+
+#### 1. Install Node.js 20+
 ```bash
-# Add NodeSource repository
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+# Add NodeSource repository for Node.js 20.x
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 
 # Install Node.js
 sudo apt-get install -y nodejs
@@ -131,8 +131,8 @@ After installation, create your first admin user:
 # Check version
 node --version
 
-# Update Node.js
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+# Update Node.js to version 20
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 

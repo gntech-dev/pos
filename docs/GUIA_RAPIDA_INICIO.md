@@ -24,7 +24,7 @@ Esta guía está diseñada para que pueda comenzar a usar el sistema en **menos 
 ### ✅ Requisitos Generales
 
 **Para ambas opciones:**
-- **Sistema Operativo**: Ubuntu 18.04+ o Debian 10+ (Linux)
+- **Sistema Operativo**: Ubuntu 20.04+ o Debian 11+ (Linux)
 - **Navegador**: Chrome, Firefox, o Edge (actualizado)
 - **Conexión**: Internet para activación inicial
 - **Información**: RNC, datos de empresa, NCF (para producción)
@@ -58,7 +58,7 @@ Esta guía está diseñada para que pueda comenzar a usar el sistema en **menos 
 
 ## Requisitos Específicos
 
-- **Sistema Operativo**: Ubuntu 18.04+ o Debian 10+
+- **Sistema Operativo**: Ubuntu 20.04+ o Debian 11+
 - **RAM**: 4GB mínimo
 - **Espacio**: 2GB libre
 - **Permisos**: Usuario con sudo
@@ -71,15 +71,15 @@ Esta guía está diseñada para que pueda comenzar a usar el sistema en **menos 
 # Actualizar sistema
 sudo apt update
 
-# Instalar Node.js 18.x
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+# Instalar Node.js 20.x
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
 **Verificar instalación:**
 ```bash
-node --version  # Debe mostrar v18.x.x
-npm --version   # Debe mostrar 8.x.x
+node --version  # Debe mostrar v20.x.x
+npm --version   # Debe mostrar 10.x.x
 ```
 
 ### Paso 2: Instalar Git (2 minutos)
@@ -227,17 +227,17 @@ sudo apt install -y curl wget git unzip ufw
 ### Paso 3: Instalar Node.js (3 minutos)
 
 ```bash
-# Instalar Node.js 18.x
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+# Instalar Node.js 20.x
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
 # Verificar instalación
-node --version  # Debe mostrar v18.x.x
-npm --version   # Debe mostrar 8.x.x
+node --version  # Debe mostrar v20.x.x
+npm --version   # Debe mostrar 10.x.x
 ```
 
 **¿Qué hace esto?**
-- Instala Node.js versión 18 (LTS)
+- Instala Node.js versión 20 (LTS)
 - Verifica que esté correctamente instalado
 
 ### Paso 4: Instalar PM2 (2 minutos)

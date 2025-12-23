@@ -8,7 +8,7 @@ This guide provides comprehensive step-by-step instructions for deploying the PO
 
 ### System Requirements
 - **Operating System**: Ubuntu 20.04+ or Debian 11+ (recommended)
-- **Node.js**: 18+ (LTS recommended)
+- **Node.js**: 20+ (LTS recommended)
 - **Memory**: 2GB RAM minimum, 4GB recommended
 - **Storage**: 20GB minimum
 - **Domain**: Domain name (optional but recommended)
@@ -27,10 +27,10 @@ This guide provides comprehensive step-by-step instructions for deploying the PO
 sudo apt update && sudo apt upgrade -y
 ```
 
-#### 1.2 Install Node.js 18+
+#### 1.2 Install Node.js 20+
 ```bash
-# Add NodeSource repository
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+# Add NodeSource repository for Node.js 20.x
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 
 # Install Node.js
 sudo apt-get install -y nodejs
@@ -517,7 +517,7 @@ ls -lh prod.db
 
 #### Dockerfile
 ```dockerfile
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 

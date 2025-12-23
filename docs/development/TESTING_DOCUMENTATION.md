@@ -15,7 +15,7 @@ This document provides comprehensive testing procedures for the POS System, incl
 ## Test Environment Setup
 
 ### Pre-requisites
-- Node.js 18+ installed
+- Node.js 20+ installed
 - npm or yarn package manager
 - SQLite database access
 - PM2 for process management

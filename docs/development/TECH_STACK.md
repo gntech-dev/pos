@@ -264,7 +264,7 @@ NODE_ENV="development"
 ## Hardware Requirements
 
 ### Development
-- Node.js 18+
+- Node.js 20+
 - 4GB RAM minimum
 - 10GB disk space
 

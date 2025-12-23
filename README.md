@@ -47,8 +47,8 @@ pos-system/
 
 ## 📋 Prerequisites
 
-- **Operating System**: Ubuntu 18.04+ or Debian 10+ (Linux only)
-- **Node.js**: 18+ (v20.19.6 recommended)
+- **Operating System**: Ubuntu 20.04+ or Debian 11+ (Linux only)
+- **Node.js**: 20+ (v20.19.6+ recommended)
 - **Package Manager**: npm or pnpm
 - **Version Control**: Git
 - **Server**: VPS/Dedicated server for production (2GB RAM minimum)
