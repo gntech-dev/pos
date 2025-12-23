@@ -150,5 +150,4 @@ Content-Type: application/json
 For technical support with email functionality:
 - Check the [[Troubleshooting|Troubleshooting]] page
 - Review [[FAQ|FAQ]] for common questions
-- Contact support@gnttech.com</content>
-<parameter name="filePath">/home/gntech/PS/pos-system/docs/wiki/Email-Invoices.md
+- Contact support@gnttech.com

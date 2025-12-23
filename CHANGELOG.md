@@ -57,5 +57,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tailwind CSS for styling
 - Secure authentication with JWT
 - PM2 process management
-- Docker deployment support</content>
-<parameter name="filePath">/home/gntech/PS/pos-system/CHANGELOG.md
+- Docker deployment support

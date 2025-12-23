@@ -1,11 +1,13 @@
 # Installation Guide
 
-This guide covers installing and setting up the POS System.
+This guide covers installing and setting up the POS System for development and basic production use.
+
+**⚠️ System Requirements**: This system is designed exclusively for **Linux servers**. Not compatible with Windows Server.
 
 ## System Requirements
 
 ### Minimum Requirements
-- **OS**: Ubuntu 20.04+, CentOS 7+, or Windows 10+
+- **OS**: Ubuntu 20.04+ or Debian 11+
 - **RAM**: 2GB
 - **Storage**: 10GB free space
 - **Network**: Internet connection for initial setup
@@ -16,70 +18,65 @@ This guide covers installing and setting up the POS System.
 - **Storage**: 20GB SSD
 - **CPU**: 2 cores
 
-## Quick Installation
+## Quick Development Installation
 
-### Using the Installation Script
+### Prerequisites
 
+#### 1. Install Node.js 18+
 ```bash
-# Download the installation script
-wget https://raw.githubusercontent.com/your-repo/pos-system/main/install.sh
-chmod +x install.sh
-
-# Run the installer
-sudo ./install.sh
-```
-
-### Manual Installation
-
-#### 1. Install Node.js
-
-**Ubuntu/Debian:**
-```bash
+# Add NodeSource repository
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+
+# Install Node.js
 sudo apt-get install -y nodejs
+
+# Verify installation
+node --version
+npm --version
 ```
 
-**CentOS/RHEL:**
+#### 2. Install Git
 ```bash
-curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
-sudo yum install -y nodejs
+sudo apt install -y git
 ```
 
-**Windows:**
-Download from [nodejs.org](https://nodejs.org/)
+### Installation Steps
 
-#### 2. Clone Repository
-
+#### 1. Clone Repository
 ```bash
-git clone https://github.com/your-username/pos-system.git
+# Create a directory for your projects
+mkdir -p ~/projects
+cd ~/projects
+
+# Clone the repository
+git clone https://github.com/gntech-dev/pos.git pos-system
 cd pos-system
 ```
 
-#### 3. Install Dependencies
-
+#### 2. Install Dependencies
 ```bash
 npm install --legacy-peer-deps
 ```
 
-#### 4. Configure Environment
-
+#### 3. Configure Environment
 ```bash
+# Copy environment template
 cp .env.example .env
-# Edit .env with your settings
+
+# Edit environment file (optional for development)
+nano .env
 ```
 
-#### 5. Setup Database
-
+#### 4. Setup Database
 ```bash
-# Run migrations
+# Run database migrations
 npm run db:migrate
 
-# Seed initial data
+# Seed initial data (optional)
 npm run db:seed
 ```
 
-#### 6. Start Application
-
+#### 5. Start Development Server
 ```bash
 npm run dev
 ```
@@ -88,7 +85,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Production Deployment
 
-For production deployment, see the [[Deployment Guide|Deployment]].
+For production deployment with PM2, Nginx, SSL certificates, and automated backups, see the [[Deployment Guide|../DEPLOYMENT_GUIDE]].
 
 ## Post-Installation Setup
 
@@ -96,7 +93,7 @@ For production deployment, see the [[Deployment Guide|Deployment]].
 
 After installation, create your first admin user:
 
-1. Access the application
+1. Access the application at `http://localhost:3000`
 2. Use the default login (if available)
 3. Go to Settings > Users
 4. Create admin user
@@ -153,10 +150,10 @@ npm run db:migrate
 **Permission denied**
 ```bash
 # Check file permissions
-ls -la dev.db
+ls -la *.db
 
 # Fix permissions
-chmod 664 dev.db
+chmod 664 *.db
 ```
 
 ### Network Issues
@@ -180,7 +177,7 @@ PORT=3001 npm run dev
 # Clear cache
 rm -rf .next node_modules/.cache
 
-# Reinstall
+# Reinstall dependencies
 npm install --legacy-peer-deps
 
 # Try build again
@@ -200,6 +197,7 @@ After installation, verify everything works:
 
 ## Next Steps
 
-- [[User Guide|User-Guide]] - Learn how to use the system
-- [[Configuration|Configuration]] - Advanced configuration
+- [[User Guide|../USER_GUIDE]] - Learn how to use the system
+- [[Configuration|Settings]] - Advanced configuration
 - [[Backup and Restore|Backup-Restore]] - Data protection
+- [[Deployment Guide|../DEPLOYMENT_GUIDE]] - Production deployment
