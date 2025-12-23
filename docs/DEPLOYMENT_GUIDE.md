@@ -87,12 +87,14 @@ ls -la
 
 #### 2.3 Install Dependencies
 ```bash
-# Install Node.js dependencies
-npm install --legacy-peer-deps --production
+# Install Node.js dependencies (include dev dependencies for build)
+npm install --legacy-peer-deps
 
 # Verify installation
 npm list --depth=0
 ```
+
+**Note:** We install all dependencies (including dev dependencies) because Next.js requires TypeScript, type definitions, and build tools for the production build process. The built application will only use runtime dependencies.
 
 #### 2.4 Environment Configuration
 ```bash
@@ -524,8 +526,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install --legacy-peer-deps --production
+# Install dependencies (include dev dependencies for build)
+RUN npm install --legacy-peer-deps
 
 # Copy application code
 COPY . .
@@ -710,6 +712,9 @@ npm install --legacy-peer-deps
 
 # For production, some scripts need dev dependencies
 # This is normal for database seeding and migrations
+
+# If you see "UNMET DEPENDENCY" warnings
+# Make sure you ran: npm install --legacy-peer-deps (not --production)
 ```
 
 ### Performance Optimization
