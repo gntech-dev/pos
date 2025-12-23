@@ -108,7 +108,7 @@ nano .env
 **Production .env configuration:**
 ```env
 # Database
-DATABASE_URL="file:./prod.db"
+DATABASE_URL="file:./database/prisma/prod.db"
 
 # Authentication
 NEXTAUTH_URL="https://your-domain.com"
@@ -349,7 +349,7 @@ pm2 stop pos-system
 sleep 5
 
 # Copy database file
-cp prod.db $BACKUP_FILE
+cp database/prisma/prod.db $BACKUP_FILE
 
 # Start application again
 pm2 start pos-system
@@ -471,7 +471,7 @@ pm2 monit
 sqlite3 prod.db "PRAGMA integrity_check;"
 
 # Check database size
-ls -lh prod.db
+ls -lh database/prisma/prod.db
 ```
 
 #### 7.4 Test Email Functionality (if configured)
@@ -551,12 +551,12 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./prod.db:/app/prod.db
+      - ./database/prisma/prod.db:/app/database/prisma/prod.db
       - ./storage:/app/storage
       - ./logs:/app/logs
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=file:./prod.db
+      - DATABASE_URL=file:./database/prisma/prod.db
     restart: unless-stopped
 ```
 
@@ -589,13 +589,13 @@ pm2 logs pos-system --lines 20
 cd ~/apps/pos-system
 
 # Vacuum database to optimize size
-sqlite3 prod.db "VACUUM;"
+sqlite3 database/prisma/prod.db "VACUUM;"
 
 # Check database integrity
-sqlite3 prod.db "PRAGMA integrity_check;"
+sqlite3 database/prisma/prod.db "PRAGMA integrity_check;"
 
 # Backup before maintenance
-cp prod.db prod.db.backup
+cp database/prisma/prod.db database/prisma/prod.db.backup
 ```
 
 ### Log Management
@@ -626,7 +626,7 @@ pm2 logs pos-system --lines 100
 netstat -tlnp | grep :3000
 
 # Verify database file exists and is accessible
-ls -la prod.db
+ls -la database/prisma/prod.db
 
 # Check Node.js version
 node --version
@@ -650,13 +650,13 @@ sudo systemctl reload nginx
 #### Database Connection Issues
 ```bash
 # Check database file permissions
-ls -la prod.db
+ls -la database/prisma/prod.db
 
 # Test database connection
-sqlite3 prod.db "SELECT 1;"
+sqlite3 database/prisma/prod.db "SELECT 1;"
 
 # Check for database locks
-lsof | grep prod.db
+lsof | grep database/prisma/prod.db
 
 # Kill any hanging SQLite processes
 pkill -f sqlite3
@@ -763,7 +763,7 @@ BACKUP_DIR="~/backups/manual/$(date +%Y%m%d_%H%M%S)"
 mkdir -p $BACKUP_DIR
 
 # Backup database
-cp prod.db $BACKUP_DIR/
+cp database/prisma/prod.db $BACKUP_DIR/
 
 # Backup configuration files
 cp .env $BACKUP_DIR/
@@ -789,7 +789,7 @@ echo "Manual backup completed: $BACKUP_DIR.tar.gz"
 
 2. **Restore Database**
    ```bash
-   cp ~/backups/pos_backup_20231201_020000.db prod.db
+   cp ~/backups/pos_backup_20231201_020000.db database/prisma/prod.db
    ```
 
 3. **Restore Configuration (if needed)**
@@ -799,7 +799,7 @@ echo "Manual backup completed: $BACKUP_DIR.tar.gz"
 
 4. **Verify Data Integrity**
    ```bash
-   sqlite3 prod.db "PRAGMA integrity_check;"
+   sqlite3 database/prisma/prod.db "PRAGMA integrity_check;"
    ```
 
 5. **Restart Application**
