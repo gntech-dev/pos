@@ -21,6 +21,7 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/nodemailer": "^7.0.4",
     "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.3",
     "dotenv": "^17.2.3",
     "adm-zip": "^0.5.16",
     "axios": "^1.13.2",
