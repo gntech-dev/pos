@@ -67,6 +67,120 @@ export async function GET(_request: NextRequest) {
       }
     })
 
+    // Get yesterday's sales for comparison
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayEnd = new Date(today)
+
+    const yesterdaySales = await prisma.sale.aggregate({
+      where: {
+        createdAt: {
+          gte: yesterday,
+          lt: yesterdayEnd
+        },
+        status: 'COMPLETED'
+      },
+      _sum: {
+        total: true
+      }
+    })
+
+    // Get average sale amount today
+    const todaySalesData = await prisma.sale.findMany({
+      where: {
+        createdAt: {
+          gte: today,
+          lt: tomorrow
+        },
+        status: 'COMPLETED'
+      },
+      select: {
+        total: true
+      }
+    })
+
+    const averageSale = todaySalesData.length > 0 
+      ? todaySalesData.reduce((sum, sale) => sum + sale.total, 0) / todaySalesData.length 
+      : 0
+
+    // Get top selling products (last 30 days)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    const topProducts = await prisma.saleItem.groupBy({
+      by: ['productId'],
+      where: {
+        sale: {
+          createdAt: {
+            gte: thirtyDaysAgo
+          },
+          status: 'COMPLETED'
+        }
+      },
+      _sum: {
+        quantity: true,
+        total: true
+      },
+      orderBy: {
+        _sum: {
+          quantity: 'desc'
+        }
+      },
+      take: 5
+    })
+
+    // Get product details for top products
+    const topProductsWithDetails = await Promise.all(
+      topProducts.map(async (item) => {
+        const product = await prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { name: true, sku: true }
+        })
+        return {
+          ...item,
+          product: product || { name: 'Producto desconocido', sku: '' }
+        }
+      })
+    )
+
+    // Get hourly sales for today
+    const hourlySales = []
+    for (let hour = 0; hour < 24; hour++) {
+      const hourStart = new Date(today)
+      hourStart.setHours(hour, 0, 0, 0)
+      const hourEnd = new Date(hourStart)
+      hourEnd.setHours(hour + 1, 0, 0, 0)
+
+      const hourData = await prisma.sale.aggregate({
+        where: {
+          createdAt: {
+            gte: hourStart,
+            lt: hourEnd
+          },
+          status: 'COMPLETED'
+        },
+        _sum: {
+          total: true
+        },
+        _count: {
+          id: true
+        }
+      })
+
+      hourlySales.push({
+        hour,
+        total: hourData._sum.total || 0,
+        count: hourData._count.id || 0
+      })
+    }
+
+    // Calculate growth percentage
+    const yesterdayTotal = yesterdaySales._sum.total || 0
+    const todayTotal = todaySales._sum.total || 0
+    const growthPercentage = yesterdayTotal > 0 
+      ? ((todayTotal - yesterdayTotal) / yesterdayTotal) * 100 
+      : todayTotal > 0 ? 100 : 0
+
     // Get recent sales for additional context
     const recentSales = await prisma.sale.findMany({
       where: {
@@ -134,6 +248,14 @@ export async function GET(_request: NextRequest) {
       criticalStockProducts,
       recentSales,
       weeklySales,
+      averageSale,
+      topProducts: topProductsWithDetails,
+      hourlySales,
+      growthPercentage,
+      yesterdaySales: {
+        total: yesterdaySales._sum.total || 0,
+        formatted: `RD$ ${(yesterdaySales._sum.total || 0).toLocaleString('es-DO', { minimumFractionDigits: 2 })}`
+      },
       lastUpdated: new Date().toISOString()
     }
 

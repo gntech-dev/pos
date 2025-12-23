@@ -35,8 +35,8 @@ pos-system/
 - ✅ **Inventory Control** - Product management with barcode scanning
 - ✅ **Customer Management** - RNC/Cédula validation
 - ✅ **Business Configuration** - Persistent company settings
-- ✅ **Logo Management** - Pre-generated logos and custom logo upload
-- ✅ **Branding** - Professional appearance on invoices and receipts
+- ✅ **Logo Management** - Pre-generated logos and custom logo upload with universal display support
+- ✅ **Branding** - Professional appearance on invoices, receipts, and emails
 - ✅ **Quotations** - Create and manage price quotes
 - ✅ **Refunds** - Process returns with credit notes
 - ✅ **Reporting** - Sales, inventory, and tax reports

@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
 import { AuthProvider } from "../components/providers"
+import { ToastProvider } from "../components/Toast"
+import ErrorBoundary from '../components/ErrorBoundary'
 import Header from '../components/Header'
 import { getSessionFromCookie } from '@/lib/session'
 import Sidebar from '../components/Sidebar'
@@ -50,21 +52,25 @@ export default async function RootLayout({
   return (
     <html lang="es">
       <body className="antialiased">
-        <AuthProvider>
-          {session ? (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
-              <Header name={session?.role} businessSettings={businessSettings} />
-              <div className="flex">
-                <Sidebar />
-                <main className="flex-1 p-0">{children}</main>
-              </div>
-            </div>
-          ) : (
-            <div className="min-h-screen">
-              {children}
-            </div>
-          )}
-        </AuthProvider>
+        <ErrorBoundary>
+          <ToastProvider>
+            <AuthProvider>
+              {session ? (
+                <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+                  <Header name={session?.role} businessSettings={businessSettings} />
+                  <div className="flex">
+                    <Sidebar />
+                    <main className="flex-1 p-0">{children}</main>
+                  </div>
+                </div>
+              ) : (
+                <div className="min-h-screen">
+                  {children}
+                </div>
+              )}
+            </AuthProvider>
+          </ToastProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

@@ -60,20 +60,49 @@ export default function QuotationsPage() {
     }
 
     try {
-      // Get quotation details
-      const response = await fetch(`/api/quotations/${quotation.id}`)
-      if (!response.ok) {
-        alert('Error al obtener los detalles de la cotización')
-        return
+      const paymentMethod = prompt('Método de pago (CASH, CARD, TRANSFER, MIXED, CHECK, OTHER):', 'CASH')
+      if (!paymentMethod) return
+
+      const response = await fetch(`/api/quotations/${quotation.id}/convert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentMethod })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        alert('✅ Cotización convertida a venta exitosamente')
+        router.push(`/sales/${result.sale.id}`)
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
       }
-
-      const _quotationDetails = await response.json()
-
-      // Navigate to POS with quotation data
-      router.push(`/pos?quotationId=${quotation.id}`)
     } catch (error) {
       console.error('Error converting quotation:', error)
       alert('Error al convertir la cotización')
+    }
+  }
+
+  const handleDeleteQuotation = async (quotation: Quotation) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar la cotización ${quotation.quotationNumber}? Esta acción no se puede deshacer.`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/quotations/${quotation.id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        alert('Cotización eliminada exitosamente')
+        loadQuotations() // Reload the list
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error deleting quotation:', error)
+      alert('Error al eliminar la cotización')
     }
   }
 
@@ -243,13 +272,28 @@ export default function QuotationsPage() {
                                 >
                                   👁️ Ver Detalles
                                 </button>
+                                <button
+                                  onClick={() => router.push(`/quotations/${quotation.id}/edit`)}
+                                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded flex items-center gap-2"
+                                >
+                                  ✏️ Editar
+                                </button>
                                 {quotation.status === 'PENDING' && (
-                                  <button
-                                    onClick={() => handleConvertToSale(quotation)}
-                                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded flex items-center gap-2"
-                                  >
-                                    🛒 Convertir a Venta
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => handleConvertToSale(quotation)}
+                                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded flex items-center gap-2"
+                                    >
+                                      🛒 Convertir a Venta
+                                    </button>
+                                    <div className="border-t border-gray-200 my-2"></div>
+                                    <button
+                                      onClick={() => handleDeleteQuotation(quotation)}
+                                      className="w-full text-left px-3 py-2 text-sm hover:bg-red-50 text-red-600 rounded flex items-center gap-2"
+                                    >
+                                      🗑️ Eliminar
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             </div>

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import Image from 'next/image'
 import LogoSelector from '../../components/LogoSelector'
 
 interface User {

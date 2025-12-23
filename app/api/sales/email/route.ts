@@ -48,6 +48,7 @@ const CONFIG_FILE = path.join(process.cwd(), 'email-config.json')
 
 // Generate PDF using Puppeteer
 async function generateInvoicePDF(saleId: string, type: string = 'invoice'): Promise<Buffer> {
+  console.log('Starting PDF generation for sale:', saleId, 'type:', type)
   const browser = await puppeteer.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -60,7 +61,9 @@ async function generateInvoicePDF(saleId: string, type: string = 'invoice'): Pro
     await page.setViewport({ width: 794, height: 1123 }) // A4 dimensions in pixels
 
     // Navigate to the print page
-    const printUrl = `http://localhost:3001/print/${saleId}?type=${type}&pdf=true`
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
+                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+    const printUrl = `${baseUrl}/print/${saleId}?type=${type}&pdf=true`
     console.log('Navigating to:', printUrl)
     await page.goto(printUrl, { waitUntil: 'domcontentloaded' })
 
@@ -80,6 +83,21 @@ async function generateInvoicePDF(saleId: string, type: string = 'invoice'): Pro
     // Wait for content to load with shorter timeout
     await page.waitForSelector('.print-container', { timeout: 5000 })
 
+    // Check if logo image exists and has content
+    const logoInfo = await page.evaluate(() => {
+      const img = document.querySelector('.print-container img')
+      if (img) {
+        return {
+          src: (img as HTMLImageElement).src,
+          srcLength: (img as HTMLImageElement).src.length,
+          naturalWidth: (img as HTMLImageElement).naturalWidth,
+          naturalHeight: (img as HTMLImageElement).naturalHeight
+        }
+      }
+      return null
+    })
+    console.log('Logo info:', logoInfo)
+
     // Generate PDF
     const pdfBuffer = await page.pdf({
       format: 'A4',
@@ -92,12 +110,52 @@ async function generateInvoicePDF(saleId: string, type: string = 'invoice'): Pro
       }
     })
 
+    console.log('PDF generated, buffer size:', pdfBuffer.length)
     return Buffer.from(pdfBuffer)
   } finally {
     await browser.close()
   }
 }
 
+// Helper function to convert logo to data URL for email embedding
+function convertLogoToDataUrl(logoPath: string | null): string | null {
+  if (!logoPath) return null
+
+  try {
+    let fullPath: string
+
+    if (logoPath.startsWith('/logos/')) {
+      // Pre-made logos in public/logos/
+      fullPath = path.join(process.cwd(), 'public', logoPath)
+    } else if (logoPath.startsWith('/api/storage/uploads/')) {
+      // Uploaded logos in storage/uploads/
+      const filename = logoPath.replace('/api/storage/uploads/', '')
+      fullPath = path.join(process.cwd(), 'storage', 'uploads', filename)
+    } else {
+      // Unknown path, return as is
+      return logoPath
+    }
+
+    if (fs.existsSync(fullPath)) {
+      const fileContent = fs.readFileSync(fullPath)
+      const ext = logoPath.split('.').pop()?.toLowerCase()
+      let mimeType = 'image/png' // default
+
+      if (ext === 'jpg' || ext === 'jpeg') mimeType = 'image/jpeg'
+      else if (ext === 'png') mimeType = 'image/png'
+      else if (ext === 'gif') mimeType = 'image/gif'
+      else if (ext === 'webp') mimeType = 'image/webp'
+      else if (ext === 'svg') mimeType = 'image/svg+xml'
+
+      const base64 = fileContent.toString('base64')
+      return `data:${mimeType};base64,${base64}`
+    }
+  } catch (error) {
+    console.error('Error converting logo to data URL:', error)
+  }
+
+  return logoPath
+}
 // Load email configuration from file
 function loadEmailConfig() {
   try {
@@ -473,7 +531,7 @@ function generateInvoiceHTML(sale: Sale, type: string, businessData: BusinessDat
       <body>
         <div class="invoice-container">
           <div class="header">
-            ${businessData.logo ? `<img src="${businessData.logo}" alt="Logo" style="max-width: 80px; max-height: 80px; margin-bottom: 10px;">` : ''}
+            ${businessData.logo ? `<img src="${convertLogoToDataUrl(businessData.logo)}" alt="Logo" style="max-width: 80px; max-height: 80px; margin-bottom: 10px;">` : ''}
             <div class="company-name">${businessData.name}</div>
             <div class="company-info">Sistema de Punto de Venta Profesional</div>
             <div class="company-info">RNC: ${businessData.rnc}</div>

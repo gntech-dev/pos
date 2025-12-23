@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // If user is not authenticated and trying to access protected routes, redirect to login
-  if (!isAuthenticated && !pathname.startsWith('/login') && !pathname.startsWith('/api/login') && !pathname.startsWith('/print') && !pathname.startsWith('/quotations/print') && !pathname.startsWith('/api/backup') && !pathname.startsWith('/api/restore')) {
+  if (!isAuthenticated && !pathname.startsWith('/login') && !pathname.startsWith('/api/login') && !pathname.startsWith('/print') && !pathname.startsWith('/quotations/print') && !pathname.startsWith('/api/backup') && !pathname.startsWith('/api/restore') && !pathname.startsWith('/logos/')) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
@@ -44,7 +44,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - logos/ (logo files)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|logos/).*)',
   ],
 }

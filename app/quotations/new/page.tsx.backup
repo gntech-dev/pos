@@ -7,17 +7,6 @@ interface Customer {
   id: string
   name: string
   rnc?: string
-  isFromRNC?: boolean
-}
-
-interface RNCResult {
-  rnc: string
-  businessName: string
-  businessType?: string
-  address?: string
-  province?: string
-  phone?: string
-  email?: string
 }
 
 interface Product {
@@ -41,6 +30,7 @@ interface CartItem {
 export default function NewQuotationPage() {
   const router = useRouter()
   const [customerId, setCustomerId] = useState('')
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<CartItem[]>([])
@@ -63,62 +53,16 @@ export default function NewQuotationPage() {
   }, [])
 
   useEffect(() => {
-    const searchCustomers = async () => {
-      if (customerSearchTerm.trim() === '') {
-        // Load first 10 customers when no search term
-        try {
-          const response = await fetch('/api/customers?limit=10')
-          if (response.ok) {
-            const data = await response.json()
-            setFilteredCustomers(data.data)
-          }
-        } catch (error) {
-          console.error('Error loading customers:', error)
-        }
-      } else {
-        // First search in customers
-        try {
-          const customerResponse = await fetch(`/api/customers?q=${encodeURIComponent(customerSearchTerm)}&limit=10`)
-          if (customerResponse.ok) {
-            const customerData = await customerResponse.json()
-            let allResults = [...customerData.data]
-
-            // If we have less than 10 results from customers, search in RNC registry
-            if (allResults.length < 10) {
-              try {
-                const rncResponse = await fetch(`/api/rnc/search?q=${encodeURIComponent(customerSearchTerm)}&limit=${10 - allResults.length}`)
-                if (rncResponse.ok) {
-                  const rncData = await rncResponse.json()
-                  // Add RNC results that are not already in customers
-                  const existingRNCs = new Set(allResults.map(c => c.rnc).filter(Boolean))
-                  const newRNCResults = rncData.results
-                    .filter((rnc: RNCResult) => !existingRNCs.has(rnc.rnc))
-                    .map((rnc: RNCResult) => ({
-                      id: `rnc-${rnc.rnc}`, // Use RNC as part of ID to distinguish
-                      name: rnc.businessName,
-                      rnc: rnc.rnc,
-                      isFromRNC: true // Flag to indicate this is from RNC registry
-                    }))
-
-                  allResults = [...allResults, ...newRNCResults]
-                }
-              } catch (rncError) {
-                console.error('Error searching RNC registry:', rncError)
-              }
-            }
-
-            setFilteredCustomers(allResults.slice(0, 10))
-          }
-        } catch (error) {
-          console.error('Error searching customers:', error)
-        }
-      }
+    if (customerSearchTerm.trim() === '') {
+      setFilteredCustomers(customers.slice(0, 10)) // Show first 10 customers when no search
+    } else {
+      const filtered = customers.filter(customer =>
+        customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+        (customer.rnc && customer.rnc.includes(customerSearchTerm))
+      ).slice(0, 10) // Limit to 10 results
+      setFilteredCustomers(filtered)
     }
-
-    // Debounce search to avoid too many API calls
-    const timeoutId = setTimeout(searchCustomers, 300)
-    return () => clearTimeout(timeoutId)
-  }, [customerSearchTerm])
+  }, [customerSearchTerm, customers])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -135,10 +79,10 @@ export default function NewQuotationPage() {
 
   const loadCustomers = async () => {
     try {
-      const response = await fetch('/api/customers?limit=10')
+      const response = await fetch('/api/customers?limit=100')
       if (response.ok) {
         const data = await response.json()
-        setFilteredCustomers(data.data)
+        setCustomers(data.data)
       }
     } catch (error) {
       console.error('Error loading customers:', error)
@@ -157,7 +101,17 @@ export default function NewQuotationPage() {
     }
   }
 
-  const addToCart = (product: Product) => {
+  const handleCustomerSelect = (customer: Customer) => {
+    setCustomerId(customer.id)
+    setCustomerSearchTerm(customer.name)
+    setShowCustomerDropdown(false)
+  }
+
+  const handleClearCustomer = () => {
+    setCustomerId('')
+    setCustomerSearchTerm('')
+    setShowCustomerDropdown(false)
+  }
     const existingItem = cart.find(item => item.productId === product.id)
 
     if (existingItem) {
@@ -185,12 +139,13 @@ export default function NewQuotationPage() {
 
     setCart(cart.map(item => {
       if (item.productId === productId) {
-        const subtotal = quantity * item.unitPrice - item.discount
-        const total = subtotal * 1.18
+        const newQuantity = quantity
+        const subtotal = newQuantity * item.unitPrice - item.discount
+        const total = subtotal * (1 + (item.product ? 0.18 : 0)) // 18% ITBIS
 
         return {
           ...item,
-          quantity,
+          quantity: newQuantity,
           subtotal,
           total
         }
@@ -203,7 +158,7 @@ export default function NewQuotationPage() {
     setCart(cart.map(item => {
       if (item.productId === productId) {
         const subtotal = item.quantity * item.unitPrice - discount
-        const total = subtotal * 1.18
+        const total = subtotal * (1 + (item.product ? 0.18 : 0))
 
         return {
           ...item,
@@ -226,62 +181,6 @@ export default function NewQuotationPage() {
     const total = subtotal + tax
 
     return { subtotal, tax, total }
-  }
-
-  const handleCustomerSelect = async (customer: Customer & { isFromRNC?: boolean }) => {
-    if (customer.isFromRNC) {
-      // Get full RNC details first
-      try {
-        const rncResponse = await fetch(`/api/rnc/search?q=${encodeURIComponent(customer.rnc || '')}&limit=1`)
-        if (rncResponse.ok) {
-          const rncData = await rncResponse.json()
-          if (rncData.results && rncData.results.length > 0) {
-            const rncDetails = rncData.results[0]
-
-            // Create customer from RNC registry
-            const createResponse = await fetch('/api/customers', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                name: rncDetails.businessName,
-                rnc: rncDetails.rnc,
-                email: rncDetails.email || undefined,
-                phone: rncDetails.phone || undefined,
-                address: rncDetails.address || undefined,
-                isCompany: true
-              })
-            })
-
-            if (createResponse.ok) {
-              const newCustomer = await createResponse.json()
-              setCustomerId(newCustomer.id)
-              setCustomerSearchTerm(newCustomer.name)
-              setShowCustomerDropdown(false)
-              // Reload customers to include the new one
-              loadCustomers()
-              alert('Cliente creado exitosamente desde el registro de RNC')
-            } else {
-              const error = await createResponse.json()
-              alert(`Error al crear el cliente: ${error.error}`)
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error creating customer from RNC:', error)
-        alert('Error al crear el cliente desde el RNC')
-      }
-    } else {
-      // Regular customer selection
-      setCustomerId(customer.id)
-      setCustomerSearchTerm(customer.name)
-      setShowCustomerDropdown(false)
-    }
-  }
-
-  const handleClearCustomer = () => {
-    setCustomerId('')
-    setCustomerSearchTerm('')
-    setShowCustomerDropdown(false)
   }
 
   const handleSave = async () => {
@@ -322,6 +221,12 @@ export default function NewQuotationPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleClearCustomer = () => {
+    setCustomerId('')
+    setCustomerSearchTerm('')
+    setShowCustomerDropdown(false)
   }
 
   const filteredProducts = products.filter(product =>
@@ -413,22 +318,10 @@ export default function NewQuotationPage() {
                               onClick={() => handleCustomerSelect(customer)}
                               className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded flex items-center gap-2"
                             >
-                              <div className="flex items-center justify-between w-full">
-                                <div>
-                                  <div className="font-medium flex items-center gap-2">
-                                    {customer.name}
-                                    {customer.isFromRNC && (
-                                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                        Nuevo
-                                      </span>
-                                    )}
-                                  </div>
-                                  {customer.rnc && (
-                                    <div className="text-xs text-gray-500">RNC: {customer.rnc}</div>
-                                  )}
-                                </div>
-                                {customer.isFromRNC && (
-                                  <span className="text-xs text-blue-600">➕ Crear cliente</span>
+                              <div>
+                                <div className="font-medium">{customer.name}</div>
+                                {customer.rnc && (
+                                  <div className="text-xs text-gray-500">RNC: {customer.rnc}</div>
                                 )}
                               </div>
                             </button>

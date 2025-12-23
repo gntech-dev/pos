@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import ThermalReceipt from '@/components/ThermalReceipt'
 import A4Invoice from '@/components/A4Invoice'
+import { useToast } from '@/components/Toast'
+import { useKeyboardShortcuts } from '@/lib/useKeyboardShortcuts'
+import KeyboardShortcutsHelp from '@/components/KeyboardShortcutsHelp'
 
 interface Product {
   id: string
@@ -86,6 +89,9 @@ interface CartItem {
 
 export default function POSPage() {
   const router = useRouter()
+  const toast = useToast()
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false)
+
   const [loading, setLoading] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<CartItem[]>([])
@@ -96,7 +102,7 @@ export default function POSPage() {
   const [scannerActive, setScannerActive] = useState(false)
   const [showReceipt, setShowReceipt] = useState(false)
   const [lastSale, setLastSale] = useState<Sale | null>(null)
-  const [documentType, setDocumentType] = useState<'thermal' | 'invoice'>('thermal')
+  const [documentType, setDocumentType] = useState<'thermal' | 'invoice'>('invoice')
   const [showEmailForm, setShowEmailForm] = useState(false)
   const [showDocumentSelection, setShowDocumentSelection] = useState(false)
   const [emailAddress, setEmailAddress] = useState('')
@@ -106,29 +112,49 @@ export default function POSPage() {
   const [customerSearchResults, setCustomerSearchResults] = useState<CustomerSearchResult[]>([])
   const [searchingCustomers, setSearchingCustomers] = useState(false)
   const scannerRef = useRef<HTMLVideoElement>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [parkedSales, setParkedSales] = useState<Array<{
+    id: string
+    cart: SaleItem[]
+    selectedCustomer: Customer | null
+    discount: number
+    timestamp: Date
+  }>>([])
 
-  // Load products on mount
-  useEffect(() => {
-    loadProducts()
-  }, [])
-
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     try {
       const response = await fetch('/api/products')
       if (response.ok) {
         const data = await response.json()
         setProducts(data.data)
+
+        // Check for low stock products and show notifications
+        const lowStockProducts = data.data.filter((p: Product) => p.trackInventory && p.stock <= p.minStock && p.stock > 0)
+        const outOfStockProducts = data.data.filter((p: Product) => p.trackInventory && p.stock === 0)
+
+        if (lowStockProducts.length > 0) {
+          toast.warning(`⚠️ ${lowStockProducts.length} producto${lowStockProducts.length !== 1 ? 's' : ''} con stock bajo`)
+        }
+
+        if (outOfStockProducts.length > 0) {
+          toast.error(`🚫 ${outOfStockProducts.length} producto${outOfStockProducts.length !== 1 ? 's' : ''} sin stock disponible`)
+        }
       }
     } catch (error) {
       console.error('Error loading products:', error)
     }
-  }
+  }, [toast])
+
+  // Load products on mount
+  useEffect(() => {
+    loadProducts()
+  }, [loadProducts])
 
   const addToCart = (product: Product) => {
     const existing = cart.find(item => item.product.id === product.id)
     if (existing) {
       if (product.trackInventory && existing.quantity >= product.stock) {
-        alert('Stock insuficiente')
+        toast.error('Stock insuficiente')
         return
       }
       setCart(cart.map(item =>
@@ -138,9 +164,15 @@ export default function POSPage() {
       ))
     } else {
       if (product.trackInventory && product.stock < 1) {
-        alert('Sin stock disponible')
+        toast.error('Sin stock disponible')
         return
       }
+
+      // Show warning if stock is getting low
+      if (product.trackInventory && product.stock <= product.minStock * 1.2 && product.stock > 1) {
+        toast.warning(`⚠️ Queda poco stock de ${product.name} (${product.stock} unidades)`)
+      }
+
       setCart([...cart, {
         product,
         quantity: 1,
@@ -158,7 +190,7 @@ export default function POSPage() {
 
     const product = products.find(p => p.id === productId)
     if (product?.trackInventory && quantity > product.stock) {
-      alert('Stock insuficiente')
+      toast.error('Stock insuficiente')
       return
     }
 
@@ -169,14 +201,61 @@ export default function POSPage() {
     ))
   }
 
-  const calculateTotals = () => {
+  const calculateTotals = useCallback(() => {
     const subtotal = cart.reduce((sum, item) => sum + (item.quantity * item.unitPrice - item.discount), 0)
     const tax = cart.reduce((sum, item) => sum + (item.quantity * item.unitPrice - item.discount) * item.product.taxRate, 0)
     const total = subtotal + tax - discount
     return { subtotal, tax, total }
-  }
+  }, [cart, discount])
 
-  const handleCheckout = async () => {
+  // Parked sales functions
+  const parkCurrentSale = useCallback(() => {
+    if (cart.length === 0) {
+      toast.warning('No hay productos en el carrito para pausar')
+      return
+    }
+
+    const parkedSale = {
+      id: `parked-${Date.now()}`,
+      cart: [...cart],
+      selectedCustomer,
+      discount,
+      timestamp: new Date()
+    }
+
+    setParkedSales(prev => [...prev, parkedSale])
+    setCart([])
+    setSelectedCustomer(null)
+    setDiscount(0)
+    toast.success('Venta pausada exitosamente')
+  }, [cart, selectedCustomer, discount, toast])
+
+  const resumeParkedSale = useCallback((parkedSaleId: string) => {
+    const parkedSale = parkedSales.find(sale => sale.id === parkedSaleId)
+    if (!parkedSale) return
+
+    // Check if current cart has items
+    if (cart.length > 0) {
+      if (!confirm('¿Deseas reemplazar el carrito actual con la venta pausada?')) {
+        return
+      }
+    }
+
+    setCart(parkedSale.cart)
+    setSelectedCustomer(parkedSale.selectedCustomer)
+    setDiscount(parkedSale.discount)
+    setParkedSales(prev => prev.filter(sale => sale.id !== parkedSaleId))
+    toast.success('Venta recuperada exitosamente')
+  }, [parkedSales, cart.length, toast])
+
+  const deleteParkedSale = useCallback((parkedSaleId: string) => {
+    if (confirm('¿Estás seguro de que deseas eliminar esta venta pausada?')) {
+      setParkedSales(prev => prev.filter(sale => sale.id !== parkedSaleId))
+      toast.success('Venta pausada eliminada')
+    }
+  }, [toast])
+
+  const handleCheckout = useCallback(async () => {
     if (cart.length === 0) return
 
     setLoading(true)
@@ -208,17 +287,18 @@ export default function POSPage() {
         setCart([])
         setSelectedCustomer(null)
         setDiscount(0)
+        toast.success('Venta procesada exitosamente')
       } else {
         const error = await response.json()
-        alert(`Error: ${error.error}`)
+        toast.error(`Error al procesar venta: ${error.error}`)
       }
     } catch (error) {
       console.error('Error de pago:', error)
-      alert('Ocurrió un error durante el pago')
+      toast.error('Ocurrió un error durante el pago')
     } finally {
       setLoading(false)
     }
-  }
+  }, [cart, selectedCustomer?.id, paymentMethod, discount, calculateTotals, toast])
 
   const handleDocumentSelection = (action: 'print-receipt' | 'print-invoice' | 'email') => {
     if (!lastSale) return
@@ -251,20 +331,115 @@ export default function POSPage() {
       })
 
       if (response.ok) {
-        alert('✅ Correo enviado exitosamente')
+        toast.success('Correo enviado exitosamente')
         setShowEmailForm(false)
         setEmailAddress('')
       } else {
         const error = await response.json()
-        alert(`Error: ${error.error}`)
+        toast.error(`Error al enviar correo: ${error.error}`)
       }
     } catch (error) {
       console.error('Error enviando correo:', error)
-      alert('Ocurrió un error al enviar el correo')
+      toast.error('Ocurrió un error al enviar el correo')
     } finally {
       setSendingEmail(false)
     }
   }
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true)
+        toast.success('Modo pantalla completa activado')
+      }).catch((err) => {
+        console.error('Error al activar fullscreen:', err)
+        toast.error('No se pudo activar el modo pantalla completa')
+      })
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false)
+        toast.success('Modo pantalla completa desactivado')
+      }).catch((err) => {
+        console.error('Error al desactivar fullscreen:', err)
+        toast.error('No se pudo desactivar el modo pantalla completa')
+      })
+    }
+  }, [toast])
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
+  // Keyboard shortcuts - memoized to prevent recreation on every render
+  const keyboardShortcuts = useMemo(() => [
+    {
+      key: 'F1',
+      altKey: true,
+      action: () => {
+        const searchInput = document.querySelector('input[placeholder*="Buscar producto"]') as HTMLInputElement
+        searchInput?.focus()
+      },
+      description: 'Buscar productos (Alt+F1)'
+    },
+    {
+      key: 'F2',
+      altKey: true,
+      action: () => setShowCustomerSearch(true),
+      description: 'Buscar cliente (Alt+F2)'
+    },
+    {
+      key: 'F3',
+      altKey: true,
+      action: () => {
+        if (cart.length > 0) {
+          handleCheckout()
+        }
+      },
+      description: 'Procesar venta (Alt+F3)'
+    },
+    {
+      key: 'C',
+      altKey: true,
+      action: () => {
+        if (confirm('¿Está seguro de que desea limpiar el carrito?')) {
+          setCart([])
+          setSelectedCustomer(null)
+          setDiscount(0)
+          toast.success('Carrito limpiado')
+        }
+      },
+      description: 'Limpiar carrito (Alt+C)'
+    },
+    {
+      key: 'P',
+      altKey: true,
+      action: () => parkCurrentSale(),
+      description: 'Pausar venta (Alt+P)'
+    },
+    {
+      key: 'F11',
+      action: () => toggleFullscreen(),
+      description: 'Pantalla completa (F11)'
+    },
+    {
+      key: 'Enter',
+      ctrlKey: true,
+      action: () => {
+        if (cart.length > 0) {
+          handleCheckout()
+        }
+      },
+      description: 'Completar venta (Ctrl+Enter)'
+    }
+  ], [cart.length, handleCheckout, setShowCustomerSearch, toast, toggleFullscreen, parkCurrentSale])
+
+  useKeyboardShortcuts(keyboardShortcuts)
 
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -295,7 +470,7 @@ export default function POSPage() {
             addToCart(product)
             stopBarcodeScanner()
           } else {
-            alert(`Producto con código de barras ${code} no encontrado`)
+            toast.error(`Producto con código de barras ${code} no encontrado`)
           }
         }
       } catch (err) {
@@ -323,7 +498,7 @@ export default function POSPage() {
 
   const handleCustomerSearch = async () => {
     if (!customerSearchQuery.trim()) {
-      alert('Por favor ingrese un RNC o nombre para buscar')
+      toast.error('Por favor ingrese un RNC o nombre para buscar')
       return
     }
 
@@ -334,15 +509,15 @@ export default function POSPage() {
         const result = await response.json()
         setCustomerSearchResults(result.results)
         if (result.results.length === 0) {
-          alert('No se encontraron clientes con esa búsqueda')
+          toast.warning('No se encontraron clientes con esa búsqueda')
         }
       } else {
         const error = await response.json()
-        alert(`Error: ${error.error}`)
+        toast.error(`Error: ${error.error}`)
       }
     } catch (error) {
       console.error('Error buscando clientes:', error)
-      alert('Error al buscar clientes')
+      toast.error('Error al buscar clientes')
     } finally {
       setSearchingCustomers(false)
     }
@@ -386,20 +561,20 @@ export default function POSPage() {
           } else {
             const errorData = await createResponse.json()
             console.error('Customer creation error:', errorData)
-            alert(`Error al crear cliente desde datos DGII: ${errorData.error || 'Validación fallida'}`)
+            toast.error(`Error al crear cliente desde datos DGII: ${errorData.error || 'Validación fallida'}`)
             return
           }
         }
       } catch (error) {
         console.error('Error handling DGII customer:', error)
-        alert('Error al procesar cliente DGII')
+        toast.error('Error al procesar cliente DGII')
         return
       }
     }
 
     // Ensure customerId is defined (it should be for both manual and DGII customers)
     if (!customerId) {
-      alert('Error: No se pudo obtener el ID del cliente')
+      toast.error('Error: No se pudo obtener el ID del cliente')
       return
     }
 
@@ -418,7 +593,31 @@ export default function POSPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-6">
+    <div className={`min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-6 ${isFullscreen ? 'fullscreen-mode' : ''}`}>
+      <style jsx>{`
+        .fullscreen-mode {
+          padding: 1rem !important;
+          background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #581c87 100%) !important;
+        }
+        .fullscreen-mode .max-w-7xl {
+          max-width: none !important;
+        }
+        .fullscreen-mode h1 {
+          font-size: 2.5rem !important;
+        }
+        .fullscreen-mode .grid {
+          gap: 1.5rem !important;
+        }
+        .fullscreen-mode .bg-white {
+          background: rgba(255, 255, 255, 0.95) !important;
+          backdrop-filter: blur(10px) !important;
+        }
+        @media (max-width: 1024px) {
+          .fullscreen-mode .grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -428,13 +627,90 @@ export default function POSPage() {
             </h1>
             <p className="text-gray-600 text-sm mt-1">Sistema POS - GNTech</p>
           </div>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="px-6 py-2.5 bg-white text-gray-700 rounded-xl hover:bg-gray-50 shadow-md hover:shadow-lg transition-all duration-200 font-medium border border-gray-200"
-          >
-            ← Volver al Panel
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={toggleFullscreen}
+              className={`px-4 py-2.5 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg border ${
+                isFullscreen
+                  ? 'bg-green-500 text-white border-green-500 hover:bg-green-600'
+                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+              }`}
+              title={isFullscreen ? 'Salir de pantalla completa (F11)' : 'Pantalla completa (F11)'}
+            >
+              {isFullscreen ? '🗗' : '🗖'} {isFullscreen ? 'Salir' : 'Pantalla Completa'}
+            </button>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="px-6 py-2.5 bg-white text-gray-700 rounded-xl hover:bg-gray-50 shadow-md hover:shadow-lg transition-all duration-200 font-medium border border-gray-200"
+            >
+              ← Volver al Panel
+            </button>
+          </div>
         </div>
+
+        {/* Inventory Alerts */}
+        {(() => {
+          const lowStockProducts = products.filter(p => p.trackInventory && p.stock <= p.minStock && p.stock > 0)
+          const outOfStockProducts = products.filter(p => p.trackInventory && p.stock === 0)
+
+          if (lowStockProducts.length === 0 && outOfStockProducts.length === 0) return null
+
+          return (
+            <div className="mb-6 space-y-3">
+              {lowStockProducts.length > 0 && (
+                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-400 p-4 rounded-r-xl shadow-md">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      <span className="text-2xl">⚠️</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-yellow-800">
+                        Stock Bajo
+                      </h3>
+                      <p className="text-sm text-yellow-700 mt-1">
+                        {lowStockProducts.length} producto{lowStockProducts.length !== 1 ? 's' : ''} con stock bajo: {' '}
+                        {lowStockProducts.slice(0, 3).map(p => `${p.name} (${p.stock})`).join(', ')}
+                        {lowStockProducts.length > 3 && ` y ${lowStockProducts.length - 3} más...`}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => router.push('/inventory')}
+                      className="px-3 py-1 bg-yellow-600 text-white text-xs rounded-lg hover:bg-yellow-700 transition-colors"
+                    >
+                      Ver Inventario
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {outOfStockProducts.length > 0 && (
+                <div className="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-400 p-4 rounded-r-xl shadow-md">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      <span className="text-2xl">🚫</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-red-800">
+                        Sin Stock
+                      </h3>
+                      <p className="text-sm text-red-700 mt-1">
+                        {outOfStockProducts.length} producto{outOfStockProducts.length !== 1 ? 's' : ''} agotado{outOfStockProducts.length !== 1 ? 's' : ''}: {' '}
+                        {outOfStockProducts.slice(0, 3).map(p => p.name).join(', ')}
+                        {outOfStockProducts.length > 3 && ` y ${outOfStockProducts.length - 3} más...`}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => router.push('/inventory')}
+                      className="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Ver Inventario
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })()}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Products Section */}
@@ -491,14 +767,19 @@ export default function POSPage() {
                         RD$ {product.price.toFixed(2)}
                       </p>
                       {product.trackInventory && (
-                        <span className={`text-xs px-3 py-1 rounded-full font-semibold ${
-                          product.stock === 0 ? 'bg-red-100 text-red-700 border border-red-300' :
-                          product.stock <= product.minStock ? 'bg-orange-100 text-orange-700 border border-orange-300' :
-                          product.stock <= product.minStock * 1.5 ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' :
-                          'bg-green-100 text-green-700 border border-green-300'
-                        }`}>
-                          {product.stock} disp.
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className={`text-xs px-2 py-1 rounded-full font-semibold border ${
+                            product.stock === 0 ? 'bg-red-100 text-red-700 border-red-300' :
+                            product.stock <= product.minStock ? 'bg-orange-100 text-orange-700 border-orange-300' :
+                            product.stock <= product.minStock * 1.5 ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
+                            'bg-green-100 text-green-700 border-green-300'
+                          }`}>
+                            {product.stock === 0 ? '🚫' : product.stock <= product.minStock ? '⚠️' : ''} {product.stock}
+                          </span>
+                          {product.stock <= product.minStock && product.stock > 0 && (
+                            <span className="text-xs text-red-500 font-bold animate-pulse">!</span>
+                          )}
+                        </div>
                       )}
                     </div>
                     <button
@@ -506,7 +787,9 @@ export default function POSPage() {
                       className="w-full mt-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
                       disabled={product.trackInventory && product.stock <= 0}
                     >
-                      {product.trackInventory && product.stock <= 0 ? '❌ Sin Stock' : '➕ Agregar al Carrito'}
+                      {product.trackInventory && product.stock <= 0 ? '🚫 Agotado' :
+                       product.trackInventory && product.stock <= product.minStock ? '⚠️ Stock Bajo - Agregar' :
+                       '➕ Agregar al Carrito'}
                     </button>
                   </div>
                 ))}
@@ -655,27 +938,96 @@ export default function POSPage() {
                     />
                   </div>
 
-                  <button
-                    onClick={handleCheckout}
-                    disabled={loading}
-                    className="w-full px-6 py-4 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 text-white rounded-xl font-bold text-lg hover:from-green-600 hover:via-emerald-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:scale-105"
-                  >
-                    {loading ? (
-                      <span className="flex items-center justify-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Procesando...
-                      </span>
-                    ) : (
-                      `💰 Completar Venta - RD$ ${total.toFixed(2)}`
-                    )}
-                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={parkCurrentSale}
+                      disabled={cart.length === 0}
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    >
+                      ⏸️ Pausar Venta
+                    </button>
+
+                    <button
+                      onClick={handleCheckout}
+                      disabled={loading}
+                      className="flex-1 px-6 py-4 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 text-white rounded-xl font-bold text-lg hover:from-green-600 hover:via-emerald-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:scale-105"
+                    >
+                      {loading ? (
+                        <span className="flex items-center justify-center">
+                          <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Procesando...
+                        </span>
+                      ) : (
+                        `💰 Completar Venta - RD$ ${total.toFixed(2)}`
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
           </div>
+
+          {/* Parked Sales */}
+          {parkedSales.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+              <h2 className="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                ⏸️ Ventas Pausadas
+                <span className="text-sm bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-semibold">
+                  {parkedSales.length}
+                </span>
+              </h2>
+
+              <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                {parkedSales.map(parkedSale => {
+                  const parkedTotal = parkedSale.cart.reduce((sum, item) =>
+                    sum + (item.quantity * item.unitPrice - item.discount), 0
+                  ) - parkedSale.discount
+
+                  return (
+                    <div key={parkedSale.id} className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-xl p-4 hover:shadow-md transition-all duration-200">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-800">
+                            {parkedSale.selectedCustomer ? parkedSale.selectedCustomer.name : 'Cliente no especificado'}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {parkedSale.cart.length} artículo{parkedSale.cart.length !== 1 ? 's' : ''} • RD$ {parkedTotal.toFixed(2)}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {parkedSale.timestamp.toLocaleTimeString()}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => resumeParkedSale(parkedSale.id)}
+                            className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+                            title="Recuperar venta"
+                          >
+                            ▶️
+                          </button>
+                          <button
+                            onClick={() => deleteParkedSale(parkedSale.id)}
+                            className="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
+                            title="Eliminar venta pausada"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="text-xs text-gray-600">
+                        {parkedSale.cart.slice(0, 2).map(item => item.product.name).join(', ')}
+                        {parkedSale.cart.length > 2 && ` y ${parkedSale.cart.length - 2} más...`}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Document Selection Modal */}
@@ -989,6 +1341,12 @@ export default function POSPage() {
           </div>
         )}
       </div>
+
+      {/* Keyboard Shortcuts Help */}
+      <KeyboardShortcutsHelp 
+        isOpen={showKeyboardHelp} 
+        onClose={() => setShowKeyboardHelp(false)} 
+      />
 
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {

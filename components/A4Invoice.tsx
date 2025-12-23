@@ -2,6 +2,24 @@
 
 import Image from 'next/image'
 
+// Helper function to convert relative logo paths to absolute URLs
+function getAbsoluteLogoUrl(logoPath: string | null | undefined): string | null {
+  if (!logoPath) return null
+
+  // If it's already an absolute URL or data URL, return as is
+  if (logoPath.startsWith('http://') || logoPath.startsWith('https://') || logoPath.startsWith('data:')) {
+    return logoPath
+  }
+
+  // Get base URL from environment or construct it
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
+                  (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000')
+
+  // Remove leading slash if present and construct full URL
+  const cleanPath = logoPath.startsWith('/') ? logoPath.substring(1) : logoPath
+  return `${baseUrl}/${cleanPath}`
+}
+
 interface Product {
   id: string
   name: string
@@ -82,9 +100,9 @@ export default function A4Invoice({ sale, ncfExpiration, businessSettings }: A4I
       {/* Header */}
       <div className="flex justify-between items-start mb-8 pb-6 border-b-4 border-indigo-600">
         <div className="flex items-center gap-4">
-          {businessSettings?.logo && (
+          {businessSettings?.logo && getAbsoluteLogoUrl(businessSettings.logo) && (
             <Image
-              src={businessSettings.logo}
+              src={getAbsoluteLogoUrl(businessSettings.logo)!}
               alt="Logo"
               width={64}
               height={64}

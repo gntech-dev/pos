@@ -46,6 +46,10 @@ Welcome to the POS System Wiki! This knowledge base contains detailed informatio
 
 ## Recent Updates
 
+- Version 1.0.2 - Logo display fixes and email improvements
+- Fixed logo embedding in HTML emails and print documents
+- Enhanced support for custom uploaded logos
+- Changed default email type to invoice
 - Version 1.0.1 - Email invoice functionality
 - Professional PDF generation with html2canvas
 - Spanish character encoding fixes

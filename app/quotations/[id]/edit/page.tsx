@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 
 interface Customer {
   id: string
@@ -38,8 +38,34 @@ interface CartItem {
   total: number
 }
 
-export default function NewQuotationPage() {
+interface Quotation {
+  id: string
+  quotationNumber: string
+  customerId?: string
+  customer?: {
+    id: string
+    name: string
+    rnc?: string
+  }
+  items: Array<{
+    id: string
+    productId: string
+    product: Product
+    quantity: number
+    unitPrice: number
+    discount: number
+    subtotal: number
+    total: number
+  }>
+  expiresAt: string
+  notes?: string
+}
+
+export default function EditQuotationPage() {
   const router = useRouter()
+  const params = useParams()
+  const quotationId = params.id as string
+
   const [customerId, setCustomerId] = useState('')
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([])
   const [products, setProducts] = useState<Product[]>([])
@@ -51,16 +77,6 @@ export default function NewQuotationPage() {
   const [customerSearchTerm, setCustomerSearchTerm] = useState('')
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
   const customerDropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    loadCustomers()
-    loadProducts()
-
-    // Set default expiry to 30 days
-    const defaultExpiry = new Date()
-    defaultExpiry.setDate(defaultExpiry.getDate() + 30)
-    setExpiresAt(defaultExpiry.toISOString().split('T')[0])
-  }, [])
 
   useEffect(() => {
     const searchCustomers = async () => {
@@ -133,6 +149,50 @@ export default function NewQuotationPage() {
     }
   }, [])
 
+  const loadQuotation = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/quotations/${quotationId}`)
+      if (response.ok) {
+        const quotation: Quotation = await response.json()
+
+        // Set customer
+        if (quotation.customerId) {
+          setCustomerId(quotation.customerId)
+          setCustomerSearchTerm(quotation.customer?.name || '')
+        }
+
+        // Set items
+        const cartItems: CartItem[] = quotation.items.map(item => ({
+          productId: item.productId,
+          product: item.product,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          discount: item.discount,
+          subtotal: item.subtotal,
+          total: item.total
+        }))
+        setCart(cartItems)
+
+        // Set other fields
+        setExpiresAt(quotation.expiresAt.split('T')[0]) // Format date
+        setNotes(quotation.notes || '')
+      } else {
+        alert('Error al cargar la cotización')
+        router.push('/quotations')
+      }
+    } catch (error) {
+      console.error('Error loading quotation:', error)
+      alert('Error al cargar la cotización')
+      router.push('/quotations')
+    }
+  }, [quotationId, router])
+
+  useEffect(() => {
+    loadQuotation()
+    loadCustomers()
+    loadProducts()
+  }, [loadQuotation])
+
   const loadCustomers = async () => {
     try {
       const response = await fetch('/api/customers?limit=10')
@@ -155,77 +215,6 @@ export default function NewQuotationPage() {
     } catch (error) {
       console.error('Error loading products:', error)
     }
-  }
-
-  const addToCart = (product: Product) => {
-    const existingItem = cart.find(item => item.productId === product.id)
-
-    if (existingItem) {
-      updateQuantity(product.id, existingItem.quantity + 1)
-    } else {
-      const newItem: CartItem = {
-        productId: product.id,
-        product,
-        quantity: 1,
-        unitPrice: product.price,
-        discount: 0,
-        subtotal: product.price,
-        total: product.price
-      }
-      setCart([...cart, newItem])
-    }
-    setSearchTerm('')
-  }
-
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId)
-      return
-    }
-
-    setCart(cart.map(item => {
-      if (item.productId === productId) {
-        const subtotal = quantity * item.unitPrice - item.discount
-        const total = subtotal * 1.18
-
-        return {
-          ...item,
-          quantity,
-          subtotal,
-          total
-        }
-      }
-      return item
-    }))
-  }
-
-  const updateDiscount = (productId: string, discount: number) => {
-    setCart(cart.map(item => {
-      if (item.productId === productId) {
-        const subtotal = item.quantity * item.unitPrice - discount
-        const total = subtotal * 1.18
-
-        return {
-          ...item,
-          discount,
-          subtotal,
-          total
-        }
-      }
-      return item
-    }))
-  }
-
-  const removeFromCart = (productId: string) => {
-    setCart(cart.filter(item => item.productId !== productId))
-  }
-
-  const calculateTotals = () => {
-    const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0)
-    const tax = cart.reduce((sum, item) => sum + (item.subtotal * 0.18), 0)
-    const total = subtotal + tax
-
-    return { subtotal, tax, total }
   }
 
   const handleCustomerSelect = async (customer: Customer & { isFromRNC?: boolean }) => {
@@ -284,6 +273,70 @@ export default function NewQuotationPage() {
     setShowCustomerDropdown(false)
   }
 
+  const addToCart = (product: Product) => {
+    const existingItem = cart.find(item => item.productId === product.id)
+    if (existingItem) {
+      updateQuantity(product.id, existingItem.quantity + 1)
+    } else {
+      const newItem: CartItem = {
+        productId: product.id,
+        product,
+        quantity: 1,
+        unitPrice: product.price,
+        discount: 0,
+        subtotal: product.price,
+        total: product.price * (1 + 0.18) // Include tax
+      }
+      setCart([...cart, newItem])
+    }
+  }
+
+  const updateQuantity = (productId: string, quantity: number) => {
+    setCart(cart.map(item => {
+      if (item.productId === productId) {
+        const subtotal = quantity * item.unitPrice - item.discount
+        const total = subtotal * (1 + 0.18)
+
+        return {
+          ...item,
+          quantity,
+          subtotal,
+          total
+        }
+      }
+      return item
+    }))
+  }
+
+  const updateDiscount = (productId: string, discount: number) => {
+    setCart(cart.map(item => {
+      if (item.productId === productId) {
+        const subtotal = item.quantity * item.unitPrice - discount
+        const total = subtotal * (1 + 0.18)
+
+        return {
+          ...item,
+          discount,
+          subtotal,
+          total
+        }
+      }
+      return item
+    }))
+  }
+
+  const removeFromCart = (productId: string) => {
+    setCart(cart.filter(item => item.productId !== productId))
+  }
+
+  const calculateTotals = () => {
+    const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0)
+    const tax = cart.reduce((sum, item) => sum + (item.subtotal * 0.18), 0)
+    const total = subtotal + tax
+
+    return { subtotal, tax, total }
+  }
+
   const handleSave = async () => {
     if (cart.length === 0) {
       alert('Agregue al menos un producto a la cotización')
@@ -292,8 +345,8 @@ export default function NewQuotationPage() {
 
     setLoading(true)
     try {
-      const response = await fetch('/api/quotations', {
-        method: 'POST',
+      const response = await fetch(`/api/quotations/${quotationId}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customerId: customerId || undefined,
@@ -309,16 +362,15 @@ export default function NewQuotationPage() {
       })
 
       if (response.ok) {
-        const _quotation = await response.json()
-        alert('Cotización creada exitosamente')
+        alert('Cotización actualizada exitosamente')
         router.push('/quotations')
       } else {
         const error = await response.json()
         alert(`Error: ${error.error}`)
       }
     } catch (error) {
-      console.error('Error creating quotation:', error)
-      alert('Error al crear la cotización')
+      console.error('Error updating quotation:', error)
+      alert('Error al actualizar la cotización')
     } finally {
       setLoading(false)
     }
@@ -345,9 +397,9 @@ export default function NewQuotationPage() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              📝 Nueva Cotización
+              ✏️ Editar Cotización
             </h1>
-            <p className="text-gray-600 text-sm mt-1">Crea una nueva cotización para un cliente</p>
+            <p className="text-gray-600 text-sm mt-1">Modifica los detalles de la cotización</p>
           </div>
           <button
             onClick={() => router.push('/quotations')}
@@ -610,7 +662,7 @@ export default function NewQuotationPage() {
                 disabled={loading || cart.length === 0}
                 className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg"
               >
-                {loading ? '💾 Guardando...' : '✅ Crear Cotización'}
+                {loading ? '💾 Guardando...' : '✅ Actualizar Cotización'}
               </button>
             </div>
           </div>

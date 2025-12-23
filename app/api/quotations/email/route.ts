@@ -10,9 +10,50 @@ interface BusinessSettings {
   address: string;
   phone: string;
   email: string;
+  logo?: string;
 }
 
 const CONFIG_FILE = path.join(process.cwd(), 'email-config.json')
+
+// Helper function to convert logo to data URL for email embedding
+function convertLogoToDataUrl(logoPath: string | null | undefined): string | null {
+  if (!logoPath) return null
+
+  try {
+    let fullPath: string
+
+    if (logoPath.startsWith('/logos/')) {
+      // Pre-made logos in public/logos/
+      fullPath = path.join(process.cwd(), 'public', logoPath)
+    } else if (logoPath.startsWith('/api/storage/uploads/')) {
+      // Uploaded logos in storage/uploads/
+      const filename = logoPath.replace('/api/storage/uploads/', '')
+      fullPath = path.join(process.cwd(), 'storage', 'uploads', filename)
+    } else {
+      // Unknown path, return as is
+      return logoPath
+    }
+
+    if (fs.existsSync(fullPath)) {
+      const fileContent = fs.readFileSync(fullPath)
+      const ext = logoPath.split('.').pop()?.toLowerCase()
+      let mimeType = 'image/png' // default
+
+      if (ext === 'jpg' || ext === 'jpeg') mimeType = 'image/jpeg'
+      else if (ext === 'png') mimeType = 'image/png'
+      else if (ext === 'gif') mimeType = 'image/gif'
+      else if (ext === 'webp') mimeType = 'image/webp'
+      else if (ext === 'svg') mimeType = 'image/svg+xml'
+
+      const base64 = fileContent.toString('base64')
+      return `data:${mimeType};base64,${base64}`
+    }
+  } catch (error) {
+    console.error('Error converting logo to data URL:', error)
+  }
+
+  return logoPath
+}
 
 // Load email configuration from file
 function loadEmailConfig() {
@@ -74,7 +115,7 @@ export async function POST(req: NextRequest) {
     const businessSettings = await prisma.setting.findMany({
       where: {
         key: {
-          in: ['business_name', 'business_rnc', 'business_address', 'business_phone', 'business_email']
+          in: ['business_name', 'business_rnc', 'business_address', 'business_phone', 'business_email', 'business_logo']
         }
       }
     })
@@ -85,7 +126,8 @@ export async function POST(req: NextRequest) {
       rnc: '000-00000-0',
       address: 'Santo Domingo, República Dominicana',
       phone: '809-555-5555',
-      email: 'info@gntech.com'
+      email: 'info@gntech.com',
+      logo: undefined as string | undefined
     }
 
     // Override with database values
@@ -105,6 +147,9 @@ export async function POST(req: NextRequest) {
           break
         case 'business_email':
           businessData.email = setting.value
+          break
+        case 'business_logo':
+          businessData.logo = setting.value
           break
       }
     })
@@ -346,6 +391,7 @@ function generateQuotationHTML(quotation: Quotation, businessSettings?: Business
     </head>
     <body>
       <div class="header">
+        ${businessSettings?.logo ? `<img src="${convertLogoToDataUrl(businessSettings.logo)}" alt="Logo" style="max-width: 80px; max-height: 80px; margin-bottom: 10px;">` : ''}
         <div class="company-name">${businessSettings?.name || 'GNTECH POS'}</div>
         <div class="company-info">${businessSettings?.address || 'Sistema de Punto de Venta Profesional'}</div>
         <div class="company-info">RNC: ${businessSettings?.rnc || '000-00000-0'}</div>

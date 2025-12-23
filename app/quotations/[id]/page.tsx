@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 
 interface Quotation {
@@ -45,6 +45,8 @@ export default function QuotationDetailPage() {
   const params = useParams()
   const [quotation, setQuotation] = useState<Quotation | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showActionsMenu, setShowActionsMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const loadQuotation = useCallback(async () => {
     if (!params.id) return
@@ -71,6 +73,22 @@ export default function QuotationDetailPage() {
       loadQuotation()
     }
   }, [params.id, loadQuotation])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowActionsMenu(false)
+      }
+    }
+
+    if (showActionsMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showActionsMenu])
 
   const handlePrint = async (type: 'quotation' | 'quotation_a4' = 'quotation') => {
     try {
@@ -117,7 +135,28 @@ export default function QuotationDetailPage() {
       return
     }
 
-    router.push(`/pos?quotationId=${params.id}`)
+    try {
+      const paymentMethod = prompt('Método de pago (CASH, CARD, TRANSFER, MIXED, CHECK, OTHER):', 'CASH')
+      if (!paymentMethod) return
+
+      const response = await fetch(`/api/quotations/${params.id}/convert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentMethod })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        alert('✅ Cotización convertida a venta exitosamente')
+        router.push(`/sales/${result.sale.id}`)
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error converting quotation:', error)
+      alert('Error al convertir la cotización')
+    }
   }
 
   const formatCurrency = (amount: number) => {
@@ -204,26 +243,32 @@ export default function QuotationDetailPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <div className="relative">
+            <div className="relative" ref={menuRef}>
               <button
-                onClick={() => {}}
+                onClick={() => setShowActionsMenu(!showActionsMenu)}
                 className="px-6 py-2.5 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200 transition-all duration-200 font-semibold shadow-md"
               >
                 ⚡ Acciones
               </button>
 
-              {false && (
+              {showActionsMenu && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-10">
                   <div className="p-2">
                     <div className="text-xs font-semibold text-gray-500 mb-2 px-2">Imprimir</div>
                     <button
-                      onClick={() => handlePrint('quotation')}
+                      onClick={() => {
+                        handlePrint('quotation')
+                        setShowActionsMenu(false)
+                      }}
                       className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded flex items-center gap-2"
                     >
                       🧾 Cotización (80mm)
                     </button>
                     <button
-                      onClick={() => handlePrint('quotation_a4')}
+                      onClick={() => {
+                        handlePrint('quotation_a4')
+                        setShowActionsMenu(false)
+                      }}
                       className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded flex items-center gap-2"
                     >
                       📄 Cotización (A4)
@@ -232,7 +277,10 @@ export default function QuotationDetailPage() {
                     <div className="border-t border-gray-200 my-2"></div>
                     <div className="text-xs font-semibold text-gray-500 mb-2 px-2">Email</div>
                     <button
-                      onClick={handleEmail}
+                      onClick={() => {
+                        handleEmail()
+                        setShowActionsMenu(false)
+                      }}
                       className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded flex items-center gap-2"
                     >
                       📧 Enviar por Email
@@ -243,7 +291,10 @@ export default function QuotationDetailPage() {
                         <div className="border-t border-gray-200 my-2"></div>
                         <div className="text-xs font-semibold text-gray-500 mb-2 px-2">Acciones</div>
                         <button
-                          onClick={handleConvertToSale}
+                          onClick={() => {
+                            handleConvertToSale()
+                            setShowActionsMenu(false)
+                          }}
                           className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded flex items-center gap-2"
                         >
                           🛒 Convertir a Venta
