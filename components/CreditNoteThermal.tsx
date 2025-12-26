@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { formatDate, formatCurrency } from '@/lib/utils'
 
 // Helper function to convert relative logo paths to absolute URLs
 function getAbsoluteLogoUrl(logoPath: string | null | undefined): string | null {
@@ -71,23 +72,6 @@ interface CreditNoteThermalProps {
 }
 
 export default function CreditNoteThermal({ refund, businessSettings }: CreditNoteThermalProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-DO', {
-      style: 'currency',
-      currency: 'DOP',
-    }).format(amount)
-  }
-
-  const formatDate = (date: string | Date) => {
-    return new Intl.DateTimeFormat('es-DO', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(date))
-  }
-
   const logoUrl = getAbsoluteLogoUrl(businessSettings?.logo)
 
   return (
