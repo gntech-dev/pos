@@ -208,6 +208,7 @@ model Refund {
   total           Float
   reason          String?
   ncf             String?   @unique // Credit note NCF
+  ncfType         String?   @default("B04") // Credit note NCF type
   status          String    @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
   createdAt       DateTime  @default(now())
   

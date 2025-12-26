@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSessionFromCookie } from "@/lib/session"
 import { z } from "zod"
+import { generateNCF } from "@/lib/ncf"
 
 const RefundItemSchema = z.object({
   saleItemId: z.string(),
@@ -200,12 +201,15 @@ export async function POST(request: NextRequest) {
     const refundCount = await prisma.refund.count()
     const refundNumber = `REF-${(refundCount + 1).toString().padStart(8, '0')}`
 
-    // TODO: Generate credit note NCF if requested
-    // For now, we'll skip NCF generation for refunds
-    const ncf: string | null = null
-    if (data.generateCreditNote) {
-      // This would require B04 NCF type for credit notes
-      // ncf = await generateNCF('B04' as any)
+    // Generate credit note NCF automatically for all refunds (DGII compliance)
+    let ncf: string | null = null
+    try {
+      ncf = await generateNCF('B04')
+      console.log(`Generated NCF ${ncf} for refund ${refundNumber}`)
+    } catch (error) {
+      console.error('Error generating NCF for refund:', error)
+      // Continue without NCF but log the error
+      // This allows refunds to proceed even if NCF generation fails
     }
 
     // Create refund with items in a transaction
@@ -222,6 +226,7 @@ export async function POST(request: NextRequest) {
           total,
           reason: data.reason,
           ncf,
+          ncfType: ncf ? 'B04' : null, // Set NCF type if NCF was generated
           status: 'COMPLETED',
           items: {
             create: refundItems
@@ -310,6 +315,9 @@ export async function POST(request: NextRequest) {
             refundNumber: newRefund.refundNumber,
             total: newRefund.total,
             saleId: newRefund.saleId,
+            ncf: newRefund.ncf,
+            ncfType: newRefund.ncfType,
+            reason: newRefund.reason
           })
         }
       })

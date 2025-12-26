@@ -74,6 +74,15 @@ async function seedNCFSequences() {
       isActive: true,
     },
     {
+      type: "B04",
+      prefix: "B04",
+      currentNumber: 0,
+      startNumber: 1,
+      endNumber: 10000,
+      expiryDate,
+      isActive: true,
+    },
+    {
       type: "B14",
       prefix: "B14",
       currentNumber: 0,

@@ -4,11 +4,12 @@ import { prisma } from './prisma'
  * NCF Types for Dominican Republic DGII compliance
  * B01: Tax Credit (Crédito Fiscal) - For companies with RNC
  * B02: Consumer Invoice (Consumidor Final) - For individuals
+ * B04: Credit Notes (Notas de Crédito) - For refunds
  * B14: Special Regime (Régimen Especial)
  * B15: Gubernamental (Government entities)
  * B16: Export (Exportaciones)
  */
-export type NCFType = 'B01' | 'B02' | 'B14' | 'B15' | 'B16'
+export type NCFType = 'B01' | 'B02' | 'B04' | 'B14' | 'B15' | 'B16'
 
 /**
  * Generate the next NCF for a given type
