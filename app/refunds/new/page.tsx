@@ -37,6 +37,7 @@ export default function NewRefundPage() {
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [sales, setSales] = useState<Sale[]>([])
+  const [createdRefundId, setCreatedRefundId] = useState<string | null>(null)
 
   const searchSales = async () => {
     if (!searchTerm.trim()) return
@@ -111,8 +112,10 @@ export default function NewRefundPage() {
       })
 
       if (response.ok) {
-        alert('Devolución procesada exitosamente')
-        router.push('/refunds')
+        const refundData = await response.json()
+        setCreatedRefundId(refundData.id)
+        // alert('Devolución procesada exitosamente')
+        // router.push('/refunds')
       } else {
         const error = await response.json()
         alert(`Error: ${error.error}`)
@@ -130,6 +133,50 @@ export default function NewRefundPage() {
       style: 'currency',
       currency: 'DOP'
     }).format(amount)
+  }
+
+  // Success Modal
+  if (createdRefundId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 flex items-center justify-center">
+        <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 border border-gray-100 text-center">
+          <div className="text-6xl mb-4">✅</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">¡Devolución Procesada!</h2>
+          <p className="text-gray-600 mb-6">
+            La devolución ha sido procesada exitosamente con generación automática de NCF de Nota de Crédito.
+          </p>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => window.open(`/refunds/print/${createdRefundId}`, '_blank')}
+              className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 font-semibold shadow-lg"
+            >
+              🖨️ Imprimir Nota de Crédito
+            </button>
+
+            <button
+              onClick={() => router.push('/refunds')}
+              className="w-full px-6 py-3 bg-white text-gray-700 rounded-xl hover:bg-gray-50 shadow-md hover:shadow-lg transition-all duration-200 font-medium border border-gray-200"
+            >
+              📋 Ver Todas las Devoluciones
+            </button>
+
+            <button
+              onClick={() => {
+                setCreatedRefundId(null)
+                setSelectedSale(null)
+                setRefundItems([])
+                setReason('')
+                setSearchTerm('')
+              }}
+              className="w-full px-6 py-3 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200 transition-all duration-200 font-medium"
+            >
+              ➕ Procesar Otra Devolución
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

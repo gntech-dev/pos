@@ -36,7 +36,8 @@
 - ✅ Generación automática de NCF tipo B04 (Notas de Crédito)
 - ✅ Validación de montos vs venta original
 - ✅ Auditoría completa de reembolsos
-- ✅ Impresión de notas de crédito
+- ✅ Impresión de notas de crédito térmicas
+- ✅ Documento fiscal válido para DGII
 
 #### ✅ Tareas Técnicas Completadas
 - ✅ Actualizar schema Prisma para NCF de notas de crédito
@@ -44,18 +45,27 @@
 - ✅ Crear componente UI para gestión de reembolsos
 - ✅ Implementar validaciones de negocio
 - ✅ Actualizar reportes para incluir notas de crédito
+- ✅ Crear componente `CreditNoteThermal.tsx` para impresión
+- ✅ Implementar página `/refunds/print/[id]` para impresión
+- ✅ Agregar botones de impresión en lista y creación de reembolsos
 
 #### ✅ Criterios de Aceptación Cumplidos
 - ✅ Reembolso genera NCF B04 válido
 - ✅ Monto no puede exceder venta original
 - ✅ Auditoría completa registrada
 - ✅ Reportes incluyen notas de crédito
+- ✅ Nota de crédito se puede imprimir térmicamente
+- ✅ Documento incluye toda información fiscal requerida
 
-#### ✅ Archivos Modificados
+#### ✅ Archivos Modificados/Creados
 - `database/prisma/schema.prisma`
 - `app/api/refunds/route.ts`
 - `lib/ncf.ts`
 - `database/prisma/seed.ts`
+- `app/refunds/page.tsx`
+- `app/refunds/new/page.tsx`
+- `components/CreditNoteThermal.tsx` (nuevo)
+- `app/refunds/print/[id]/page.tsx` (nuevo)
 
 ---
 
