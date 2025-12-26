@@ -53,9 +53,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { secret, token } = await req.json()
+    let body
+    try {
+      body = await req.json()
+    } catch (error) {
+      console.error('Invalid JSON in 2FA POST request:', error)
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    }
+
+    const { secret, token } = body
 
     if (!secret || !token) {
+      console.error('Missing secret or token:', { hasSecret: !!secret, hasToken: !!token })
       return NextResponse.json({ error: 'Secret and token are required' }, { status: 400 })
     }
 
@@ -64,6 +73,7 @@ export async function POST(req: NextRequest) {
     const isValid = verify2FAToken(secret, token)
 
     if (!isValid) {
+      console.error('Invalid 2FA token for secret:', secret.substring(0, 10) + '...')
       return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
     }
 
