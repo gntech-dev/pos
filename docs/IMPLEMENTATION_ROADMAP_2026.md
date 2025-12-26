@@ -48,6 +48,8 @@
 - ✅ Crear componente `CreditNoteThermal.tsx` para impresión
 - ✅ Implementar página `/refunds/print/[id]` para impresión
 - ✅ Agregar botones de impresión en lista y creación de reembolsos
+- ✅ Agregar búsqueda por cliente en creación de reembolsos
+- ✅ Actualizar API `/api/sales` con parámetro `customerSearch`
 
 #### ✅ Criterios de Aceptación Cumplidos
 - ✅ Reembolso genera NCF B04 válido
@@ -56,12 +58,13 @@
 - ✅ Reportes incluyen notas de crédito
 - ✅ Nota de crédito se puede imprimir térmicamente
 - ✅ Documento incluye toda información fiscal requerida
+- ✅ Búsqueda por cliente (nombre, RNC, cédula)
+- ✅ Búsqueda por venta (número, NCF)
 
 #### ✅ Archivos Modificados/Creados
 - `database/prisma/schema.prisma`
 - `app/api/refunds/route.ts`
-- `lib/ncf.ts`
-- `database/prisma/seed.ts`
+- `app/api/sales/route.ts`
 - `app/refunds/page.tsx`
 - `app/refunds/new/page.tsx`
 - `components/CreditNoteThermal.tsx` (nuevo)
