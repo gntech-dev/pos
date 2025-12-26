@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   const search = url.searchParams.get("search") || undefined
   const customerSearch = url.searchParams.get("customerSearch") || undefined
 
-  const where: Record<string, unknown> = {}
+  let where: Record<string, unknown> = {}
 
   if (status) {
     where.status = status
@@ -62,12 +62,26 @@ export async function GET(request: NextRequest) {
 
   // Customer search functionality
   if (customerSearch) {
-    where.customer = {
-      OR: [
-        { name: { contains: customerSearch, mode: 'insensitive' } },
-        { rnc: { contains: customerSearch, mode: 'insensitive' } },
-        { cedula: { contains: customerSearch, mode: 'insensitive' } },
-      ]
+    // Create a more complex OR condition for customer search
+    const customerConditions = [
+      { customer: { name: { contains: customerSearch } } },
+      { customer: { name: { contains: customerSearch.toLowerCase() } } },
+      { customer: { name: { contains: customerSearch.toUpperCase() } } },
+      { customer: { rnc: { contains: customerSearch } } },
+      { customer: { cedula: { contains: customerSearch } } },
+    ]
+
+    // Add to existing where conditions
+    if (where.OR) {
+      // If there's already an OR, we need to combine them
+      where = {
+        AND: [
+          where,
+          { OR: customerConditions }
+        ]
+      }
+    } else {
+      where.OR = customerConditions
     }
   }
 
