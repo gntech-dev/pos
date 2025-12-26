@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getSessionFromCookie } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { generate2FASecret, generateQRCodeDataURL, generateBackupCodes, hashBackupCodes } from '@/lib/2fa'
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_ENTITIES, getClientIP } from '@/lib/audit'
@@ -8,13 +7,13 @@ import { logAuditEvent, AUDIT_ACTIONS, AUDIT_ENTITIES, getClientIP } from '@/lib
 // GET /api/2fa/setup - Get 2FA setup information
 export async function GET(_req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const session = await getSessionFromCookie()
+    if (!session?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: session.userId },
       select: { twoFactorEnabled: true, twoFactorSecret: true }
     })
 
@@ -49,8 +48,8 @@ export async function GET(_req: NextRequest) {
 // POST /api/2fa/enable - Enable 2FA
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const session = await getSessionFromCookie()
+    if (!session?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -74,7 +73,7 @@ export async function POST(req: NextRequest) {
 
     // Update user
     await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: session.userId },
       data: {
         twoFactorEnabled: true,
         twoFactorSecret: secret,
@@ -84,10 +83,10 @@ export async function POST(req: NextRequest) {
 
     // Log the action
     await logAuditEvent({
-      userId: session.user.id,
+      userId: session.userId,
       action: AUDIT_ACTIONS.USER_2FA_ENABLED,
       entity: AUDIT_ENTITIES.USER,
-      entityId: session.user.id,
+      entityId: session.userId,
       newValue: { twoFactorEnabled: true },
       ipAddress: getClientIP(req),
     })

@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getSessionFromCookie } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_ENTITIES, getClientIP } from '@/lib/audit'
 
 // DELETE /api/2fa/disable - Disable 2FA
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const session = await getSessionFromCookie()
+    if (!session?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Update user to disable 2FA
     await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: session.userId },
       data: {
         twoFactorEnabled: false,
         twoFactorSecret: null,
@@ -24,10 +23,10 @@ export async function DELETE(req: NextRequest) {
 
     // Log the action
     await logAuditEvent({
-      userId: session.user.id,
+      userId: session.userId,
       action: AUDIT_ACTIONS.USER_2FA_DISABLED,
       entity: AUDIT_ENTITIES.USER,
-      entityId: session.user.id,
+      entityId: session.userId,
       oldValue: { twoFactorEnabled: true },
       newValue: { twoFactorEnabled: false },
       ipAddress: getClientIP(req),
