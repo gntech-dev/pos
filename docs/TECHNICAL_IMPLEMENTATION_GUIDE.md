@@ -28,12 +28,201 @@
 -- Tablas Core (Implementadas)
 User, Customer, Product, Sale, Payment, Quotation, Refund, NCFSequence, AuditLog, Setting
 
--- Relaciones Principales
-User (1) ──── (N) Sale
-Customer (1) ──── (N) Sale
-Product (1) ──── (N) SaleItem
-Sale (1) ──── (N) SaleItem
-Sale (1) ──── (N) Payment
+-- Campos de Seguridad Agregados
+User.twoFactorEnabled: Boolean
+User.twoFactorSecret: String?
+User.backupCodes: String? (JSON array)
+AuditLog: id, userId, action, entity, entityId, oldValue, newValue, ipAddress, createdAt
+```
+
+---
+
+## 🔒 Sistema de Seguridad Avanzada
+
+### Arquitectura de Seguridad
+
+#### Componentes de Seguridad Implementados
+```typescript
+// lib/2fa.ts - Two-Factor Authentication
+- generateTOTPSecret() - Genera secreto TOTP
+- verify2FAToken() - Verifica token TOTP
+- generateQRCodeDataURL() - Genera QR code para apps autenticadoras
+- generateBackupCodes() - Genera códigos de respaldo
+- verifyBackupCode() - Verifica código de respaldo
+
+// lib/audit.ts - Sistema de Auditoría
+- logAuditEvent() - Registra evento de auditoría
+- AUDIT_ACTIONS - Constantes de acciones
+- AUDIT_ENTITIES - Constantes de entidades
+
+// lib/encryption.ts - Encriptación de Datos
+- encryptData() - Encripta datos con AES-256-GCM
+- decryptData() - Desencripta datos
+- hashData() - Hash one-way para datos sensibles
+- generateSecureToken() - Genera tokens seguros
+
+// lib/security.ts - Middleware de Seguridad
+- securityHeaders - Headers HTTP de seguridad
+- validateOrigin() - Validación de origen de requests
+- detectSuspiciousActivity() - Detección de actividad sospechosa
+
+// lib/rate-limit.ts - Rate Limiting Avanzado
+- rateLimitConfigs - Configuraciones de rate limiting
+- createRateLimitMiddleware() - Middleware de rate limiting
+- getClientIP() - Obtención de IP del cliente
+```
+
+#### Database Schema para Seguridad
+```prisma
+// database/prisma/schema.prisma
+model User {
+  // ... campos existentes
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret  String?
+  backupCodes      String? // JSON array de códigos de respaldo
+}
+
+model AuditLog {
+  id              String    @id @default(cuid())
+  userId          String
+  action          String
+  entity          String    // Tabla afectada
+  entityId        String
+  oldValue        String?   // JSON string
+  newValue        String?   // JSON string
+  ipAddress       String?
+  createdAt       DateTime  @default(now())
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+```
+
+#### Endpoints de Seguridad
+```typescript
+// app/api/2fa/route.ts
+GET  /api/2fa - Estado actual de 2FA
+POST /api/2fa - Configurar 2FA
+POST /api/2fa/disable - Deshabilitar 2FA
+
+// app/api/audit/route.ts
+GET /api/audit - Logs de auditoría (Admin)
+```
+
+### Implementación de 2FA
+
+#### Flujo de Configuración
+1. Usuario solicita habilitar 2FA
+2. Sistema genera secreto TOTP único
+3. Se crea QR code con otpauth:// URL
+4. Usuario escanea QR en app autenticadora
+5. Sistema genera códigos de respaldo
+6. Usuario confirma configuración
+
+#### Verificación de Login con 2FA
+```typescript
+// lib/auth.ts - authorize function
+if (user.twoFactorEnabled && user.twoFactorSecret) {
+  const token = credentials.twoFactorToken
+  const backupCode = credentials.backupCode
+
+  if (token) {
+    is2FAValid = verify2FAToken(user.twoFactorSecret, token)
+  } else if (backupCode && user.backupCodes) {
+    is2FAValid = verifyBackupCode(storedCodes, backupCode)
+    // Remover código usado
+  }
+}
+```
+
+### Sistema de Auditoría
+
+#### Categorización de Eventos
+```typescript
+export const AUDIT_ACTIONS = {
+  // Authentication
+  LOGIN_SUCCESS: 'LOGIN_SUCCESS',
+  LOGIN_FAILED: 'LOGIN_FAILED',
+  LOGOUT: 'LOGOUT',
+
+  // User Management
+  USER_CREATED: 'USER_CREATED',
+  USER_UPDATED: 'USER_UPDATED',
+  USER_DELETED: 'USER_DELETED',
+
+  // Data Operations
+  SALE_CREATED: 'SALE_CREATED',
+  PRODUCT_UPDATED: 'PRODUCT_UPDATED',
+  CUSTOMER_CREATED: 'CUSTOMER_CREATED',
+} as const
+
+export const AUDIT_ENTITIES = {
+  AUTH: 'AUTH',
+  USER: 'USER',
+  SALE: 'SALE',
+  PRODUCT: 'PRODUCT',
+  CUSTOMER: 'CUSTOMER',
+} as const
+```
+
+#### Logging Automático
+```typescript
+await logAuditEvent({
+  userId: user.id,
+  action: AUDIT_ACTIONS.LOGIN_SUCCESS,
+  entity: AUDIT_ENTITIES.AUTH,
+  entityId: user.username,
+  newValue: { role: user.role },
+  ipAddress: clientIP,
+})
+```
+
+### Rate Limiting Avanzado
+
+#### Configuraciones por Endpoint
+```typescript
+export const rateLimitConfigs = {
+  login: {
+    points: 5,      // Número de requests
+    duration: 900,  // Por 15 minutos
+    blockDuration: 900, // Bloqueo por 15 minutos
+  },
+  validation: {
+    points: 100,    // Requests por hora
+    duration: 3600,
+    blockDuration: 300, // Bloqueo por 5 minutos
+  }
+}
+```
+
+#### Detección de Actividad Sospechosa
+```typescript
+// lib/rate-limit.ts
+function detectSuspiciousActivity(req: NextRequest): boolean {
+  const userAgent = req.headers.get('user-agent') || ''
+  const suspiciousPatterns = [
+    /sqlmap/i,
+    /nmap/i,
+    /nikto/i,
+    /dirbuster/i,
+  ]
+  return suspiciousPatterns.some(pattern => pattern.test(userAgent))
+}
+```
+
+### Headers de Seguridad
+
+#### Configuración de Headers
+```typescript
+// lib/security.ts
+export const securityHeaders = {
+  'X-DNS-Prefetch-Control': 'on',
+  'X-XSS-Protection': '1; mode=block',
+  'X-Frame-Options': 'SAMEORIGIN',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'origin-when-cross-origin',
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'",
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+}
 ```
 
 ---

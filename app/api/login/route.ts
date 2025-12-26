@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { authenticateUser } from "@/lib/auth-utils"
 import { setSessionCookie } from "@/lib/session"
 import { endpointLimiters, createRateLimitResponse, BruteForceProtection, logRateLimitViolation } from "@/lib/rate-limit"
+import { prisma } from "@/lib/prisma"
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { username, password } = body
+    const { username, password, twoFactorToken, backupCode } = body
 
     console.log('Login attempt for', username)
 
@@ -52,13 +53,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // First, authenticate with username/password
     const user = await authenticateUser(username, password)
 
     if (!user) {
       console.log('Auth failed for', username)
       await BruteForceProtection.recordFailure(clientIP, username)
       const remainingAttempts = BruteForceProtection.getRemainingAttempts(clientIP, username)
-      
+
       logRateLimitViolation(req, 'login_failure', `${clientIP}:${username}`, {
         username,
         remainingAttempts,
@@ -72,6 +74,51 @@ export async function POST(req: NextRequest) {
         },
         { status: 401 }
       )
+    }
+
+    // Check if 2FA is enabled for this user
+    if (user.twoFactorEnabled && user.twoFactorSecret) {
+      // 2FA is required but no token provided - request 2FA
+      if (!twoFactorToken && !backupCode) {
+        return NextResponse.json(
+          {
+            requires2FA: true,
+            message: "2FA verification required"
+          },
+          { status: 200 }
+        )
+      }
+
+      // Verify 2FA token
+      const { verify2FAToken, verifyBackupCode } = await import('@/lib/2fa')
+      let is2FAValid = false
+
+      if (twoFactorToken) {
+        is2FAValid = verify2FAToken(user.twoFactorSecret, twoFactorToken)
+      } else if (backupCode && user.backupCodes) {
+        const storedCodes = JSON.parse(user.backupCodes)
+        is2FAValid = verifyBackupCode(storedCodes, backupCode)
+
+        if (is2FAValid) {
+          // Remove used backup code
+          const { removeUsedBackupCode } = await import('@/lib/2fa')
+          const updatedCodes = removeUsedBackupCode(storedCodes, backupCode)
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { backupCodes: JSON.stringify(updatedCodes) }
+          })
+        }
+      }
+
+      if (!is2FAValid) {
+        console.log('2FA verification failed for', username)
+        await BruteForceProtection.recordFailure(clientIP, username)
+
+        return NextResponse.json(
+          { error: "Invalid 2FA token or backup code" },
+          { status: 401 }
+        )
+      }
     }
 
     // Success - reset brute force counter

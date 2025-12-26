@@ -7,6 +7,8 @@ export default function LoginPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [requires2FA, setRequires2FA] = useState(false)
+  const [tempCredentials, setTempCredentials] = useState<{ username: string; password: string } | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -14,28 +16,49 @@ export default function LoginPage() {
     setError('')
 
     const formData = new FormData(e.currentTarget)
-    const username = formData.get('username') as string
-    const password = formData.get('password') as string
+    const username = requires2FA && tempCredentials ? tempCredentials.username : formData.get('username') as string
+    const password = requires2FA && tempCredentials ? tempCredentials.password : formData.get('password') as string
+    const twoFactorToken = formData.get('twoFactorToken') as string
+    const backupCode = formData.get('backupCode') as string
 
     try {
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          username,
+          password,
+          twoFactorToken: requires2FA ? twoFactorToken : undefined,
+          backupCode: requires2FA ? backupCode : undefined
+        }),
       })
 
       if (!response.ok) {
         const data = await response.json()
+
+        // Check if 2FA is required
+        if (data.requires2FA) {
+          setRequires2FA(true)
+          setTempCredentials({ username, password })
+          setError('')
+          setLoading(false)
+          return
+        }
+
         setError(data.error || 'Credenciales inválidas')
         return
       }
 
       const data = await response.json()
       console.log('Login successful:', data)
-      
+
+      // Reset 2FA state on successful login
+      setRequires2FA(false)
+      setTempCredentials(null)
+
       // Force a small delay to ensure cookie is set
       await new Promise(resolve => setTimeout(resolve, 100))
-      
+
       // Navigate and force page reload
       try {
         await router.push('/dashboard')
@@ -74,33 +97,90 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-xs font-bold text-gray-700 mb-1">
-                👤 Usuario
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                required
-                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm"
-                placeholder="Ingresa tu usuario"
-              />
-            </div>
+            {!requires2FA ? (
+              <>
+                <div>
+                  <label htmlFor="username" className="block text-xs font-bold text-gray-700 mb-1">
+                    👤 Usuario
+                  </label>
+                  <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    required
+                    className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm"
+                    placeholder="Ingresa tu usuario"
+                  />
+                </div>
 
-            <div>
-              <label htmlFor="password" className="block text-xs font-bold text-gray-700 mb-1">
-                🔒 Contraseña
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm"
-                placeholder="Ingresa tu contraseña"
-              />
-            </div>
+                <div>
+                  <label htmlFor="password" className="block text-xs font-bold text-gray-700 mb-1">
+                    🔒 Contraseña
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm"
+                    placeholder="Ingresa tu contraseña"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-center mb-4">
+                  <div className="text-2xl mb-2">🔐</div>
+                  <h3 className="text-lg font-semibold text-gray-800">Verificación de Dos Factores</h3>
+                  <p className="text-sm text-gray-600">Ingresa el código de tu app autenticadora</p>
+                </div>
+
+                <div>
+                  <label htmlFor="twoFactorToken" className="block text-xs font-bold text-gray-700 mb-1">
+                    📱 Código de 6 dígitos
+                  </label>
+                  <input
+                    id="twoFactorToken"
+                    name="twoFactorToken"
+                    type="text"
+                    required
+                    maxLength={6}
+                    className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm text-center text-lg font-mono"
+                    placeholder="000000"
+                  />
+                </div>
+
+                <div className="text-center">
+                  <span className="text-xs text-gray-500">¿No tienes acceso a tu app?</span>
+                  <details className="mt-2">
+                    <summary className="text-xs text-indigo-600 hover:text-indigo-800 cursor-pointer">
+                      Usar código de respaldo
+                    </summary>
+                    <div className="mt-2">
+                      <input
+                        id="backupCode"
+                        name="backupCode"
+                        type="text"
+                        className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm font-mono"
+                        placeholder="Ingresa código de respaldo"
+                      />
+                    </div>
+                  </details>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRequires2FA(false)
+                    setTempCredentials(null)
+                    setError('')
+                  }}
+                  className="w-full text-indigo-600 hover:text-indigo-800 text-sm font-semibold py-2"
+                >
+                  ← Volver al login
+                </button>
+              </>
+            )}
 
             {error && (
               <div className="bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-300 text-red-700 p-2 rounded-lg text-xs font-semibold flex items-center gap-2">

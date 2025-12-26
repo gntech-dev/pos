@@ -6,6 +6,23 @@ import { useState, useEffect, useCallback } from 'react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import Papa from 'papaparse'
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area
+} from 'recharts'
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState('sales')
@@ -15,6 +32,7 @@ export default function ReportsPage() {
     { id: 'inventory', label: '📦 Reportes de Inventario', description: 'Niveles de stock y movimientos de inventario' },
     { id: 'customers', label: '👥 Reportes de Clientes', description: 'Información y análisis de cartera de clientes' },
     { id: 'dgii', label: '🏛️ Reportes DGII', description: 'Reportes fiscales para la Dirección General de Impuestos Internos' },
+    { id: 'advanced', label: '🚀 Reportes Avanzados', description: 'Dashboards personalizados con gráficos y análisis avanzado' },
   ]
 
   return (
@@ -63,6 +81,7 @@ export default function ReportsPage() {
             {activeTab === 'inventory' && <InventoryReports />}
             {activeTab === 'customers' && <CustomerReports />}
             {activeTab === 'dgii' && <DGIIReports />}
+            {activeTab === 'advanced' && <AdvancedReports />}
           </div>
         </div>
       </div>
@@ -1720,6 +1739,415 @@ function DGIIReports() {
               </div>
             </div>
           )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Advanced Reports Component with Custom Dashboards and Charts
+function AdvancedReports() {
+  const [activeView, setActiveView] = useState('dashboard')
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['revenue', 'sales', 'customers'])
+  const [dateRange, setDateRange] = useState('30d')
+  const [chartType, setChartType] = useState<'line' | 'bar' | 'area'>('line')
+  const [dashboardData, setDashboardData] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [customReport, setCustomReport] = useState({
+    title: '',
+    description: '',
+    metrics: [] as string[],
+    filters: {} as any,
+    chartType: 'line' as 'line' | 'bar' | 'area' | 'pie'
+  })
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-DO', {
+      style: 'currency',
+      currency: 'DOP'
+    }).format(amount)
+  }
+
+  const exportToPDF = (data: any[], title: string, headers: string[]) => {
+    const doc = new jsPDF()
+    doc.setFontSize(16)
+    doc.text(title, 20, 20)
+
+    const tableData = data.map(row => headers.map(header => {
+      const key = Object.keys(row).find(k => k.toLowerCase().includes(header.toLowerCase().split(' ')[0].toLowerCase())) || header.toLowerCase()
+      const value = row[key] || row[header] || ''
+      return typeof value === 'number' && !['fecha', 'date', 'tipo', 'type'].includes(header.toLowerCase()) ? formatCurrency(value) : String(value)
+    }))
+
+    autoTable(doc, {
+      head: [headers],
+      body: tableData,
+      startY: 30,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [41, 128, 185] }
+    })
+
+    doc.save(`${title.replace(/\s+/g, '_')}.pdf`)
+  }
+
+  const availableMetrics = [
+    { id: 'revenue', label: '💰 Ingresos Totales', color: '#10b981' },
+    { id: 'sales', label: '📊 Número de Ventas', color: '#3b82f6' },
+    { id: 'customers', label: '👥 Clientes Nuevos', color: '#8b5cf6' },
+    { id: 'products', label: '📦 Productos Vendidos', color: '#f59e0b' },
+    { id: 'tax', label: '💼 ITBIS', color: '#ef4444' },
+    { id: 'profit', label: '📈 Utilidad', color: '#06b6d4' }
+  ]
+
+  const dateRanges = [
+    { id: '7d', label: 'Últimos 7 días' },
+    { id: '30d', label: 'Últimos 30 días' },
+    { id: '90d', label: 'Últimos 90 días' },
+    { id: '1y', label: 'Último año' },
+    { id: 'custom', label: 'Personalizado' }
+  ]
+
+  const loadDashboardData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        metrics: selectedMetrics.join(','),
+        range: dateRange,
+        type: 'advanced'
+      })
+
+      const response = await fetch(`/api/reports/advanced?${params}`)
+      if (response.ok) {
+        const data = await response.json()
+        setDashboardData(data)
+      }
+    } catch (error) {
+      console.error('Error loading dashboard data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedMetrics, dateRange])
+
+  useEffect(() => {
+    loadDashboardData()
+  }, [loadDashboardData])
+
+  const exportToExcel = (data: any[], filename: string) => {
+    // Convert to CSV format that Excel can open
+    const csv = Papa.unparse(data)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `${filename}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const renderChart = (data: any[], type: 'line' | 'bar' | 'area') => {
+    const ChartComponent = type === 'line' ? LineChart : type === 'bar' ? BarChart : AreaChart
+    const DataComponent = type === 'line' ? Line : type === 'bar' ? Bar : Area
+
+    return (
+      <ResponsiveContainer width="100%" height={400}>
+        <ChartComponent data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip formatter={(value: any) => [formatCurrency(Number(value)), '']} />
+          <Legend />
+          {selectedMetrics.map((metric) => {
+            const metricInfo = availableMetrics.find(m => m.id === metric)
+            return (
+              <DataComponent
+                key={metric}
+                type="monotone"
+                dataKey={metric}
+                stroke={metricInfo?.color}
+                fill={type === 'area' ? metricInfo?.color : undefined}
+                name={metricInfo?.label}
+              />
+            )
+          })}
+        </ChartComponent>
+      </ResponsiveContainer>
+    )
+  }
+
+  const renderPieChart = (data: any[]) => {
+    const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4']
+
+    return (
+      <ResponsiveContainer width="100%" height={400}>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+            outerRadius={120}
+            fill="#8884d8"
+            dataKey="value"
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip />
+        </PieChart>
+      </ResponsiveContainer>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* View Selector */}
+      <div className="flex gap-2 border-b border-gray-200 pb-4">
+        <button
+          onClick={() => setActiveView('dashboard')}
+          className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
+            activeView === 'dashboard'
+              ? 'bg-blue-500 text-white shadow-lg'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          📊 Dashboard
+        </button>
+        <button
+          onClick={() => setActiveView('builder')}
+          className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
+            activeView === 'builder'
+              ? 'bg-blue-500 text-white shadow-lg'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          🛠️ Constructor
+        </button>
+      </div>
+
+      {activeView === 'dashboard' && (
+        <div className="space-y-6">
+          {/* Controls */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Metric Selector */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Métricas</label>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {availableMetrics.map(metric => (
+                    <label key={metric.id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedMetrics.includes(metric.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedMetrics([...selectedMetrics, metric.id])
+                          } else {
+                            setSelectedMetrics(selectedMetrics.filter(m => m !== metric.id))
+                          }
+                        }}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">{metric.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Date Range */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Período</label>
+                <select
+                  value={dateRange}
+                  onChange={(e) => setDateRange(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-lg"
+                >
+                  {dateRanges.map(range => (
+                    <option key={range.id} value={range.id}>{range.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Chart Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Gráfico</label>
+                <select
+                  value={chartType}
+                  onChange={(e) => setChartType(e.target.value as 'line' | 'bar' | 'area')}
+                  className="w-full p-2 border border-gray-300 rounded-lg"
+                >
+                  <option value="line">📈 Líneas</option>
+                  <option value="bar">📊 Barras</option>
+                  <option value="area">🌊 Área</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={loadDashboardData}
+                disabled={loading}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              >
+                {loading ? '🔄 Cargando...' : '📊 Actualizar'}
+              </button>
+              {dashboardData && (
+                <>
+                  <button
+                    onClick={() => exportToExcel(dashboardData.chartData || [], 'dashboard-data')}
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                  >
+                    📊 Exportar Excel
+                  </button>
+                  <button
+                    onClick={() => exportToPDF(dashboardData.chartData || [], 'Dashboard Avanzado', ['Fecha', ...selectedMetrics.map(m => availableMetrics.find(am => am.id === m)?.label || m)])}
+                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                  >
+                    📄 Exportar PDF
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Charts */}
+          {dashboardData && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Main Chart */}
+              <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-800 mb-4">Tendencias</h3>
+                {renderChart(dashboardData.chartData || [], chartType)}
+              </div>
+
+              {/* Summary Cards */}
+              <div className="space-y-4">
+                {selectedMetrics.map(metric => {
+                  const metricInfo = availableMetrics.find(m => m.id === metric)
+                  const value = dashboardData.summary?.[metric] || 0
+                  return (
+                    <div key={metric} className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">{metricInfo?.label}</p>
+                          <p className="text-2xl font-bold" style={{ color: metricInfo?.color }}>
+                            {typeof value === 'number' && metric !== 'sales' && metric !== 'customers' && metric !== 'products'
+                              ? formatCurrency(value)
+                              : value.toLocaleString()
+                            }
+                          </p>
+                        </div>
+                        <div className="text-3xl">{metricInfo?.label.split(' ')[0]}</div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Pie Charts for categorical data */}
+          {dashboardData?.pieData && (
+            <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">Distribución por Categorías</h3>
+              {renderPieChart(dashboardData.pieData)}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeView === 'builder' && (
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">🛠️ Constructor de Reportes Personalizados</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Título del Reporte</label>
+                <input
+                  type="text"
+                  value={customReport.title}
+                  onChange={(e) => setCustomReport({...customReport, title: e.target.value})}
+                  className="w-full p-2 border border-gray-300 rounded-lg"
+                  placeholder="Mi Reporte Personalizado"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Gráfico</label>
+                <select
+                  value={customReport.chartType}
+                  onChange={(e) => setCustomReport({...customReport, chartType: e.target.value as any})}
+                  className="w-full p-2 border border-gray-300 rounded-lg"
+                >
+                  <option value="line">📈 Líneas</option>
+                  <option value="bar">📊 Barras</option>
+                  <option value="area">🌊 Área</option>
+                  <option value="pie">🥧 Circular</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+              <textarea
+                value={customReport.description}
+                onChange={(e) => setCustomReport({...customReport, description: e.target.value})}
+                className="w-full p-2 border border-gray-300 rounded-lg"
+                rows={3}
+                placeholder="Describe el propósito de este reporte..."
+              />
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Métricas a Incluir</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {availableMetrics.map(metric => (
+                  <label key={metric.id} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={customReport.metrics.includes(metric.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setCustomReport({
+                            ...customReport,
+                            metrics: [...customReport.metrics, metric.id]
+                          })
+                        } else {
+                          setCustomReport({
+                            ...customReport,
+                            metrics: customReport.metrics.filter(m => m !== metric.id)
+                          })
+                        }
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">{metric.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-2">
+              <button
+                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              >
+                💾 Guardar Reporte
+              </button>
+              <button
+                className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+              >
+                🎯 Generar Reporte
+              </button>
+              <button
+                className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              >
+                📋 Ver Reportes Guardados
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

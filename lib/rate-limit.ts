@@ -1,5 +1,6 @@
 import { RateLimiterMemory } from 'rate-limiter-flexible'
 import { NextRequest, NextResponse } from 'next/server'
+import { logAuditEvent, AUDIT_ACTIONS, AUDIT_ENTITIES } from './audit'
 
 // Rate limiting configurations
 export const rateLimitConfigs = {
@@ -128,13 +129,29 @@ export async function rateLimit(
     const remainingPoints = (rateLimiterRes as RateLimiterRes)?.remainingPoints || 0
     const msBeforeNext = (rateLimiterRes as RateLimiterRes)?.msBeforeNext || 60 * 1000
     
-    console.warn(`Rate limit exceeded for ${getClientIP(req)} on ${options.limiter}`, {
-      ip: getClientIP(req),
+    const clientIP = getClientIP(req)
+    
+    console.warn(`Rate limit exceeded for ${clientIP} on ${options.limiter}`, {
+      ip: clientIP,
       endpoint: req.nextUrl.pathname,
       limiter: options.limiter,
       remainingPoints,
       resetTime: new Date(Date.now() + msBeforeNext)
     })
+    
+    // Log suspicious activity for critical endpoints
+    if (options.limiter === 'login') {
+      // Log rate limit violation for login attempts (potential brute force)
+      await logAuditEvent({
+        userId: 'system', // System-generated event
+        action: AUDIT_ACTIONS.RATE_LIMIT_EXCEEDED,
+        entity: AUDIT_ENTITIES.AUTH,
+        entityId: clientIP,
+        oldValue: { endpoint: req.nextUrl.pathname, limiter: options.limiter },
+        newValue: { remainingPoints, resetTime: msBeforeNext },
+        ipAddress: clientIP,
+      })
+    }
     
     return {
       success: false,

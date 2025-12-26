@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import LogoSelector from '../../components/LogoSelector'
 
 interface User {
@@ -13,6 +14,22 @@ interface User {
   lastLogin?: string
   createdAt: string
   updatedAt: string
+}
+
+interface AuditLog {
+  id: string
+  userId: string
+  action: string
+  entity: string
+  entityId: string
+  oldValue?: string
+  newValue?: string
+  ipAddress?: string
+  createdAt: string
+  user: {
+    name: string
+    username: string
+  }
 }
 
 interface RolePermissions {
@@ -702,6 +719,16 @@ export default function SettingsPage() {
             }`}
           >
             🔧 Sistema
+          </button>
+          <button
+            onClick={() => setActiveTab('security')}
+            className={`px-5 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+              activeTab === 'security'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+            }`}
+          >
+            🔒 Seguridad
           </button>
         </div>
 
@@ -2050,6 +2077,10 @@ export default function SettingsPage() {
               </div>
             )}
 
+            {/* Security Settings */}
+            {activeTab === 'security' && (
+              <SecuritySettings />
+            )}
 
             {/* Users Management */}
             {activeTab === 'users' && (
@@ -2377,6 +2408,340 @@ export default function SettingsPage() {
           background: linear-gradient(to bottom, #4f46e5, #7c3aed);
         }
       `}</style>
+    </div>
+  )
+}
+
+// Security Settings Component
+function SecuritySettings() {
+  const [twoFactorData, setTwoFactorData] = useState<{
+    enabled: boolean
+    secret?: string
+    qrCodeDataURL?: string
+    otpauthUrl?: string
+  } | null>(null)
+  const [twoFactorToken, setTwoFactorToken] = useState('')
+  const [backupCodes, setBackupCodes] = useState<string[]>([])
+  const [showBackupCodes, setShowBackupCodes] = useState(false)
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
+  const [loading, setLoading] = useState(false)
+
+  // Load 2FA status
+  const load2FAStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/api/2fa')
+      if (response.ok) {
+        const data = await response.json()
+        setTwoFactorData(data)
+      }
+    } catch (error) {
+      console.error('Error loading 2FA status:', error)
+    }
+  }, [])
+
+  // Load audit logs
+  const loadAuditLogs = useCallback(async () => {
+    try {
+      const response = await fetch('/api/audit?page=1&limit=20')
+      if (response.ok) {
+        const data = await response.json()
+        setAuditLogs(data.data || [])
+      }
+    } catch (error) {
+      console.error('Error loading audit logs:', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    load2FAStatus()
+    loadAuditLogs()
+  }, [load2FAStatus, loadAuditLogs])
+
+  // Setup 2FA
+  const setup2FA = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/2fa')
+      if (response.ok) {
+        const data = await response.json()
+        setTwoFactorData(data)
+      }
+    } catch (error) {
+      console.error('Error setting up 2FA:', error)
+      alert('Error al configurar 2FA')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Enable 2FA
+  const enable2FA = async () => {
+    if (!twoFactorData?.secret || !twoFactorToken) {
+      alert('Por favor ingresa el código de verificación')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch('/api/2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          secret: twoFactorData.secret,
+          token: twoFactorToken
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setBackupCodes(data.backupCodes)
+        setShowBackupCodes(true)
+        setTwoFactorData(prev => prev ? { ...prev, enabled: true } : null)
+        alert('2FA habilitado exitosamente. Guarda tus códigos de respaldo!')
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error enabling 2FA:', error)
+      alert('Error al habilitar 2FA')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Disable 2FA
+  const disable2FA = async () => {
+    if (!confirm('¿Estás seguro de que quieres deshabilitar 2FA? Esto reducirá la seguridad de tu cuenta.')) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch('/api/2fa/disable', {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setTwoFactorData(prev => prev ? { ...prev, enabled: false, secret: undefined, qrCodeDataURL: undefined } : null)
+        setBackupCodes([])
+        setShowBackupCodes(false)
+        alert('2FA deshabilitado exitosamente')
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error disabling 2FA:', error)
+      alert('Error al deshabilitar 2FA')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* 2FA Section */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+          🔐 Autenticación de Dos Factores (2FA)
+        </h2>
+
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800">Estado de 2FA</h3>
+              <p className="text-sm text-gray-600">
+                {twoFactorData?.enabled
+                  ? '✅ 2FA está habilitado para tu cuenta'
+                  : '❌ 2FA no está habilitado'
+                }
+              </p>
+            </div>
+            <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
+              twoFactorData?.enabled
+                ? 'bg-green-100 text-green-800'
+                : 'bg-red-100 text-red-800'
+            }`}>
+              {twoFactorData?.enabled ? 'Habilitado' : 'Deshabilitado'}
+            </div>
+          </div>
+
+          {!twoFactorData?.enabled && !twoFactorData?.secret && (
+            <button
+              onClick={setup2FA}
+              disabled={loading}
+              className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg disabled:opacity-50"
+            >
+              {loading ? '🔄 Configurando...' : '🚀 Configurar 2FA'}
+            </button>
+          )}
+
+          {twoFactorData?.secret && !twoFactorData?.enabled && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Escanea el código QR</h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  Usa una app de autenticación como Google Authenticator, Authy o Microsoft Authenticator
+                </p>
+                {twoFactorData.qrCodeDataURL && (
+                  <Image
+                    src={twoFactorData.qrCodeDataURL}
+                    alt="2FA QR Code"
+                    width={200}
+                    height={200}
+                    className="border border-gray-300 rounded-lg"
+                  />
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Código de verificación
+                </label>
+                <input
+                  type="text"
+                  value={twoFactorToken}
+                  onChange={(e) => setTwoFactorToken(e.target.value)}
+                  placeholder="Ingresa el código de 6 dígitos"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  maxLength={6}
+                />
+              </div>
+
+              <button
+                onClick={enable2FA}
+                disabled={loading || !twoFactorToken}
+                className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg disabled:opacity-50"
+              >
+                {loading ? '🔄 Habilitando...' : '✅ Habilitar 2FA'}
+              </button>
+            </div>
+          )}
+
+          {showBackupCodes && backupCodes.length > 0 && (
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Códigos de Respaldo</h4>
+              <p className="text-sm text-yellow-700 mb-3">
+                Guarda estos códigos en un lugar seguro. Los necesitarás si pierdes acceso a tu app de autenticación.
+              </p>
+              <div className="grid grid-cols-2 gap-2 font-mono text-sm">
+                {backupCodes.map((code, index) => (
+                  <div key={index} className="bg-white px-3 py-2 rounded border">
+                    {code}
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowBackupCodes(false)}
+                className="mt-3 px-4 py-2 bg-yellow-600 text-white rounded font-semibold hover:bg-yellow-700"
+              >
+                He guardado los códigos
+              </button>
+            </div>
+          )}
+
+          {twoFactorData?.enabled && (
+            <button
+              onClick={disable2FA}
+              disabled={loading}
+              className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-semibold hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg disabled:opacity-50"
+            >
+              {loading ? '🔄 Deshabilitando...' : '🚫 Deshabilitar 2FA'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Audit Logs Section */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+          📋 Registro de Auditoría
+        </h2>
+
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Usuario
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Acción
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Entidad
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Fecha
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    IP
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {auditLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {log.user?.username || 'Sistema'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {log.action.replace(/_/g, ' ')}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {log.entity}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500">
+                      {new Date(log.createdAt).toLocaleString('es-DO')}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 font-mono">
+                      {log.ipAddress || 'N/A'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {auditLogs.length === 0 && (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-2">📋</div>
+              <p className="text-gray-500">No hay registros de auditoría disponibles</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Security Recommendations */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+          🛡️ Recomendaciones de Seguridad
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h3 className="font-semibold text-green-800 mb-2">✅ Buenas Prácticas</h3>
+            <ul className="text-sm text-green-700 space-y-1">
+              <li>• Usa contraseñas fuertes y únicas</li>
+              <li>• Habilita 2FA para mayor seguridad</li>
+              <li>• Revisa regularmente los logs de auditoría</li>
+              <li>• Mantén el sistema actualizado</li>
+            </ul>
+          </div>
+
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h3 className="font-semibold text-yellow-800 mb-2">⚠️ Alertas de Seguridad</h3>
+            <ul className="text-sm text-yellow-700 space-y-1">
+              <li>• Monitorea intentos de login fallidos</li>
+              <li>• Revisa accesos desde IPs desconocidas</li>
+              <li>• Cambia contraseñas periódicamente</li>
+              <li>• Reporta actividades sospechosas</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

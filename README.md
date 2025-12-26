@@ -29,7 +29,8 @@ pos-system/
 ## 🚀 Features
 
 - ✅ **User Management** - Admin, Manager, Cashier roles with granular permissions
-- ✅ **Authentication** - Secure login with NextAuth.js
+- ✅ **Authentication** - Secure login with NextAuth.js and optional 2FA
+- ✅ **Security** - Advanced security with audit logging, encryption, and rate limiting
 - ✅ **Database** - SQLite with Prisma ORM
 - ✅ **Sales Management** - Process sales with NCF generation
 - ✅ **Inventory Control** - Product management with barcode scanning
@@ -43,6 +44,10 @@ pos-system/
 - ✅ **Receipt Printing** - ESC/POS thermal printer support
 - ✅ **Email Invoices** - Send professional PDF invoices via email
 - ✅ **DGII Compliance** - NCF, RNC validation, tax reports
+- ✅ **Two-Factor Authentication** - Optional TOTP-based 2FA with backup codes
+- ✅ **Audit Logging** - Complete audit trail of all system actions
+- ✅ **Data Encryption** - AES-256-GCM encryption for sensitive data
+- ✅ **Rate Limiting** - Advanced rate limiting with suspicious activity detection
 - 🚧 **Offline Mode** - Works without internet connection
 
 ## 📋 Prerequisites

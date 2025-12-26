@@ -55,6 +55,86 @@ Destroy the current session.
 }
 ```
 
+### Security
+
+#### GET /2fa
+Get current user's 2FA status.
+
+**Response (200):**
+```json
+{
+  "enabled": false,
+  "secret": null,
+  "qrCodeDataURL": null
+}
+```
+
+#### POST /2fa
+Setup 2FA for current user.
+
+**Response (200):**
+```json
+{
+  "enabled": true,
+  "secret": "JBSWY3DPEHPK3PXP",
+  "qrCodeDataURL": "data:image/png;base64,...",
+  "backupCodes": ["12345678", "87654321", ...]
+}
+```
+
+#### POST /2fa/disable
+Disable 2FA for current user.
+
+**Request Body:**
+```json
+{
+  "password": "string"
+}
+```
+
+**Response (200):**
+```json
+{
+  "message": "2FA disabled successfully"
+}
+```
+
+#### GET /audit
+Get audit logs (Admin only).
+
+**Query Parameters:**
+- `page`: Page number (default: 1)
+- `limit`: Items per page (default: 50)
+- `userId`: Filter by user ID
+- `action`: Filter by action type
+- `entity`: Filter by entity type
+
+**Response (200):**
+```json
+{
+  "logs": [
+    {
+      "id": "string",
+      "userId": "string",
+      "action": "LOGIN_SUCCESS",
+      "entity": "AUTH",
+      "entityId": "username",
+      "oldValue": {},
+      "newValue": { "role": "admin" },
+      "ipAddress": "192.168.1.1",
+      "createdAt": "2025-12-26T10:00:00.000Z",
+      "user": {
+        "name": "Admin User",
+        "username": "admin"
+      }
+    }
+  ],
+  "total": 150,
+  "page": 1,
+  "limit": 50
+}
+```
+
 ### Users
 
 #### GET /users
