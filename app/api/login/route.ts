@@ -78,8 +78,11 @@ export async function POST(req: NextRequest) {
 
     // Check if 2FA is enabled for this user
     if (user.twoFactorEnabled && user.twoFactorSecret) {
+      console.log('User has 2FA enabled:', user.username, 'token provided:', !!twoFactorToken, 'backup provided:', !!backupCode)
+      
       // 2FA is required but no token provided - request 2FA
       if (!twoFactorToken && !backupCode) {
+        console.log('Requesting 2FA for user:', user.username)
         return NextResponse.json(
           {
             requires2FA: true,

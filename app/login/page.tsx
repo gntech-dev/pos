@@ -35,9 +35,11 @@ export default function LoginPage() {
 
       if (!response.ok) {
         const data = await response.json()
+        console.log('Login response error:', data)
 
         // Check if 2FA is required
         if (data.requires2FA) {
+          console.log('Setting requires2FA to true')
           setRequires2FA(true)
           setTempCredentials({ username, password })
           setError('')
