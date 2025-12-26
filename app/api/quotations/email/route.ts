@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 import fs from 'fs'
 import path from 'path'
+import puppeteer from 'puppeteer'
 import { prisma } from '@/lib/prisma'
 
 interface BusinessSettings {
@@ -14,6 +15,13 @@ interface BusinessSettings {
 }
 
 const CONFIG_FILE = path.join(process.cwd(), 'email-config.json')
+
+// Type definition for nodemailer attachments
+interface EmailAttachment {
+  filename: string
+  content: Buffer
+  contentType: string
+}
 
 // Helper function to convert logo to data URL for email embedding
 function convertLogoToDataUrl(logoPath: string | null | undefined): string | null {
@@ -49,10 +57,46 @@ function convertLogoToDataUrl(logoPath: string | null | undefined): string | nul
       return `data:${mimeType};base64,${base64}`
     }
   } catch (error) {
-    console.error('Error converting logo to data URL:', error)
+    console.error('convertLogoToDataUrl: Error converting logo to data URL:', error)
   }
 
   return logoPath
+}
+
+// Function to generate PDF from quotation HTML
+async function generateQuotationPDF(quotation: Quotation, businessSettings: BusinessSettings, logoDataUrl: string | null): Promise<Buffer> {
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+  })
+
+  try {
+    const page = await browser.newPage()
+
+    // Generate HTML optimized for PDF
+    const pdfHTML = generateQuotationHTML(quotation, businessSettings, logoDataUrl, true)
+
+    // Set content and wait for loading
+    await page.setContent(pdfHTML, { waitUntil: 'networkidle0' })
+
+    // Generate PDF with professional settings
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '1cm',
+        right: '1cm',
+        bottom: '1cm',
+        left: '1cm'
+      },
+      preferCSSPageSize: true,
+      displayHeaderFooter: false,
+    })
+
+    return Buffer.from(pdfBuffer)
+  } finally {
+    await browser.close()
+  }
 }
 
 // Load email configuration from file
@@ -154,6 +198,9 @@ export async function POST(req: NextRequest) {
       }
     })
 
+    // Convert logo to data URL for email embedding
+    const logoDataUrl = businessData.logo ? convertLogoToDataUrl(businessData.logo) : null
+
     // Load current email configuration
     const emailConfig = loadEmailConfig()
 
@@ -191,19 +238,36 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate email HTML
-    const emailHTML = generateQuotationHTML(quotation, businessData)
+    const emailHTML = generateQuotationHTML(quotation, businessData, logoDataUrl, false)
 
-    // PDF generation temporarily disabled due to font loading issues in Next.js environment
-    // TODO: Implement PDF generation with a more compatible solution
-    console.log('PDF generation disabled - sending HTML email only')
+    // Generate PDF attachment
+    console.log('Generating PDF attachment for quotation...')
+    let pdfBuffer: Buffer
+    try {
+      pdfBuffer = await generateQuotationPDF(quotation, businessData, logoDataUrl)
+      console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes')
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      // Continue without PDF but log the error
+      pdfBuffer = Buffer.alloc(0)
+    }
+
+    // Prepare attachments
+    const attachments: EmailAttachment[] = []
+    if (pdfBuffer.length > 0) {
+      attachments.push({
+        filename: `Cotizacion-${quotation.quotationNumber}.pdf`,
+        content: pdfBuffer,
+        contentType: 'application/pdf'
+      })
+      console.log('PDF attachment added to email')
+    } else {
+      console.log('Sending email without PDF attachment due to generation error')
+    }
 
     // Send email with enhanced options
     const senderName = emailConfig.senderName || 'GNTech POS'
     const senderEmail = emailConfig.user
-
-    const attachments: never[] = []
-    // PDF generation disabled - sending HTML email only
-    console.log('Sending HTML email without PDF attachment')
 
     await transporter.sendMail({
       from: `"${senderName}" <${senderEmail}>`,
@@ -262,7 +326,21 @@ interface Quotation {
   items: QuotationItem[]
 }
 
-function generateQuotationHTML(quotation: Quotation, businessSettings?: BusinessSettings): string {
+function generateQuotationHTML(quotation: Quotation, businessSettings: BusinessSettings, logoDataUrl: string | null, forPDF: boolean = false): string {
+  // PDF-specific styles and optimizations
+  const pdfStyles = forPDF ? `
+    @page {
+      size: A4;
+      margin: 1cm;
+    }
+    body {
+      font-size: 12px;
+    }
+    .no-print {
+      display: none !important;
+    }
+  ` : '';
+
   return `
     <!DOCTYPE html>
     <html>
@@ -271,11 +349,13 @@ function generateQuotationHTML(quotation: Quotation, businessSettings?: Business
       <style>
         body {
           font-family: 'Times New Roman', serif;
-          max-width: 800px;
+          max-width: ${forPDF ? 'none' : '800px'};
           margin: 0 auto;
-          padding: 20px;
+          padding: ${forPDF ? '0' : '20px'};
           line-height: 1.4;
+          background: ${forPDF ? 'white' : '#f9fafb'};
         }
+        ${pdfStyles}
         .header {
           text-align: center;
           border-bottom: 3px solid #1f2937;
@@ -391,12 +471,11 @@ function generateQuotationHTML(quotation: Quotation, businessSettings?: Business
     </head>
     <body>
       <div class="header">
-        ${businessSettings?.logo ? `<img src="${convertLogoToDataUrl(businessSettings.logo)}" alt="Logo" style="max-width: 80px; max-height: 80px; margin-bottom: 10px;">` : ''}
-        <div class="company-name">${businessSettings?.name || 'GNTECH POS'}</div>
-        <div class="company-info">${businessSettings?.address || 'Sistema de Punto de Venta Profesional'}</div>
-        <div class="company-info">RNC: ${businessSettings?.rnc || '000-00000-0'}</div>
-        <div class="company-info">${businessSettings?.address || 'Santo Domingo, República Dominicana'}</div>
-        <div class="company-info">Tel: ${businessSettings?.phone || '809-555-5555'} | Email: ${businessSettings?.email || 'info@gntech.com'}</div>
+        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Logo" style="max-width: 80px; max-height: 80px; margin-bottom: 10px;">` : ''}
+        <div class="company-name">${businessSettings.name}</div>
+        <div class="company-info">RNC: ${businessSettings.rnc}</div>
+        <div class="company-info">${businessSettings.address}</div>
+        <div class="company-info">Tel: ${businessSettings.phone} | Email: ${businessSettings.email}</div>
       </div>
 
       <div class="quotation-title">COTIZACIÓN</div>
