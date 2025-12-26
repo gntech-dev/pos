@@ -35,6 +35,36 @@ Updates NCF (Número de Comprobante Fiscal) state tracking.
 python update_ncf_state.py
 ```
 
+## NCF Alert Scripts
+
+### `ncf-alerts-cron.js`
+Automated NCF alerts monitoring and email notification script. This script checks for critical NCF issues and sends email notifications to administrators.
+
+**Features:**
+- Checks for expired NCF sequences
+- Monitors sequences expiring within 30 days
+- Alerts for low stock sequences
+- Sends automated email notifications to admin users
+- Logs all activities to audit trail
+
+**Usage:**
+```bash
+# Run manually
+node scripts/ncf-alerts-cron.js
+
+# Or add to crontab for daily execution at 9 AM:
+# 0 9 * * * cd /path/to/pos-system && node scripts/ncf-alerts-cron.js
+```
+
+**Requirements:**
+- Node.js environment
+- Database connection
+- Email configuration in `email-config.json`
+- Admin users with valid email addresses
+
+**Email Recipients:**
+The script automatically sends notifications to all users with `ADMIN` role who have valid email addresses configured.
+
 ## Deployment Scripts
 
 ### `backup.sh`

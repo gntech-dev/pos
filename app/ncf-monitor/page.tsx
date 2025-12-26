@@ -47,6 +47,7 @@ export default function NCFMonitorPage() {
   const [monitorData, setMonitorData] = useState<MonitorData | null>(null)
   const [loading, setLoading] = useState(true)
   const [checking, setChecking] = useState(false)
+  const [checkingAlerts, setCheckingAlerts] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<string>('')
 
   useEffect(() => {
@@ -105,6 +106,32 @@ export default function NCFMonitorPage() {
       alert('Error al ejecutar la verificación manual')
     } finally {
       setChecking(false)
+    }
+  }
+
+  const handleAlertsCheck = async () => {
+    try {
+      setCheckingAlerts(true)
+      const response = await fetch('/api/ncf/alerts', {
+        method: 'POST'
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        if (result.emailSent) {
+          alert('✅ Verificación completada. Notificación por email enviada a administradores.')
+        } else {
+          alert('✅ Verificación completada. No se encontraron problemas críticos que requieran notificación.')
+        }
+        await loadMonitorData() // Refresh data after check
+      } else {
+        alert('❌ Error al verificar alertas NCF')
+      }
+    } catch (error) {
+      console.error('Error during alerts check:', error)
+      alert('❌ Error al verificar alertas NCF')
+    } finally {
+      setCheckingAlerts(false)
     }
   }
 
@@ -184,6 +211,13 @@ export default function NCFMonitorPage() {
               className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg font-semibold disabled:opacity-50"
             >
               {checking ? '🔄 Verificando...' : '🔍 Verificar Ahora'}
+            </button>
+            <button
+              onClick={handleAlertsCheck}
+              disabled={checkingAlerts}
+              className="px-6 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg font-semibold disabled:opacity-50"
+            >
+              {checkingAlerts ? '📧 Enviando...' : '📧 Verificar Alertas'}
             </button>
             <button
               onClick={loadMonitorData}
