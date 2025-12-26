@@ -36,6 +36,8 @@ export async function GET(request: NextRequest) {
   const status = url.searchParams.get("status") || undefined
   const startDate = url.searchParams.get("startDate") || undefined
   const endDate = url.searchParams.get("endDate") || undefined
+  const search = url.searchParams.get("search") || undefined
+  const customerSearch = url.searchParams.get("customerSearch") || undefined
 
   const where: Record<string, unknown> = {}
 
@@ -48,6 +50,25 @@ export async function GET(request: NextRequest) {
     if (startDate) dateFilter.gte = new Date(startDate)
     if (endDate) dateFilter.lte = new Date(endDate)
     where.createdAt = dateFilter
+  }
+
+  // Search functionality
+  if (search) {
+    where.OR = [
+      { saleNumber: { contains: search, mode: 'insensitive' } },
+      { ncf: { contains: search, mode: 'insensitive' } },
+    ]
+  }
+
+  // Customer search functionality
+  if (customerSearch) {
+    where.customer = {
+      OR: [
+        { name: { contains: customerSearch, mode: 'insensitive' } },
+        { rnc: { contains: customerSearch, mode: 'insensitive' } },
+        { cedula: { contains: customerSearch, mode: 'insensitive' } },
+      ]
+    }
   }
 
   // Cashiers can only see their own sales

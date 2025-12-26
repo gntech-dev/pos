@@ -31,6 +31,7 @@ interface RefundItem {
 export default function NewRefundPage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
+  const [searchType, setSearchType] = useState<'sale' | 'customer'>('sale')
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [refundItems, setRefundItems] = useState<RefundItem[]>([])
   const [reason, setReason] = useState('')
@@ -44,7 +45,16 @@ export default function NewRefundPage() {
 
     setSearching(true)
     try {
-      const response = await fetch(`/api/sales?search=${encodeURIComponent(searchTerm)}&limit=10`)
+      let url = ''
+      if (searchType === 'sale') {
+        // Buscar por número de venta o NCF
+        url = `/api/sales?search=${encodeURIComponent(searchTerm)}&limit=10`
+      } else {
+        // Buscar por cliente - buscar ventas de ese cliente
+        url = `/api/sales?customerSearch=${encodeURIComponent(searchTerm)}&limit=10`
+      }
+
+      const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
         setSales(data.data)
@@ -60,6 +70,7 @@ export default function NewRefundPage() {
     setSelectedSale(sale)
     setSales([])
     setSearchTerm('')
+    setSearchType('sale') // Reset to default
     // Initialize refund items with 0 quantity
     const initialRefundItems = sale.items.map(item => ({
       saleItemId: item.id,
@@ -168,6 +179,7 @@ export default function NewRefundPage() {
                 setRefundItems([])
                 setReason('')
                 setSearchTerm('')
+                setSearchType('sale')
               }}
               className="w-full px-6 py-3 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200 transition-all duration-200 font-medium"
             >
@@ -205,12 +217,50 @@ export default function NewRefundPage() {
               <span className="text-2xl">🔍</span>
               Buscar Venta
             </h2>
+
+            {/* Search Type Selector */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => {
+                  setSearchType('sale')
+                  setSearchTerm('')
+                  setSales([])
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  searchType === 'sale'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                📄 Por Venta
+              </button>
+              <button
+                onClick={() => {
+                  setSearchType('customer')
+                  setSearchTerm('')
+                  setSales([])
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  searchType === 'customer'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                👤 Por Cliente
+              </button>
+            </div>
+
             <div className="flex gap-4">
               <input
                 type="text"
-                placeholder="Número de venta o NCF..."
+                placeholder={
+                  searchType === 'sale'
+                    ? "Número de venta o NCF..."
+                    : "Nombre del cliente, RNC o cédula..."
+                }
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && searchSales()}
                 className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
               />
               <button
