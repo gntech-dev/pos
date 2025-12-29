@@ -156,9 +156,8 @@ async function getTopCustomers() {
   const withTotals = customers.map((customer: {
     id: string;
     name: string;
-    createdAt: Date;
-    _count: { sales: number; quotations: number };
-    sales: Array<{ total: number; createdAt: Date }>;
+    _count: { sales: number };
+    sales: Array<{ total: number }>;
   }) => ({
     id: customer.id,
     name: customer.name,
