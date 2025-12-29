@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
 
     // Check stock availability
     for (const item of data.items) {
-      const product = products.find((p) => p.id === item.productId)
+      const product = products.find((p: { id: string; trackInventory: boolean; stock: number; name: string }) => p.id === item.productId)
       if (!product) continue
 
       if (product.trackInventory && product.stock < item.quantity) {
