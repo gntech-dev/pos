@@ -159,7 +159,7 @@ async function getSalesByCustomer(dateFilter: DateFilter) {
     }
   })
 
-  const grouped = sales.reduce((acc, sale) => {
+  const grouped = sales.reduce((acc: Record<string, CustomerSales>, sale: { customerId: string; total: number; tax: number; customer: { id: string; name: string }; _count: { items: number } }) => {
     const customerId = sale.customerId!
     if (!acc[customerId]) {
       acc[customerId] = {
