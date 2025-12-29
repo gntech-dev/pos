@@ -291,7 +291,7 @@ export async function POST(request: NextRequest) {
 
       // Update product stock and create stock movements
       for (const item of data.items) {
-        const product = products.find((p) => p.id === item.productId)!
+        const product = products.find((p: { id: string; trackInventory: boolean }) => p.id === item.productId)!
         
         if (product.trackInventory) {
           await tx.product.update({
