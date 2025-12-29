@@ -34,21 +34,8 @@ export function validateRNC(rnc: string): boolean {
 // Validate Cédula (11 digits)
 export function validateCedula(cedula: string): boolean {
   const cleaned = cedula.replace(/\D/g, '')
-  if (cleaned.length !== 11) return false
-  
-  // Implement Luhn algorithm for cedula validation
-  let sum = 0
-  for (let i = 0; i < 10; i++) {
-    let digit = parseInt(cleaned[i])
-    if (i % 2 === 0) {
-      digit *= 2
-      if (digit > 9) digit -= 9
-    }
-    sum += digit
-  }
-  
-  const checkDigit = (10 - (sum % 10)) % 10
-  return checkDigit === parseInt(cleaned[10])
+  // For now, just check if it's 11 digits - TODO: implement proper Dominican cedula validation
+  return cleaned.length === 11
 }
 
 // Generate NCF
