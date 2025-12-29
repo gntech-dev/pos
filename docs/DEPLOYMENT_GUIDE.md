@@ -7,13 +7,16 @@ This guide provides comprehensive step-by-step instructions for deploying the PO
 ## Prerequisites
 
 ### System Requirements
+
 - **Operating System**: Ubuntu 20.04+ or Debian 11+ (recommended)
 - **Node.js**: 20+ (LTS recommended)
+- **Python**: 3.8+ (for utility scripts)
 - **Memory**: 2GB RAM minimum, 4GB recommended
 - **Storage**: 20GB minimum
 - **Domain**: Domain name (optional but recommended)
 
 ### Network Requirements
+
 - Port 80/443 for web access
 - Port 3000 for application (internal)
 - Database access (SQLite local)
@@ -23,11 +26,13 @@ This guide provides comprehensive step-by-step instructions for deploying the PO
 ### Step 1: Server Preparation
 
 #### 1.1 Update System Packages
+
 ```bash
 sudo apt update && sudo apt upgrade -y
 ```
 
 #### 1.2 Install Node.js 20+
+
 ```bash
 # Add NodeSource repository for Node.js 20.x
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
@@ -41,6 +46,7 @@ npm --version
 ```
 
 #### 1.3 Install PM2 Process Manager
+
 ```bash
 sudo npm install -g pm2
 
@@ -49,6 +55,7 @@ pm2 --version
 ```
 
 #### 1.4 Install Nginx Web Server
+
 ```bash
 sudo apt install nginx -y
 
@@ -57,9 +64,10 @@ sudo systemctl status nginx
 ```
 
 #### 1.5 Install Additional Tools
+
 ```bash
 # Install build tools and utilities
-sudo apt install -y build-essential curl wget git htop ufw fail2ban sqlite3
+sudo apt install -y build-essential curl wget git python3 python3-pip htop ufw fail2ban sqlite3
 
 # Install Certbot for SSL certificates
 sudo apt install certbot python3-certbot-nginx -y
@@ -68,6 +76,7 @@ sudo apt install certbot python3-certbot-nginx -y
 ### Step 2: Application Setup
 
 #### 2.1 Create Application Directory
+
 ```bash
 # Create a directory for your applications (replace 'yourusername' with your actual username)
 sudo mkdir -p /home/yourusername/apps
@@ -76,6 +85,7 @@ cd /home/yourusername/apps
 ```
 
 #### 2.2 Clone Repository
+
 ```bash
 # Clone the POS system repository
 git clone https://github.com/gntech-dev/pos.git pos-system
@@ -86,6 +96,7 @@ ls -la
 ```
 
 #### 2.3 Install Dependencies
+
 ```bash
 # Install Node.js dependencies (include dev dependencies for build)
 npm install --legacy-peer-deps
@@ -97,6 +108,7 @@ npm list --depth=0
 **Note:** We install all dependencies (including dev dependencies) because Next.js requires TypeScript, type definitions, and build tools for the production build process. The built application will only use runtime dependencies.
 
 #### 2.4 Environment Configuration
+
 ```bash
 # Copy environment template
 cp .env.example .env
@@ -106,6 +118,7 @@ nano .env
 ```
 
 **Production .env configuration:**
+
 ```env
 # Database
 DATABASE_URL="file:./database/prisma/prod.db"
@@ -129,11 +142,13 @@ NEXT_PUBLIC_BASE_URL="https://your-domain.com"
 ```
 
 **Important Notes:**
+
 - Generate a secure random string for `NEXTAUTH_SECRET` (you can use `openssl rand -base64 32`)
 - Update SMTP settings with your actual email provider credentials
 - Replace `your-domain.com` with your actual domain name
 
 #### 2.5 Database Setup
+
 ```bash
 # Run database migrations
 npm run db:migrate
@@ -146,6 +161,7 @@ ls -la *.db
 ```
 
 #### 2.6 Build Application
+
 ```bash
 # Build the Next.js application
 npm run build
@@ -157,6 +173,7 @@ ls -la .next/
 ### Step 3: PM2 Configuration
 
 #### 3.1 Create Ecosystem Configuration
+
 ```bash
 # Copy the example ecosystem config
 cp config/ecosystem.config.example.js ecosystem.config.js
@@ -166,29 +183,33 @@ nano ecosystem.config.js
 ```
 
 **ecosystem.config.js content:**
+
 ```javascript
 module.exports = {
-  apps: [{
-    name: 'pos-system',
-    script: 'npm start',
-    instances: 1,
-    autorestart: true,
-    watch: false,
-    max_memory_restart: '1G',
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3000,
-      HOST: '0.0.0.0',
+  apps: [
+    {
+      name: 'pos-system',
+      script: 'npm start',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3000,
+        HOST: '0.0.0.0',
+      },
+      error_file: './logs/err.log',
+      out_file: './logs/out.log',
+      log_file: './logs/combined.log',
+      time: true,
     },
-    error_file: './logs/err.log',
-    out_file: './logs/out.log',
-    log_file: './logs/combined.log',
-    time: true
-  }]
+  ],
 }
 ```
 
 #### 3.2 Create Logs Directory
+
 ```bash
 # Create logs directory
 mkdir -p logs
@@ -198,6 +219,7 @@ chmod 755 logs
 ```
 
 #### 3.3 Start Application with PM2
+
 ```bash
 # Start the application
 pm2 start ecosystem.config.js
@@ -216,6 +238,7 @@ pm2 logs pos-system --lines 20
 ### Step 4: Nginx Configuration
 
 #### 4.1 SSL Certificate Setup (Let's Encrypt)
+
 ```bash
 # Obtain SSL certificate (replace with your domain)
 sudo certbot --nginx -d your-domain.com
@@ -225,12 +248,14 @@ sudo certbot renew --dry-run
 ```
 
 #### 4.2 Create Nginx Configuration
+
 ```bash
 # Create Nginx site configuration
 sudo nano /etc/nginx/sites-available/pos-system
 ```
 
 **Nginx configuration content:**
+
 ```nginx
 server {
     listen 80;
@@ -290,6 +315,7 @@ server {
 ```
 
 #### 4.3 Enable Nginx Site
+
 ```bash
 # Enable the site
 sudo ln -s /etc/nginx/sites-available/pos-system /etc/nginx/sites-enabled/
@@ -310,6 +336,7 @@ curl -I https://your-domain.com
 ### Step 5: Database Backup Setup
 
 #### 5.1 Create Backup Directory
+
 ```bash
 # Create backups directory
 mkdir -p ~/backups
@@ -319,12 +346,14 @@ chmod 755 ~/backups
 ```
 
 #### 5.2 Create Backup Script
+
 ```bash
 # Create backup script
 nano ~/apps/pos-system/backup.sh
 ```
 
 **backup.sh content:**
+
 ```bash
 #!/bin/bash
 
@@ -365,6 +394,7 @@ echo "$(date): Backup completed: $BACKUP_FILE" >> $BACKUP_DIR/backup.log
 ```
 
 #### 5.3 Make Backup Script Executable
+
 ```bash
 # Make script executable
 chmod +x ~/apps/pos-system/backup.sh
@@ -374,6 +404,7 @@ chmod +x ~/apps/pos-system/backup.sh
 ```
 
 #### 5.4 Schedule Automated Backups
+
 ```bash
 # Edit crontab
 crontab -e
@@ -388,6 +419,7 @@ crontab -l
 ### Step 6: Monitoring and Security Setup
 
 #### 6.1 PM2 Monitoring Configuration
+
 ```bash
 # Install PM2 log rotation
 pm2 install pm2-logrotate
@@ -402,6 +434,7 @@ pm2 restart all
 ```
 
 #### 6.2 Firewall Configuration
+
 ```bash
 # Enable UFW firewall
 sudo ufw enable
@@ -417,6 +450,7 @@ sudo ufw status
 ```
 
 #### 6.3 Fail2Ban Setup
+
 ```bash
 # Install Fail2Ban
 sudo apt install fail2ban -y
@@ -430,6 +464,7 @@ sudo systemctl status fail2ban
 ```
 
 #### 6.4 User Permissions Setup
+
 ```bash
 # Create dedicated user for the application (optional but recommended)
 sudo useradd -m -s /bin/bash posuser
@@ -445,6 +480,7 @@ chmod 600 prod.db
 ### Step 7: Testing and Verification
 
 #### 7.1 Test Application Access
+
 ```bash
 # Test local access
 curl http://localhost:3000
@@ -454,6 +490,7 @@ curl -I https://your-domain.com
 ```
 
 #### 7.2 Test PM2 Management
+
 ```bash
 # Check PM2 status
 pm2 status
@@ -466,6 +503,7 @@ pm2 monit
 ```
 
 #### 7.3 Test Database Operations
+
 ```bash
 # Check database integrity
 sqlite3 prod.db "PRAGMA integrity_check;"
@@ -475,6 +513,7 @@ ls -lh database/prisma/prod.db
 ```
 
 #### 7.4 Test Email Functionality (if configured)
+
 ```bash
 # Test email sending from application
 # Access the application and try sending a test email
@@ -483,6 +522,7 @@ ls -lh database/prisma/prod.db
 ## Cloud Deployment Options
 
 ### AWS EC2 Deployment
+
 1. **Launch EC2 Instance**
    - Choose Ubuntu 20.04 LTS
    - Instance type: t3.medium (2 vCPU, 4GB RAM recommended)
@@ -500,6 +540,7 @@ ls -lh database/prisma/prod.db
    - Configure Route 53 for DNS
 
 ### DigitalOcean Droplet Deployment
+
 1. **Create Droplet**
    - Choose Ubuntu 20.04 LTS
    - Plan: 2GB RAM minimum
@@ -518,6 +559,7 @@ ls -lh database/prisma/prod.db
 ### Docker Deployment (Alternative)
 
 #### Dockerfile
+
 ```dockerfile
 FROM node:20-alpine
 
@@ -543,13 +585,14 @@ CMD ["npm", "start"]
 ```
 
 #### Docker Compose Configuration
+
 ```yaml
 version: '3.8'
 services:
   pos-system:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     volumes:
       - ./database/prisma/prod.db:/app/database/prisma/prod.db
       - ./storage:/app/storage
@@ -563,6 +606,7 @@ services:
 ## Maintenance Procedures
 
 ### Application Updates
+
 ```bash
 # Navigate to application directory
 cd ~/apps/pos-system
@@ -584,6 +628,7 @@ pm2 logs pos-system --lines 20
 ```
 
 ### Database Maintenance
+
 ```bash
 # Navigate to application directory
 cd ~/apps/pos-system
@@ -599,6 +644,7 @@ cp database/prisma/prod.db database/prisma/prod.db.backup
 ```
 
 ### Log Management
+
 ```bash
 # View current logs
 pm2 logs pos-system
@@ -615,6 +661,7 @@ pm2 flush
 ### Common Issues and Solutions
 
 #### Application Won't Start
+
 ```bash
 # Check PM2 status
 pm2 status
@@ -633,6 +680,7 @@ node --version
 ```
 
 #### Nginx Configuration Errors
+
 ```bash
 # Test Nginx configuration
 sudo nginx -t
@@ -648,6 +696,7 @@ sudo systemctl reload nginx
 ```
 
 #### Database Connection Issues
+
 ```bash
 # Check database file permissions
 ls -la database/prisma/prod.db
@@ -663,6 +712,7 @@ pkill -f sqlite3
 ```
 
 #### SSL Certificate Problems
+
 ```bash
 # Check certificate status
 sudo certbot certificates
@@ -678,6 +728,7 @@ openssl s_client -connect your-domain.com:443 -servername your-domain.com < /dev
 ```
 
 #### Memory Issues
+
 ```bash
 # Check system memory usage
 free -h
@@ -693,6 +744,7 @@ pm2 restart ecosystem.config.js --max-memory-restart 2G
 ```
 
 #### Email Delivery Issues
+
 ```bash
 # Check email configuration in .env
 cat .env | grep EMAIL
@@ -705,6 +757,7 @@ pm2 logs pos-system | grep -i email
 ```
 
 #### Dependency Issues
+
 ```bash
 # If scripts fail with "Cannot find module" errors
 # Install all dependencies (including dev dependencies)
@@ -720,6 +773,7 @@ npm install --legacy-peer-deps
 ### Performance Optimization
 
 #### PM2 Optimization
+
 ```bash
 # Enable cluster mode for better performance (if server has multiple cores)
 pm2 start ecosystem.config.js -i max
@@ -729,6 +783,7 @@ pm2 set pm2-logrotate:rotateInterval '0 0 * * *'
 ```
 
 #### Nginx Optimization
+
 ```nginx
 # Add to /etc/nginx/nginx.conf
 worker_processes auto;
@@ -738,6 +793,7 @@ multi_accept on;
 ```
 
 #### Database Optimization
+
 ```sql
 -- Run these commands on your database
 PRAGMA cache_size = 10000;
@@ -749,11 +805,13 @@ PRAGMA temp_store = MEMORY;
 ## Backup and Recovery
 
 ### Automated Backup Strategy
+
 - **Daily Database Backups**: Full database backup every day at 2 AM
 - **Weekly System Backups**: Complete application and configuration backup weekly
 - **Offsite Storage**: Upload backups to cloud storage (AWS S3, Google Cloud, etc.)
 
 ### Manual Backup Procedure
+
 ```bash
 # Stop application
 pm2 stop pos-system
@@ -782,27 +840,33 @@ echo "Manual backup completed: $BACKUP_DIR.tar.gz"
 ```
 
 ### Recovery Procedure
+
 1. **Stop Application**
+
    ```bash
    pm2 stop pos-system
    ```
 
 2. **Restore Database**
+
    ```bash
    cp ~/backups/pos_backup_20231201_020000.db database/prisma/prod.db
    ```
 
 3. **Restore Configuration (if needed)**
+
    ```bash
    cp ~/backups/manual/config_backup/.env .env
    ```
 
 4. **Verify Data Integrity**
+
    ```bash
    sqlite3 database/prisma/prod.db "PRAGMA integrity_check;"
    ```
 
 5. **Restart Application**
+
    ```bash
    pm2 start pos-system
    ```
@@ -815,6 +879,7 @@ echo "Manual backup completed: $BACKUP_DIR.tar.gz"
 ## Security Best Practices
 
 ### Server Security
+
 - Keep system packages updated
 - Use strong passwords and SSH keys
 - Configure firewall properly
@@ -823,6 +888,7 @@ echo "Manual backup completed: $BACKUP_DIR.tar.gz"
 - Regular security audits
 
 ### Application Security
+
 - Keep dependencies updated
 - Use environment variables for secrets
 - Implement proper authentication
@@ -830,6 +896,7 @@ echo "Manual backup completed: $BACKUP_DIR.tar.gz"
 - Monitor for security vulnerabilities
 
 ### Data Security
+
 - Encrypt sensitive data
 - Regular backups
 - Secure backup storage
@@ -839,12 +906,15 @@ echo "Manual backup completed: $BACKUP_DIR.tar.gz"
 ## Support and Resources
 
 ### Getting Help
+
 1. **Check Application Logs**
+
    ```bash
    pm2 logs pos-system --lines 100
    ```
 
 2. **Review System Resources**
+
    ```bash
    htop
    df -h
@@ -860,6 +930,7 @@ echo "Manual backup completed: $BACKUP_DIR.tar.gz"
    - Contact system administrator
 
 ### Useful Commands Reference
+
 ```bash
 # PM2 commands
 pm2 status                    # Check process status

@@ -21,6 +21,7 @@ A modern, full-stack web application built with Next.js 15, TypeScript, and SQLi
 | ----------- | -------------------------------------- | ----------------------------- |
 | **OS**      | Linux (Ubuntu 20.04+ or Debian 11+)    | Production only               |
 | **Node.js** | 20.19.6+                               | LTS recommended               |
+| **Python**  | 3.8+                                   | For utility scripts           |
 | **Memory**  | 2GB RAM minimum, 4GB recommended       |                               |
 | **Storage** | 20GB minimum                           | For database and logs         |
 | **Browser** | Modern browser with JavaScript enabled | Chrome, Firefox, Safari, Edge |

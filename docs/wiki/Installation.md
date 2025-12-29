@@ -9,6 +9,8 @@
 | Component            | Specification               | Notes                           |
 | -------------------- | --------------------------- | ------------------------------- |
 | **Operating System** | Ubuntu 20.04+ or Debian 11+ | Linux only - no Windows support |
+| **Node.js**          | 20.19.6+                    | LTS version required            |
+| **Python**           | 3.8+                        | For utility scripts             |
 | **Memory (RAM)**     | 2GB                         | 4GB recommended for production  |
 | **Storage**          | 20GB SSD                    | For database, logs, and uploads |
 | **CPU**              | 1 core                      | 2 cores recommended             |
@@ -20,6 +22,8 @@
 | ----------- | --------------------------------------- | ------------------------------ |
 | **Server**  | VPS/Dedicated (DigitalOcean, AWS, etc.) | 24/7 availability              |
 | **OS**      | Ubuntu 22.04 LTS                        | Long-term support              |
+| **Node.js** | 20.19.6+                                | Latest LTS version             |
+| **Python**  | 3.10+                                   | For maintenance scripts        |
 | **Memory**  | 4GB RAM                                 | Handle concurrent users        |
 | **Storage** | 50GB SSD                                | Growth capacity                |
 | **CPU**     | 2+ cores                                | Performance for multiple users |
@@ -96,11 +100,12 @@ For developers who need to modify code or understand internals.
 # Required versions
 node --version     # Should be 20.19.6+
 npm --version      # Should be 10.0.0+
+python3 --version  # Should be 3.8+
 git --version      # Any recent version
 
 # Install if missing
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs git
+sudo apt-get install -y nodejs python3 python3-pip git
 ```
 
 #### Development Installation Steps
