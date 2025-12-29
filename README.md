@@ -339,7 +339,7 @@ For production deployment on a Linux server.
 - Ubuntu 20.04+ or Debian 11+
 - 2GB RAM minimum, 4GB recommended
 - 20GB storage minimum
-- Domain name (recommended)
+- Domain name (recommended) or static local IP
 
 #### Production Deployment Steps
 
@@ -361,13 +361,71 @@ npm ci --omit=dev
 
 # 5. Configure environment
 cp .env.example .env
-nano .env  # Configure production settings
 
-# 6. Build application
+# 6. Generate secure secrets
+openssl rand -base64 32
+
+# Copy the generated secret and edit .env file
+nano .env
+```
+
+#### Environment Configuration
+
+Edit `.env` with your production settings:
+
+```env
+# Database
+DATABASE_URL="file:./database/prisma/prod.db"
+
+# NextAuth Configuration
+NEXTAUTH_URL="http://YOUR_SERVER_IP:3000"  # Replace with your server's IP
+NEXTAUTH_SECRET="YOUR_GENERATED_SECRET_HERE"  # Use the openssl output
+
+# Application Settings
+NODE_ENV="production"
+NEXT_PUBLIC_BASE_URL="http://YOUR_SERVER_IP:3000"  # Replace with your server's IP
+
+# Email (optional - configure later)
+SMTP_HOST=""
+SMTP_PORT=""
+SMTP_USER=""
+SMTP_PASS=""
+```
+
+```bash
+# 7. Setup database
+npm run db:migrate
+npm run db:seed
+
+# 8. Set proper permissions
+chmod 664 database/prisma/prod.db
+chown -R $USER:$USER .
+
+# 9. Build application
 npm run build
 
-# 7. Start with PM2
+# 10. Start with PM2
 pm2 start ecosystem.config.js --env production
+
+# 11. Save PM2 configuration
+pm2 save
+
+# 12. Setup auto-start on boot
+pm2 startup
+
+# 13. Check status
+pm2 status
+pm2 logs pos-system --lines 20
+```
+
+#### Post-Installation Verification
+
+```bash
+# Test application health
+curl http://localhost:3000/api/health
+
+# Check PM2 status
+pm2 monit
 ```
 
 ### 🔧 **Troubleshooting Installation**
