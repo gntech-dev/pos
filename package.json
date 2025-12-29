@@ -15,7 +15,7 @@
     "db:seed": "tsx database/prisma/seed.ts",
     "db:migrate": "prisma migrate dev --schema=database/prisma/schema.prisma",
     "db:studio": "prisma studio --schema=database/prisma/schema.prisma",
-    "prepare": "husky || true"
+    "prepare": "node -e \"try { require('husky') } catch(e) { console.log('Husky not available in production - skipping git hooks setup') }\""
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
