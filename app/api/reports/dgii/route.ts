@@ -117,7 +117,7 @@ async function generateForm607(_dateFilter: Record<string, unknown>, _startDate?
     }))
   }))
 
-  const totals = records.reduce((acc, record) => ({
+  const totals = records.reduce((acc: { totalSales: number; totalITBIS: number; totalRetainedITBIS: number }, record: { totalAmount: number; itbis: number; retainedITBIS: number }) => ({
     totalSales: acc.totalSales + record.totalAmount,
     totalITBIS: acc.totalITBIS + record.itbis,
     totalRetainedITBIS: acc.totalRetainedITBIS + record.retainedITBIS
