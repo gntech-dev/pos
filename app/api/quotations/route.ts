@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSessionFromCookie } from "@/lib/session"
 import { z } from "zod"
+import { PrismaClient } from "@prisma/client"
 
 const QuotationItemSchema = z.object({
   productId: z.string(),
@@ -171,7 +172,7 @@ export async function POST(request: NextRequest) {
     const expiresAt = data.expiresAt ? new Date(data.expiresAt) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
     // Create quotation with items
-    const quotation = await prisma.$transaction(async (tx) => {
+    const quotation = await prisma.$transaction(async (tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>) => {
       // Create the quotation
       const newQuotation = await tx.quotation.create({
         data: {

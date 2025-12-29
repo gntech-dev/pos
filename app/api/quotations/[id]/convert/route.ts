@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSessionFromCookie } from "@/lib/session"
 import { z } from "zod"
+import { PrismaClient } from "@prisma/client"
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Use transaction to ensure data consistency
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>) => {
       // Update NCF sequence to the next available number
       await tx.nCFSequence.update({
         where: { id: ncfSequence.id },

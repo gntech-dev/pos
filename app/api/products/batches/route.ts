@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSessionFromCookie } from "@/lib/session"
 import { z } from "zod"
+import { PrismaClient } from "@prisma/client"
 
 const ProductBatchSchema = z.object({
   productId: z.string(),
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const batch = await prisma.$transaction(async (tx) => {
+    const batch = await prisma.$transaction(async (tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>) => {
       // Create the batch
       const newBatch = await tx.productBatch.create({
         data: {

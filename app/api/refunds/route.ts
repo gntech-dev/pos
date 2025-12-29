@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { getSessionFromCookie } from "@/lib/session"
 import { z } from "zod"
 import { generateNCF } from "@/lib/ncf"
+import { PrismaClient } from "@prisma/client"
 
 const RefundItemSchema = z.object({
   saleItemId: z.string(),
@@ -213,7 +214,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create refund with items in a transaction
-    const refund = await prisma.$transaction(async (tx) => {
+    const refund = await prisma.$transaction(async (tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>) => {
       // Create the refund
       const newRefund = await tx.refund.create({
         data: {

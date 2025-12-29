@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { getSessionFromCookie } from "@/lib/session"
 import { generateNCF, getNCFType } from "@/lib/ncf"
 import { z } from "zod"
+import { PrismaClient } from "@prisma/client"
 
 const SaleItemSchema = z.object({
   productId: z.string(),
@@ -243,7 +244,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create sale with items in a transaction
-    const sale = await prisma.$transaction(async (tx) => {
+    const sale = await prisma.$transaction(async (tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>) => {
       // Create the sale
       const newSale = await tx.sale.create({
         data: {
