@@ -357,7 +357,7 @@ sudo npm install -g pm2
 # 4. Clone and setup
 git clone https://github.com/gntech-dev/pos.git
 cd pos
-npm ci --only=production
+npm ci --omit=dev
 
 # 5. Configure environment
 cp .env.example .env
@@ -879,7 +879,7 @@ sudo npm install -g pm2
 # Clone and setup
 git clone https://github.com/gntech-dev/pos.git
 cd pos
-npm ci --only=production
+npm ci --omit=dev
 
 # Configure environment
 cp .env.example .env
