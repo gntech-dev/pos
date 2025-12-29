@@ -83,3 +83,11 @@ export function formatRNC(value: string): string {
   if (cleaned.length <= 8) return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`
   return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 8)}-${cleaned.slice(8, 9)}`
 }
+
+// Format Dominican phone number with dashes
+export function formatPhone(value: string): string {
+  const cleaned = value.replace(/\D/g, '')
+  if (cleaned.length <= 3) return cleaned
+  if (cleaned.length <= 6) return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`
+  return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`
+}

@@ -1,3 +1,6 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import { formatCedula, formatPhone, formatRNC } from '@/lib/utils'
 
 interface Customer {
