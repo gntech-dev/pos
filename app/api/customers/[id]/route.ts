@@ -39,14 +39,14 @@ const CustomerUpdateSchema = z.object({
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSessionFromCookie()
   if (!session) {
     return new NextResponse(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
   }
 
-  const { id } = params
+  const { id } = await params
 
   try {
     const customer = await prisma.customer.findUnique({
@@ -78,14 +78,14 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSessionFromCookie()
   if (!session) {
     return new NextResponse(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
   }
 
-  const { id } = params
+  const { id } = await params
 
   const body = await request.json().catch(() => null)
   const parseResult = CustomerUpdateSchema.safeParse(body)
@@ -163,14 +163,14 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSessionFromCookie()
   if (!session) {
     return new NextResponse(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
   }
 
-  const { id } = params
+  const { id } = await params
 
   try {
     // Check if customer exists
