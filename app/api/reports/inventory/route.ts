@@ -137,7 +137,7 @@ interface CategorySummary {
   totalValue: number
 }
 
-  const grouped = products.reduce((acc, product) => {
+  const grouped = products.reduce((acc: Record<string, CategorySummary>, product: { category: string | null; stock: number; cost: number }) => {
     const category = product.category || 'Sin Categoría'
     if (!acc[category]) {
       acc[category] = {
