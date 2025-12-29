@@ -222,7 +222,7 @@ export async function DELETE(
       )
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>) => {
       // Update product stock
       await tx.product.update({
         where: { id: currentBatch.productId },
