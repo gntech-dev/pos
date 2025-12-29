@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { authenticateUser } from "@/lib/auth-utils"
 import { setSessionCookie } from "@/lib/session"
 import { endpointLimiters, createRateLimitResponse, BruteForceProtection, logRateLimitViolation } from "@/lib/rate-limit"
-import { prisma } from "@/lib/prisma"
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,7 +48,7 @@ export async function POST(req: NextRequest) {
         username: username || null,
         hasPassword: !!password
       })
-    } catch (e) {
+    } catch {
       console.log('Could not log login body')
     }
 

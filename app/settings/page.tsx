@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import Image from 'next/image'
 import LogoSelector from '../../components/LogoSelector'
 
 interface User {
@@ -2415,7 +2414,6 @@ export default function SettingsPage() {
 // Security Settings Component
 function SecuritySettings() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
-  const [loading, setLoading] = useState(false)
 
   // Load audit logs
   const loadAuditLogs = useCallback(async () => {

@@ -8,10 +8,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const raw = await req.text()
-    let parsed: any = null
+    let parsed: unknown = null
     try {
       parsed = JSON.parse(raw)
-    } catch (e) {
+    } catch {
       // not JSON
     }
 

@@ -67,7 +67,7 @@ export const saleSchemas = {
 }
 
 export class ValidationService {
-  static validate(schema: z.ZodSchema, data: any) {
+  static validate(schema: z.ZodSchema, data: unknown) {
     try {
       return {
         success: true,
@@ -90,19 +90,19 @@ export class ValidationService {
     }
   }
 
-  static validateLogin(data: any) {
+  static validateLogin(data: unknown) {
     return this.validate(userSchemas.login, data)
   }
 
-  static validateUserCreate(data: any) {
+  static validateUserCreate(data: unknown) {
     return this.validate(userSchemas.create, data)
   }
 
-  static validateProductCreate(data: any) {
+  static validateProductCreate(data: unknown) {
     return this.validate(productSchemas.create, data)
   }
 
-  static validateSaleCreate(data: any) {
+  static validateSaleCreate(data: unknown) {
     return this.validate(saleSchemas.create, data)
   }
 }
