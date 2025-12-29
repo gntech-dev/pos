@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
     let subtotal = 0
 
     for (const refundItem of data.items) {
-      const saleItem = sale.items.find(item => item.id === refundItem.saleItemId)
+      const saleItem = sale.items.find((item: { id: string }) => item.id === refundItem.saleItemId)
       if (!saleItem) {
         return new NextResponse(
           JSON.stringify({ error: `Sale item ${refundItem.saleItemId} not found in sale` }),
