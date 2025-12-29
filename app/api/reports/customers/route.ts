@@ -167,7 +167,7 @@ async function getTopCustomers() {
   }))
 
   return withTotals
-    .filter(c => c.totalRevenue > 0)
+    .filter((c: { id: string; name: string; totalSales: number; totalRevenue: number }) => c.totalRevenue > 0)
     .sort((a, b) => b.totalRevenue - a.totalRevenue)
     .slice(0, 20)
 }
