@@ -151,7 +151,7 @@ async function getTopCustomers() {
     id: customer.id,
     name: customer.name,
     totalSales: customer._count.sales,
-    totalRevenue: customer.sales.reduce((sum, sale) => sum + sale.total, 0)
+    totalRevenue: customer.sales.reduce((sum: number, sale: { total: number }) => sum + sale.total, 0)
   }))
 
   return withTotals

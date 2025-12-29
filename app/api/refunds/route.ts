@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const tax = refundItems.reduce((sum, item) => sum + (item.subtotal * item.taxRate), 0)
+    const tax = refundItems.reduce((sum: number, item: { subtotal: number; taxRate: number }) => sum + (item.subtotal * item.taxRate), 0)
     const total = subtotal + tax
 
     // Generate refund number

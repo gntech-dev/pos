@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    const tax = quotationItems.reduce((sum, item) => sum + (item.subtotal * item.taxRate), 0)
+    const tax = quotationItems.reduce((sum: number, item: { subtotal: number; taxRate: number }) => sum + (item.subtotal * item.taxRate), 0)
     const total = subtotal + tax - data.discount
 
     // Generate quotation number

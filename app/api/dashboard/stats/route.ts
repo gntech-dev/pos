@@ -99,8 +99,8 @@ export async function GET(_request: NextRequest) {
       }
     })
 
-    const averageSale = todaySalesData.length > 0 
-      ? todaySalesData.reduce((sum, sale) => sum + sale.total, 0) / todaySalesData.length 
+    const averageSale = todaySalesData.length > 0
+      ? todaySalesData.reduce((sum: number, sale: { total: number }) => sum + sale.total, 0) / todaySalesData.length
       : 0
 
     // Get top selling products (last 30 days)

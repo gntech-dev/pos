@@ -168,7 +168,7 @@ async function getInventorySummary() {
     where: { isActive: true, trackInventory: true },
     select: { stock: true, cost: true }
   })
-  const totalInventoryValue = products.reduce((sum, product) => sum + (product.stock * product.cost), 0)
+  const totalInventoryValue = products.reduce((sum: number, product: { stock: number; cost: number }) => sum + (product.stock * product.cost), 0)
 
   return {
     totalProducts,

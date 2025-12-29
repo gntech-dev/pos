@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    const tax = saleItems.reduce((sum, item) => sum + (item.subtotal * item.taxRate), 0)
+    const tax = saleItems.reduce((sum: number, item: { subtotal: number; taxRate: number }) => sum + (item.subtotal * item.taxRate), 0)
     const total = subtotal + tax - data.discount
 
     // Generate sale number

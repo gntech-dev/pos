@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       running: filteredBackups.filter(b => b.status === 'running').length,
       totalSize: filteredBackups
         .filter(b => b.status === 'completed')
-        .reduce((sum, b) => sum + b.size, 0),
+        .reduce((sum: number, b: { size: number }) => sum + b.size, 0),
       oldest: filteredBackups.length > 0 ? filteredBackups[filteredBackups.length - 1].createdAt : null,
       newest: filteredBackups.length > 0 ? filteredBackups[0].createdAt : null
     }
