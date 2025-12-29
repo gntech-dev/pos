@@ -86,7 +86,7 @@ Want to try the system quickly? Here's how to get started in 5 minutes:
 ```bash
 # 1. Clone and enter directory
 git clone https://github.com/gntech-dev/pos.git
-cd pos/pos-system
+cd pos
 
 # 2. Start with Docker
 docker-compose up --build
@@ -102,7 +102,7 @@ docker-compose up --build
 
 # 2. Clone and setup
 git clone https://github.com/gntech-dev/pos.git
-cd pos/pos-system
+cd pos
 npm install
 
 # 3. Start development server
@@ -228,7 +228,7 @@ Docker makes installation simple and ensures consistency across different enviro
 ```bash
 # 1. Clone the repository
 git clone https://github.com/gntech-dev/pos.git
-cd pos/pos-system
+cd pos
 
 # 2. Start with Docker Compose
 docker-compose up --build
@@ -277,7 +277,7 @@ git --version
 ```bash
 # 1. Clone the repository
 git clone https://github.com/gntech-dev/pos.git
-cd pos/pos-system
+cd pos
 
 # 2. Install dependencies
 npm install --legacy-peer-deps
@@ -356,7 +356,7 @@ sudo npm install -g pm2
 
 # 4. Clone and setup
 git clone https://github.com/gntech-dev/pos.git
-cd pos/pos-system
+cd pos
 npm ci --only=production
 
 # 5. Configure environment
@@ -844,7 +844,7 @@ npm run db:studio  # Open Prisma Studio
 ```bash
 # On your production server
 git clone https://github.com/gntech-dev/pos.git
-cd pos/pos-system
+cd pos
 
 # Configure environment
 cp .env.example .env
@@ -878,7 +878,7 @@ sudo npm install -g pm2
 ```bash
 # Clone and setup
 git clone https://github.com/gntech-dev/pos.git
-cd pos/pos-system
+cd pos
 npm ci --only=production
 
 # Configure environment
