@@ -7,9 +7,6 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { email, username, password, name, role } = body
 
-    // Log the received body for debugging
-    console.log('User creation request body:', { ...body, password: body.password ? '***' : undefined })
-
     // Validate required fields
     if (!email || !username || !password || !name) {
       return NextResponse.json(
@@ -102,8 +99,6 @@ export async function PUT(req: NextRequest) {
     const body = await req.json()
     const { id, email, username, name, role, isActive } = body
 
-    console.log('User update request body:', { id, email, username, name, role, isActive })
-
     if (!id) {
       return NextResponse.json(
         { error: "User ID is required" },
@@ -180,8 +175,6 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')
-
-    console.log('User delete request for ID:', id)
 
     if (!id) {
       return NextResponse.json(
