@@ -209,5 +209,5 @@ async function getSalesByProduct(dateFilter: DateFilter) {
     return acc
   }, {} as Record<string, ProductSales>)
 
-  return Object.values(grouped).sort((a: ProductSales, b: ProductSales) => b.totalRevenue - a.totalRevenue)
+  return (Object.values(grouped) as ProductSales[]).sort((a, b) => b.totalRevenue - a.totalRevenue)
 }
