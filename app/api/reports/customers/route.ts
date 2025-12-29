@@ -153,7 +153,13 @@ async function getTopCustomers() {
     }
   })
 
-  const withTotals = customers.map(customer => ({
+  const withTotals = customers.map((customer: {
+    id: string;
+    name: string;
+    createdAt: Date;
+    _count: { sales: number; quotations: number };
+    sales: Array<{ total: number; createdAt: Date }>;
+  }) => ({
     id: customer.id,
     name: customer.name,
     totalSales: customer._count.sales,
