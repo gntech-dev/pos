@@ -18,6 +18,7 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -43,6 +44,42 @@ export default function CustomersPage() {
     }
   }
 
+  const handleEditCustomer = (customer: Customer) => {
+    setEditingCustomer(customer)
+    setFormData({
+      name: customer.name,
+      email: customer.email || '',
+      phone: customer.phone || '',
+      rnc: customer.rnc || '',
+      cedula: customer.cedula || '',
+      address: customer.address || ''
+    })
+    setShowForm(true)
+  }
+
+  const handleDeleteCustomer = async (customerId: string, customerName: string) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar al cliente "${customerName}"? Esta acción no se puede deshacer.`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/customers/${customerId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        await loadCustomers()
+        alert('Cliente eliminado exitosamente')
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error eliminando cliente:', error)
+      alert('Ocurrió un error al eliminar el cliente')
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -56,8 +93,11 @@ export default function CustomersPage() {
         Object.entries(trimmedData).filter(([key, value]) => key === 'name' || value !== '')
       )
 
-      const response = await fetch('/api/customers', {
-        method: 'POST',
+      const url = editingCustomer ? `/api/customers/${editingCustomer.id}` : '/api/customers'
+      const method = editingCustomer ? 'PUT' : 'POST'
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
@@ -65,14 +105,16 @@ export default function CustomersPage() {
       if (response.ok) {
         await loadCustomers()
         setShowForm(false)
+        setEditingCustomer(null)
         setFormData({ name: '', email: '', phone: '', rnc: '', cedula: '', address: '' })
+        alert(editingCustomer ? 'Cliente actualizado exitosamente' : 'Cliente creado exitosamente')
       } else {
         const error = await response.json()
         alert(`Error: ${error.error}`)
       }
     } catch (error) {
-      console.error('Error creando cliente:', error)
-      alert('Ocurrió un error al crear el cliente')
+      console.error('Error guardando cliente:', error)
+      alert('Ocurrió un error al guardar el cliente')
     } finally {
       setLoading(false)
     }
@@ -175,10 +217,16 @@ export default function CustomersPage() {
                     )}
 
                     <div className="flex gap-2">
-                      <button className="flex-1 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold">
+                      <button 
+                        onClick={() => handleEditCustomer(customer)}
+                        className="flex-1 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold"
+                      >
                         ✏️ Editar
                       </button>
-                      <button className="flex-1 px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 font-semibold">
+                      <button 
+                        onClick={() => handleDeleteCustomer(customer.id, customer.name)}
+                        className="flex-1 px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 font-semibold"
+                      >
                         🗑️ Eliminar
                       </button>
                     </div>
@@ -195,8 +243,10 @@ export default function CustomersPage() {
         <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-5 rounded-t-xl">
-              <h2 className="text-2xl font-bold">➕ Nuevo Cliente</h2>
-              <p className="text-orange-100 text-sm mt-1">Completa la información del cliente</p>
+              <h2 className="text-2xl font-bold">{editingCustomer ? '✏️ Editar Cliente' : '➕ Nuevo Cliente'}</h2>
+              <p className="text-orange-100 text-sm mt-1">
+                {editingCustomer ? 'Actualiza la información del cliente' : 'Completa la información del cliente'}
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6">
@@ -293,15 +343,19 @@ export default function CustomersPage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Guardando...
+                      {editingCustomer ? 'Actualizando...' : 'Guardando...'}
                     </span>
                   ) : (
-                    '💾 Guardar Cliente'
+                    editingCustomer ? '💾 Actualizar Cliente' : '💾 Guardar Cliente'
                   )}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={() => {
+                    setShowForm(false)
+                    setEditingCustomer(null)
+                    setFormData({ name: '', email: '', phone: '', rnc: '', cedula: '', address: '' })
+                  }}
                   className="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white py-3 rounded-lg font-bold hover:from-gray-600 hover:to-gray-700 transition-all duration-200 shadow-lg"
                 >
                   ✖️ Cancelar
