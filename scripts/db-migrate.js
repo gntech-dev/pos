@@ -19,6 +19,8 @@ while (projectRoot !== path.dirname(projectRoot)) {
 
 // Change to project root
 process.chdir(projectRoot);
+console.log('Current working directory:', process.cwd());
+console.log('Project root:', projectRoot);
 
 // Run prisma migrate
 try {
