@@ -227,7 +227,7 @@ async function sendAutomatedNCFAlertEmail(alerts: AlertData[], businessSettings:
     })
 
     const recipients = adminUsers
-      .map(user => user.email)
+      .map((user: { email: string | null; name: string | null }) => user.email)
       .filter(email => email && email.includes('@')) // Basic email validation
 
     if (recipients.length === 0) {
