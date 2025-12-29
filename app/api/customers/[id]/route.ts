@@ -94,10 +94,6 @@ export async function PUT(
   const parseResult = CustomerUpdateSchema.safeParse(body)
 
   if (!parseResult.success) {
-    console.log('Customer update validation failed:', {
-      body,
-      errors: parseResult.error.format()
-    })
     return new NextResponse(
       JSON.stringify({ error: "Invalid payload", issues: parseResult.error.format() }), 
       { status: 400 }
