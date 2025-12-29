@@ -117,7 +117,20 @@ npm run dev
 - **Password**: admin123
 - Change password immediately after first login!
 
-> **Need Help?** Check the [Installation Guide](#-installation) below for detailed instructions.
+### Updating Your Application
+
+To get the latest features and bug fixes:
+
+```bash
+# Pull latest changes
+git pull origin main
+
+# Restart (if using Docker)
+docker-compose restart
+
+# Or restart PM2 (if using traditional deployment)
+pm2 restart pos-system
+```
 
 > **Need Help?** Check the [Installation Guide](#-installation) below for detailed instructions.
 
@@ -375,6 +388,7 @@ Edit `.env` with your production settings:
 
 ```env
 # Database
+# Note: Uses relative path from app root - ecosystem.config.js ensures correct working directory
 DATABASE_URL="file:./database/prisma/prod.db"
 
 # NextAuth Configuration
@@ -973,6 +987,39 @@ pm2 startup
 pm2 status
 pm2 logs pos-system
 ```
+
+### **Updating from GitHub**
+
+To update your production application with the latest changes from GitHub:
+
+```bash
+# Navigate to your application directory
+cd /path/to/your/pos-system
+
+# Stop the PM2 process
+pm2 stop pos-system
+
+# Pull latest changes from GitHub
+git pull origin main
+
+# Install any new dependencies (if package.json was updated)
+npm ci --omit=dev
+
+# Run database migrations (if schema changed)
+npm run db:migrate
+
+# Rebuild the application
+npm run build
+
+# Restart the application
+pm2 restart pos-system
+
+# Check that it's running
+pm2 status
+curl http://localhost:3000/api/health
+```
+
+> **⚠️ Important**: Always backup your database before updating, especially if migrations are involved.
 
 ### **Nginx Reverse Proxy** (Recommended)
 
