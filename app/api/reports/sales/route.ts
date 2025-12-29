@@ -122,7 +122,7 @@ async function getSalesByDate(dateFilter: DateFilter) {
   })
 
   // Group by date
-  const grouped = sales.reduce((acc, sale) => {
+  const grouped = sales.reduce((acc: Record<string, DailySales>, sale: { createdAt: Date; total: number; tax: number; _count: { items: number } }) => {
     const date = sale.createdAt.toISOString().split('T')[0]
     if (!acc[date]) {
       acc[date] = {
