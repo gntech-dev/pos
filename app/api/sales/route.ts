@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
     // Calculate totals
     let subtotal = 0
     const saleItems = data.items.map(item => {
-      const product = products.find((p) => p.id === item.productId)!
+      const product = products.find((p: { id: string; taxRate: number }) => p.id === item.productId)!
       const itemSubtotal = item.quantity * item.unitPrice - item.discount
       const itemTax = itemSubtotal * product.taxRate
       const itemTotal = itemSubtotal + itemTax
