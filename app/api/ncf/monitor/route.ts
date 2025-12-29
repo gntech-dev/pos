@@ -99,7 +99,7 @@ export async function GET(_request: NextRequest) {
     // Calculate summary statistics
     const summary = {
       totalSequences: sequences.length,
-      activeSequences: sequences.filter(s => s.isActive).length,
+      activeSequences: sequences.filter((s: { isActive: boolean }) => s.isActive).length,
       expiredSequences: ncfStatuses.filter(s => s.status === 'EXPIRED').length,
       expiringSequences: ncfStatuses.filter(s => s.status === 'EXPIRING_SOON').length,
       lowStockSequences: ncfStatuses.filter(s => s.status === 'LOW_STOCK').length,
