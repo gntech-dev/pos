@@ -37,7 +37,7 @@ export default async function RootLayout({
         logo: null
       }
 
-      settings.forEach(setting => {
+      settings.forEach((setting: { key: string; value: string }) => {
         if (setting.key === 'business_name') {
           businessSettings!.name = setting.value
         } else if (setting.key === 'business_logo') {
