@@ -11,6 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "jest",
     "db:seed": "tsx database/prisma/seed.ts",
     "db:migrate": "prisma migrate dev --schema=database/prisma/schema.prisma",
     "db:studio": "prisma studio --schema=database/prisma/schema.prisma"
@@ -55,6 +56,7 @@
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.7",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/papaparse": "^5.5.2",
     "@types/qrcode": "^1.5.6",
@@ -63,7 +65,9 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
+    "jest": "^30.2.0",
     "tailwindcss": "^4",
+    "ts-jest": "^29.4.6",
     "typescript": "^5"
   }
 }
