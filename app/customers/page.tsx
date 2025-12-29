@@ -1,6 +1,4 @@
-'use client'
-
-import { useState, useEffect } from 'react'
+import { formatCedula, formatPhone, formatRNC } from '@/lib/utils'
 
 interface Customer {
   id: string
@@ -286,7 +284,7 @@ export default function CustomersPage() {
                   <input
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
                     className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200"
                     placeholder="809-555-5555"
                   />
@@ -299,7 +297,7 @@ export default function CustomersPage() {
                   <input
                     type="text"
                     value={formData.rnc}
-                    onChange={(e) => setFormData({ ...formData, rnc: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, rnc: formatRNC(e.target.value) })}
                     className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200"
                     placeholder="000-00000-0"
                   />
@@ -312,7 +310,7 @@ export default function CustomersPage() {
                   <input
                     type="text"
                     value={formData.cedula}
-                    onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, cedula: formatCedula(e.target.value) })}
                     className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200"
                     placeholder="000-0000000-0"
                   />

@@ -67,3 +67,19 @@ export function calculateTax(amount: number, taxRate: number = 0.18): number {
 export function calculateTotal(subtotal: number, tax: number, discount: number = 0): number {
   return Math.round((subtotal + tax - discount) * 100) / 100
 }
+
+// Format Dominican cedula with dashes
+export function formatCedula(value: string): string {
+  const cleaned = value.replace(/\D/g, '')
+  if (cleaned.length <= 3) return cleaned
+  if (cleaned.length <= 10) return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`
+  return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 10)}-${cleaned.slice(10, 11)}`
+}
+
+// Format Dominican RNC with dashes
+export function formatRNC(value: string): string {
+  const cleaned = value.replace(/\D/g, '')
+  if (cleaned.length <= 3) return cleaned
+  if (cleaned.length <= 8) return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`
+  return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 8)}-${cleaned.slice(8, 9)}`
+}
