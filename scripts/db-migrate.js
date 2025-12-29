@@ -5,6 +5,10 @@
 
 const { execSync } = require('child_process');
 const path = require('path');
+const fs = require('fs');
+
+// Load environment variables from .env
+require('dotenv').config();
 
 // Find the project root (directory containing package.json)
 let currentDir = process.cwd();
