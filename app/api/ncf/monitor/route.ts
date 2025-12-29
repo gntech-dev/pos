@@ -48,7 +48,7 @@ export async function GET(_request: NextRequest) {
     const thirtyDaysFromNow = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000))
     // const sevenDaysFromNow = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000))
 
-    const ncfStatuses: NCFStatus[] = sequences.map(sequence => {
+    const ncfStatuses: NCFStatus[] = sequences.map((sequence: { expiryDate: Date; endNumber: number; currentNumber: number; startNumber: number; type: string; prefix: string; isActive: boolean }) => {
       const expiryDate = new Date(sequence.expiryDate)
       const daysLeft = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       const remaining = sequence.endNumber - sequence.currentNumber
