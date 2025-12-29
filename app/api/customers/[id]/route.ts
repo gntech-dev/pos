@@ -11,9 +11,12 @@ const CustomerUpdateSchema = z.object({
    email: z.string().optional().transform(val => val === "" ? undefined : val).pipe(z.string().email().optional()),
    phone: z.string().optional().transform(val => val === "" ? undefined : val),
    address: z.string().optional().transform(val => val === "" ? undefined : val),
-   isCompany: z.boolean().optional().default(false),
+   isCompany: z.boolean().optional(),
    emailPreference: z.boolean().optional().default(false),
- }).refine(
+ }).transform((data) => ({
+   ...data,
+   isCompany: data.isCompany ?? (data.rnc ? true : false)
+ })).refine(
    (data) => {
      // If it's a company, RNC is required
      if (data.isCompany && !data.rnc) {
@@ -30,7 +33,7 @@ const CustomerUpdateSchema = z.object({
      return true
    },
    {
-     message: "Invalid RNC or Cédula format, or missing required fields"
+     message: "Invalid RNC or Cédula format, or missing required fields for company"
    }
  )
 
@@ -91,13 +94,15 @@ export async function PUT(
   const parseResult = CustomerUpdateSchema.safeParse(body)
 
   if (!parseResult.success) {
+    console.log('Customer update validation failed:', {
+      body,
+      errors: parseResult.error.format()
+    })
     return new NextResponse(
-      JSON.stringify({ error: "Invalid payload", issues: parseResult.error.format() }),
+      JSON.stringify({ error: "Invalid payload", issues: parseResult.error.format() }), 
       { status: 400 }
     )
-  }
-
-  const data = parseResult.data
+  }  const data = parseResult.data
 
   try {
     // Check if customer exists

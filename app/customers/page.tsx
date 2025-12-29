@@ -10,6 +10,7 @@ interface Customer {
   rnc?: string
   cedula?: string
   address?: string
+  isCompany?: boolean
   createdAt: string
 }
 
