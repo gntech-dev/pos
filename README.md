@@ -8,22 +8,39 @@ A production-ready Point of Sale system for small businesses in the Dominican Re
 
 ```
 pos-system/
-├── app/                    # Next.js application pages and API routes
-├── components/             # Reusable React components
-├── config/                 # Configuration files (PM2, email, etc.)
-├── database/               # Database schema and migrations (Prisma)
-├── docs/                   # Documentation and guides
-├── lib/                    # Utility functions and configurations
-├── public/                 # Static assets (images, icons)
-├── scripts/                # Deployment and maintenance scripts
-├── storage/                # Persistent data storage
-│   ├── backups/           # Database backup files
-│   ├── cache/             # Temporary cache files
-│   ├── restore/           # Restore operation files
-│   ├── temp/              # Temporary files
-│   └── uploads/           # User uploaded files
-├── types/                  # TypeScript type definitions
-└── [config files]         # Package.json, tsconfig.json, etc.
+├── .github/
+│   └── workflows/         # GitHub Actions CI/CD pipelines
+├── app/                   # Next.js application pages and API routes
+├── components/            # Reusable React components
+├── config/                # Configuration files (PM2, email, etc.)
+├── database/              # Database schema and migrations (Prisma)
+├── docs/                  # Documentation and guides
+├── lib/                   # Utility functions and configurations
+├── public/                # Static assets (images, icons)
+├── scripts/               # Deployment and maintenance scripts
+├── storage/               # Persistent data storage
+│   ├── backups/          # Database backup files
+│   ├── cache/            # Temporary cache files
+│   ├── restore/          # Restore operation files
+│   ├── temp/             # Temporary files
+│   └── uploads/          # User uploaded files
+├── tests/                 # Test suites (unit, integration)
+├── types/                 # TypeScript type definitions
+├── .dockerignore          # Docker ignore patterns
+├── .editorconfig          # Code style configuration
+├── .env.example           # Environment variables template
+├── .gitignore             # Git ignore patterns
+├── .nvmrc                 # Node.js version specification
+├── CHANGELOG.md           # Version history
+├── CONTRIBUTING.md        # Contribution guidelines
+├── Dockerfile             # Docker container configuration
+├── docker-compose.yml     # Docker Compose setup
+├── jest.config.js         # Jest testing configuration
+├── LICENSE                # MIT License
+├── package.json           # Node.js dependencies and scripts
+├── README.md              # This file
+├── tsconfig.json          # TypeScript configuration
+└── [other config files]
 ```
 
 ## 🚀 Features
@@ -107,22 +124,52 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## 🐳 Docker Development
+
+### Using Docker Compose
+
+```bash
+# Build and run the application
+docker-compose up --build
+
+# Run in background
+docker-compose up -d --build
+
+# Stop the application
+docker-compose down
+```
+
+### Manual Docker Build
+
+```bash
+# Build the Docker image
+docker build -t pos-system .
+
+# Run the container
+docker run -p 3000:3000 pos-system
+```
+
+## 🧪 Testing
+
+### Run Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run tests with coverage
+npm test -- --coverage
+```
+
+### Test Structure
+
+- `tests/unit/` - Unit tests for individual functions and components
+- `tests/integration/` - Integration tests for API endpoints and workflows
+
 ## 📁 Project Structure
-
-```
-pos-system/
-├── app/                   # Next.js pages & API routes
-│   ├── api/              # Backend API
-│   ├── dashboard/        # Dashboard page
-│   └── login/            # Login page
-├── lib/                   # Utilities & configurations
-├── components/            # React components (to create)
-├── prisma/                # Database schema & migrations
-├── types/                 # TypeScript definitions
-└── middleware.ts          # Auth middleware
-```
-
-## 🗄️ Database
 
 The system uses SQLite for simplicity and offline-first capabilities.
 
@@ -141,6 +188,24 @@ npx prisma migrate reset
 # Seed data
 npm run db:seed
 ```
+
+## 🔄 CI/CD
+
+The project uses GitHub Actions for continuous integration and deployment.
+
+### Workflows
+
+- **CI Pipeline**: Runs on every push and pull request
+  - Installs dependencies
+  - Runs linter
+  - Executes tests
+  - Builds the application
+
+### Branch Protection
+
+- `main` branch is protected
+- Requires passing CI checks for merges
+- Requires code review for pull requests
 
 ## 🔐 Authentication
 
