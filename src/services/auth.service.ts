@@ -1,6 +1,6 @@
-import { prisma } from "../lib/prisma"
+import { prisma } from "../../lib/prisma"
 import bcrypt from "bcryptjs"
-import { logAuditEvent, AUDIT_ACTIONS, AUDIT_ENTITIES } from "../lib/audit"
+import { logAuditEvent, AUDIT_ACTIONS, AUDIT_ENTITIES } from "../../lib/audit"
 
 export class AuthService {
   static async validateCredentials(email: string, password: string) {
@@ -35,10 +35,10 @@ export class AuthService {
     // Log successful login
     await logAuditEvent({
       userId: user.id,
-      action: AUDIT_ACTIONS.LOGIN,
+      action: AUDIT_ACTIONS.LOGIN_SUCCESS,
       entity: AUDIT_ENTITIES.USER,
       entityId: user.id,
-      details: { email: user.email }
+      newValue: { email: user.email },
     })
 
     return {
