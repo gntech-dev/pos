@@ -28,6 +28,7 @@ process.chdir(projectRoot);
 
 // Run prisma migrate
 try {
+  console.log('cwd before exec:', process.cwd());
   execSync('prisma migrate dev --schema=database/prisma/schema.prisma', {
     stdio: 'inherit',
     cwd: projectRoot
