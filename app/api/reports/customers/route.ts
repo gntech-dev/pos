@@ -98,7 +98,13 @@ async function getCustomersByActivity() {
     }
   })
 
-  const categorized = customers.map(customer => {
+  const categorized = customers.map((customer: {
+    id: string;
+    name: string;
+    createdAt: Date;
+    _count: { sales: number; quotations: number };
+    sales: Array<{ total: number; createdAt: Date }>;
+  }) => {
     const lastSale = customer.sales[0]
     const daysSinceLastSale = lastSale
       ? Math.floor((Date.now() - new Date(lastSale.createdAt).getTime()) / (1000 * 60 * 60 * 24))
