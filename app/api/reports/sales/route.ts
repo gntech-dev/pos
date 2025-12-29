@@ -193,7 +193,7 @@ async function getSalesByProduct(dateFilter: DateFilter) {
     }
   })
 
-  const grouped = items.reduce((acc, item) => {
+  const grouped = items.reduce((acc: Record<string, ProductSales>, item: { productId: string; quantity: number; total: number; product: { id: string; name: string; sku: string } }) => {
     const productId = item.productId
     if (!acc[productId]) {
       acc[productId] = {
