@@ -62,7 +62,15 @@ export async function GET(req: NextRequest) {
     })
 
     // Combine and format results
-    const customerResults = customers.map(customer => ({
+    const customerResults = customers.map((customer: {
+      id: string
+      name: string
+      rnc: string | null
+      cedula: string | null
+      email: string | null
+      phone: string | null
+      isCompany: boolean
+    }) => ({
       id: customer.id,
       name: customer.name,
       rnc: customer.rnc,
@@ -73,7 +81,16 @@ export async function GET(req: NextRequest) {
       source: 'manual' as const
     }))
 
-    const rncResults = rncRecords.map(record => ({
+    const rncResults = rncRecords.map((record: {
+      id: number
+      rnc: string
+      businessName: string
+      businessType: string | null
+      address: string | null
+      province: string | null
+      phone: string | null
+      email: string | null
+    }) => ({
       id: `rnc-${record.id}`, // Prefix to avoid ID conflicts
       name: record.businessName,
       rnc: record.rnc,
