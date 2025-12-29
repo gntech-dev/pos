@@ -29,6 +29,7 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "@tailwindcss/postcss": "^4",
+    "@types/adm-zip": "^0.5.7",
     "@types/bcryptjs": "^2.4.6",
     "@types/nodemailer": "^7.0.4",
     "@types/speakeasy": "^2.0.10",
@@ -59,7 +60,6 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@types/adm-zip": "^0.5.7",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/papaparse": "^5.5.2",
