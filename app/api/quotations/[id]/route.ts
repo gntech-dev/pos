@@ -122,7 +122,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       })
 
       if (products.length !== productIds.length) {
-        const foundIds = products.map(p => p.id)
+        const foundIds = products.map((p: { id: string; name: string }) => p.id)
         const missingIds = productIds.filter(id => !foundIds.includes(id))
         return new NextResponse(JSON.stringify({
           error: 'Some products not found',
