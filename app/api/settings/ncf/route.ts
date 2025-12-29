@@ -36,7 +36,7 @@ export async function GET() {
     }
 
     // Update with real data from database
-    sequences.forEach(seq => {
+    sequences.forEach((seq: { type: string; startNumber: number; endNumber: number; currentNumber: number; expiryDate: Date }) => {
       const type = seq.type.toLowerCase()
       ncfData[`${type}Start` as keyof typeof ncfData] = seq.startNumber.toString().padStart(8, '0')
       ncfData[`${type}End` as keyof typeof ncfData] = seq.endNumber.toString().padStart(8, '0')

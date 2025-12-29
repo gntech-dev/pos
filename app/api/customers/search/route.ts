@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
       source: 'manual' as const
     }))
 
-    const rncResults = rncRecords.map((record: any) => ({
+    const rncResults = rncRecords.map((record: { id: string; rnc: string; businessName: string; businessType: string | null; address: string | null; province: string | null; phone: string | null; email: string | null }) => ({
       id: `rnc-${record.id}`, // Prefix to avoid ID conflicts
       name: record.businessName,
       rnc: record.rnc,

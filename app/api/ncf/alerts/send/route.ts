@@ -53,7 +53,7 @@ async function getBusinessSettings() {
   }
 
   // Override with database values
-  settings.forEach(setting => {
+  settings.forEach((setting: { key: string; value: string }) => {
     switch (setting.key) {
       case 'business_name':
         businessData.name = setting.value

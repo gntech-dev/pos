@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Override with database values
-    businessSettings.forEach(setting => {
+    businessSettings.forEach((setting: { key: string; value: string }) => {
       switch (setting.key) {
         case 'business_name':
           businessData.name = setting.value
