@@ -98,7 +98,7 @@ async function generateForm607(_dateFilter: Record<string, unknown>, _startDate?
     tax: number;
     ncfType: string | null;
     customer: { rnc: string | null; cedula: string | null; name: string | null } | null;
-    items: Array<{ product: { name: string } }>;
+    items: Array<{ quantity: number; unitPrice: number; taxRate: number; subtotal: number; product: { name: string } }>;
   }) => ({
     ncf: sale.ncf,
     saleDate: sale.createdAt.toISOString().split('T')[0],
