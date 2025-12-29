@@ -148,7 +148,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           paymentMethod,
           notes: notes || quotation.notes,
           items: {
-            create: quotation.items.map(item => ({
+            create: quotation.items.map((item: { productId: string; quantity: number; unitPrice: number; taxRate: number; discount: number; subtotal: number; total: number }) => ({
               productId: item.productId,
               quantity: item.quantity,
               unitPrice: item.unitPrice,
