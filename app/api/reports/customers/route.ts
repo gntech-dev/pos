@@ -61,7 +61,7 @@ async function getCustomerSummary() {
     prisma.sale.aggregate({
       _sum: { total: true }
     }).then((result: { _sum: { total: number | null } }) => {
-      return prisma.customer.count().then(count => {
+      return prisma.customer.count().then((count: number) => {
         return count > 0 ? (result._sum.total || 0) / count : 0
       })
     })
