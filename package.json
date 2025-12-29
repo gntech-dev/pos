@@ -14,7 +14,17 @@
     "test": "jest",
     "db:seed": "tsx database/prisma/seed.ts",
     "db:migrate": "prisma migrate dev --schema=database/prisma/schema.prisma",
-    "db:studio": "prisma studio --schema=database/prisma/schema.prisma"
+    "db:studio": "prisma studio --schema=database/prisma/schema.prisma",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "jest --findRelatedTests --passWithNoTests"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -65,7 +75,10 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
+    "husky": "^9.1.7",
     "jest": "^30.2.0",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
     "typescript": "^5"

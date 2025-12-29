@@ -9,37 +9,47 @@ A production-ready Point of Sale system for small businesses in the Dominican Re
 ```
 pos-system/
 ├── .github/
-│   └── workflows/         # GitHub Actions CI/CD pipelines
-├── app/                   # Next.js application pages and API routes
-├── components/            # Reusable React components
-├── config/                # Configuration files (PM2, email, etc.)
-├── database/              # Database schema and migrations (Prisma)
-├── docs/                  # Documentation and guides
-├── lib/                   # Utility functions and configurations
-├── public/                # Static assets (images, icons)
-├── scripts/               # Deployment and maintenance scripts
-├── storage/               # Persistent data storage
-│   ├── backups/          # Database backup files
-│   ├── cache/            # Temporary cache files
-│   ├── restore/          # Restore operation files
-│   ├── temp/             # Temporary files
-│   └── uploads/          # User uploaded files
-├── tests/                 # Test suites (unit, integration)
-├── types/                 # TypeScript type definitions
-├── .dockerignore          # Docker ignore patterns
-├── .editorconfig          # Code style configuration
-├── .env.example           # Environment variables template
-├── .gitignore             # Git ignore patterns
-├── .nvmrc                 # Node.js version specification
-├── CHANGELOG.md           # Version history
-├── CONTRIBUTING.md        # Contribution guidelines
-├── Dockerfile             # Docker container configuration
-├── docker-compose.yml     # Docker Compose setup
-├── jest.config.js         # Jest testing configuration
-├── LICENSE                # MIT License
-├── package.json           # Node.js dependencies and scripts
-├── README.md              # This file
-├── tsconfig.json          # TypeScript configuration
+│   ├── ISSUE_TEMPLATE/     # GitHub issue templates
+│   ├── PULL_REQUEST_TEMPLATE/ # PR templates
+│   └── workflows/          # GitHub Actions CI/CD pipelines
+├── .husky/                 # Git hooks (pre-commit)
+├── app/                    # Next.js application pages and API routes
+├── components/             # Reusable React components
+├── config/                 # Configuration files (PM2, email, etc.)
+├── database/               # Database schema and migrations (Prisma)
+├── docs/                   # Documentation and guides
+│   ├── api/               # API documentation
+│   ├── adr/               # Architecture Decision Records
+│   └── architecture/      # System architecture docs
+├── lib/                    # Legacy utility functions
+├── public/                 # Static assets (images, icons)
+├── scripts/                # Deployment and maintenance scripts
+├── src/                    # Modern source code organization
+│   ├── constants/         # Application constants
+│   ├── hooks/             # Custom React hooks
+│   ├── services/          # Business logic services
+│   ├── utils/             # Utility functions
+│   └── validation/        # Input validation schemas
+├── storage/                # Persistent data storage
+├── tests/                  # Test suites (unit, integration)
+├── types/                  # TypeScript type definitions
+├── .dockerignore           # Docker ignore patterns
+├── .editorconfig           # Code style configuration
+├── .env.example            # Environment variables template
+├── .gitignore              # Git ignore patterns
+├── .nvmrc                  # Node.js version specification
+├── .prettierrc             # Code formatting configuration
+├── CHANGELOG.md            # Version history
+├── CODE_OF_CONDUCT.md      # Community code of conduct
+├── CONTRIBUTING.md         # Contribution guidelines
+├── Dockerfile              # Docker container configuration
+├── docker-compose.yml      # Docker Compose setup
+├── jest.config.js          # Jest testing configuration
+├── LICENSE                 # MIT License
+├── package.json            # Node.js dependencies and scripts
+├── README.md               # This file
+├── SECURITY.md             # Security policy
+├── tsconfig.json           # TypeScript configuration
 └── [other config files]
 ```
 
@@ -66,6 +76,44 @@ pos-system/
 - ✅ **Data Encryption** - AES-256-GCM encryption for sensitive data
 - ✅ **Rate Limiting** - Advanced rate limiting with suspicious activity detection
 - 🚧 **Offline Mode** - Works without internet connection
+
+## 🏗️ Architecture & Code Quality
+
+### **Modern Code Organization**
+
+- **Service Layer**: Business logic separated into dedicated services (`src/services/`)
+- **Validation Layer**: Input validation with Zod schemas (`src/validation/`)
+- **Constants**: Centralized application constants (`src/constants/`)
+- **Custom Hooks**: Reusable React hooks (`src/hooks/`)
+- **Utilities**: Helper functions and formatters (`src/utils/`)
+
+### **Quality Assurance**
+
+- **Pre-commit Hooks**: Automated linting and testing before commits
+- **Code Formatting**: Prettier configuration for consistent code style
+- **TypeScript**: Full type safety throughout the application
+- **ESLint**: Code quality and style enforcement
+
+### **Documentation**
+
+- **API Documentation**: Comprehensive API reference (`docs/api/`)
+- **Architecture Decisions**: ADRs for important technical decisions (`docs/adr/`)
+- **Code of Conduct**: Community guidelines (`CODE_OF_CONDUCT.md`)
+- **Security Policy**: Vulnerability reporting process (`SECURITY.md`)
+
+### **CI/CD Pipeline**
+
+- **Automated Testing**: Unit and integration tests on every push
+- **Security Scanning**: Weekly security vulnerability checks
+- **Code Coverage**: Test coverage reporting with Codecov
+- **Multi-stage Builds**: Optimized Docker builds for production
+
+### **Monitoring & Observability**
+
+- **Health Checks**: `/api/health` endpoint for system monitoring
+- **Metrics**: `/api/metrics` endpoint for business metrics
+- **Audit Logging**: Complete audit trail of all system actions
+- **Error Tracking**: Comprehensive error logging and reporting
 
 ## 📋 Prerequisites
 
@@ -292,6 +340,7 @@ server {
 ### Business Settings
 
 Configure company information through the web interface:
+
 1. Go to **Settings** → **Business**
 2. Fill in company details (name, RNC, address, phone, email)
 3. Click **Save** - settings are automatically persisted
@@ -299,6 +348,7 @@ Configure company information through the web interface:
 ### DGII Settings
 
 NCF sequences are configured through the web interface:
+
 1. Go to **Settings** → **NCF**
 2. Add your DGII-issued NCF ranges for each type:
    - B01: Crédito Fiscal (Invoices with tax credit)
@@ -350,6 +400,7 @@ For issues or questions, please contact the development team.
 ## 🗺️ Roadmap
 
 ### Phase 1: Foundation ✅
+
 - [x] Project setup
 - [x] Database design
 - [x] Authentication
@@ -357,6 +408,7 @@ For issues or questions, please contact the development team.
 - [x] Business configuration persistence
 
 ### Phase 2: Core Features ✅
+
 - [x] Sales module with NCF generation
 - [x] Inventory management
 - [x] Customer management with RNC validation
@@ -367,12 +419,14 @@ For issues or questions, please contact the development team.
 - [x] DGII compliance features
 
 ### Phase 3: Advanced Features 🚧
+
 - [ ] Email notifications system
 - [ ] Advanced analytics
 - [ ] Multi-location support
 - [ ] API integrations
 
 ### Phase 4: Optimization 🔮
+
 - [ ] Offline mode
 - [ ] Performance tuning
 - [ ] Mobile app
@@ -405,17 +459,20 @@ npx prisma generate
 ## 📚 Documentation
 
 ### 🚀 Guías para Principiantes
+
 - **[Guía Rápida de Producción](./docs/GUIA_RAPIDA_INICIO.md)** - Despliegue en servidor en 60 minutos (¡Comience aquí!)
 - **[Preguntas Frecuentes (FAQ)](./docs/FAQ.md)** - Respuestas a dudas comunes
 - **[Guía del Usuario](./docs/USER_GUIDE.md)** - Manual completo paso a paso
 
 ### 🛠️ Documentación Técnica
+
 - **[Guía de Instalación en Servidor](./docs/deployment/INSTALLATION_GUIDE.md)** - Instalación detallada paso a paso
 - **[API REST](./docs/API.md)** - Referencia completa de endpoints
 - **[Guía del Desarrollador](./docs/DEVELOPER_GUIDE.md)** - Desarrollo y contribución
 - **[Guía de Despliegue](./docs/DEPLOYMENT_GUIDE.md)** - Configuración de producción avanzada
 
 ### 📋 Documentos Adicionales
+
 - **[Wiki](./docs/wiki/)** - Base de conocimientos y FAQ
 - **[Documentación de Desarrollo](./docs/development/)** - Docs internos y planes
 
@@ -430,6 +487,7 @@ npx prisma generate
 ## 📋 Changelog
 
 ### Version 1.2.0 (December 22, 2025)
+
 - ✨ **Logo Management System**: Added pre-generated professional logos and custom logo upload functionality
 - 🎨 **Branding Enhancement**: Logos now appear on invoices, receipts, and quotations
 - 🔧 **LogoSelector Component**: New reusable component for logo selection
@@ -437,6 +495,7 @@ npx prisma generate
 - 📚 **Documentation Updates**: Updated user guide, developer guide, and API documentation
 
 ### Version 1.1.0 (December 18, 2025)
+
 - Initial production release with full DGII compliance
 
 ---
