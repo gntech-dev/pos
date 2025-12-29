@@ -10,6 +10,8 @@ const fs = require('fs');
 // Load environment variables from .env
 require('dotenv').config();
 
+console.log('DATABASE_URL after dotenv load:', process.env.DATABASE_URL);
+
 // Find the project root (directory containing package.json)
 let currentDir = process.cwd();
 let projectRoot = currentDir;
