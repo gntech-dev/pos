@@ -153,5 +153,5 @@ interface CategorySummary {
     return acc
   }, {} as Record<string, CategorySummary>)
 
-  return Object.values(grouped).sort((a: CategorySummary, b: CategorySummary) => b.totalValue - a.totalValue)
+  return (Object.values(grouped) as CategorySummary[]).sort((a, b) => b.totalValue - a.totalValue)
 }
