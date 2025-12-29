@@ -10,8 +10,6 @@ const fs = require('fs');
 // Load environment variables from .env
 require('dotenv').config();
 
-console.log('DATABASE_URL after dotenv load:', process.env.DATABASE_URL);
-
 // Find the project root (directory containing package.json)
 let currentDir = process.cwd();
 let projectRoot = currentDir;
@@ -28,7 +26,6 @@ process.chdir(projectRoot);
 
 // Run prisma migrate
 try {
-  console.log('cwd before exec:', process.cwd());
   execSync('prisma migrate dev --schema=database/prisma/schema.prisma', {
     stdio: 'inherit',
     cwd: projectRoot
