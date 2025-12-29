@@ -295,7 +295,7 @@ export async function POST(request: NextRequest) {
         _sum: { quantity: true }
       })
 
-      const totalSold = sale.items.reduce((sum, item) => sum + item.quantity, 0)
+      const totalSold = sale.items.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0)
       const totalRefundedQuantity = totalRefunded._sum.quantity || 0
 
       if (totalRefundedQuantity >= totalSold) {
