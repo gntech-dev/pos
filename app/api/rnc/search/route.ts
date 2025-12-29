@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      results: results.map(rnc => ({
+      results: results.map((rnc: { rnc: string; businessName: string; businessType: string; address: string; province: string; phone: string; email: string }) => ({
         rnc: rnc.rnc,
         businessName: rnc.businessName,
         businessType: rnc.businessType,
