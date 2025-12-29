@@ -2,7 +2,7 @@ import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "./prisma"
 import bcrypt from "bcryptjs"
-import { verify2FAToken, verifyBackupCode, removeUsedBackupCode } from "./2fa"
+// import { verify2FAToken, verifyBackupCode, removeUsedBackupCode } from "./2fa" // Removed 2FA
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_ENTITIES } from "./audit"
 
 // Extend the built-in session types
@@ -47,8 +47,8 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
-        twoFactorToken: { label: "2FA Token", type: "text" },
-        backupCode: { label: "Backup Code", type: "text" }
+        // twoFactorToken: { label: "2FA Token", type: "text" }, // Removed 2FA
+        // backupCode: { label: "Backup Code", type: "text" } // Removed 2FA
       },
       async authorize(credentials, req) {
         if (!credentials?.username || !credentials?.password) {
@@ -93,43 +93,6 @@ export const authOptions: NextAuthOptions = {
               ipAddress: clientIP,
             })
             return null
-          }
-
-          // Check 2FA if enabled
-          if (user.twoFactorEnabled && user.twoFactorSecret) {
-            const token = credentials.twoFactorToken
-            const backupCode = credentials.backupCode
-
-            let is2FAValid = false
-
-            if (token) {
-              is2FAValid = verify2FAToken(user.twoFactorSecret, token)
-            } else if (backupCode && user.backupCodes) {
-              const storedCodes = JSON.parse(user.backupCodes)
-              is2FAValid = verifyBackupCode(storedCodes, backupCode)
-
-              if (is2FAValid) {
-                // Remove used backup code
-                const updatedCodes = removeUsedBackupCode(storedCodes, backupCode)
-                await prisma.user.update({
-                  where: { id: user.id },
-                  data: { backupCodes: JSON.stringify(updatedCodes) }
-                })
-              }
-            }
-
-            if (!is2FAValid) {
-              // Log failed 2FA attempt
-              await logAuditEvent({
-                userId: user.id,
-                action: AUDIT_ACTIONS.LOGIN_FAILED,
-                entity: AUDIT_ENTITIES.AUTH,
-                entityId: user.username,
-                oldValue: { reason: 'Invalid 2FA token or backup code' },
-                ipAddress: clientIP,
-              })
-              return null
-            }
           }
 
           // Update last login (non-blocking)

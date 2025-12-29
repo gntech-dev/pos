@@ -4,75 +4,124 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
+  console.log('LoginPage component loaded')
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [requires2FA, setRequires2FA] = useState(false)
-  const [tempCredentials, setTempCredentials] = useState<{ username: string; password: string } | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    const formData = new FormData(e.currentTarget)
-    const username = requires2FA && tempCredentials ? tempCredentials.username : formData.get('username') as string
-    const password = requires2FA && tempCredentials ? tempCredentials.password : formData.get('password') as string
-    const twoFactorToken = formData.get('twoFactorToken') as string
-    const backupCode = formData.get('backupCode') as string
-
+    console.log('handleSubmit called')
+    
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username,
-          password,
-          twoFactorToken: requires2FA ? twoFactorToken : undefined,
-          backupCode: requires2FA ? backupCode : undefined
-        }),
-      })
+      e.preventDefault()
+      console.log('Form prevented default successfully')
+      setLoading(true)
+      setError('')
 
-      if (!response.ok) {
-        const data = await response.json()
-        console.log('Login response error:', data)
+      const formData = new FormData(e.currentTarget)
+      console.log('FormData keys:', Array.from(formData.keys()))
+      
+      const username = (formData.get('username') as string) || ''
+      const password = (formData.get('password') as string) || ''
 
-        // Check if 2FA is required
-        if (data.requires2FA) {
-          console.log('Setting requires2FA to true')
-          setRequires2FA(true)
-          setTempCredentials({ username, password })
-          setError('')
-          setLoading(false)
-          return
-        }
+      console.log('Form data extracted:')
+      console.log('username:', username ? `${username.substring(0, 3)}***` : 'empty')
+      console.log('password:', password ? '***' : 'empty')
 
-        setError(data.error || 'Credenciales inválidas')
+      // Validate required fields
+      if (!username || !password) {
+        setError('Por favor ingresa tu usuario y contraseña')
         return
       }
 
-      const data = await response.json()
-      console.log('Login successful:', data)
+      console.log('About to call fetch...')
+      const requestBody = { username, password }
 
-      // Reset 2FA state on successful login
-      setRequires2FA(false)
-      setTempCredentials(null)
+      console.log('Request body constructed:', {
+        username: username ? `${username.substring(0, 3)}***` : 'missing',
+        hasPassword: !!password
+      })
 
-      // Force a small delay to ensure cookie is set
-      await new Promise(resolve => setTimeout(resolve, 100))
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => {
+        console.log('Fetch timeout triggered, aborting...')
+        controller.abort()
+      }, 120000) // 120 second timeout
 
-      // Navigate and force page reload
-      try {
-        await router.push('/dashboard')
-        // Force a page reload to ensure middleware picks up the session
-        window.location.href = '/dashboard'
-      } catch (error) {
-        console.error('Navigation error:', error)
-        setError('Error al navegar. Intente nuevamente.')
+      console.log('Creating fetch promise...')
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+        cache: 'no-cache'
+      })
+      
+      console.log('Awaiting fetch response...')
+      console.log('Fetch completed!')
+      
+      clearTimeout(timeoutId)
+      console.log('Timeout cleared')
+      console.log('Fetch completed successfully')
+      console.log('Fetch response received, status:', response.status)
+      console.log('Response ok:', response.ok)
+      console.log('Response url:', response.url)
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+
+      if (!response.ok) {
+        console.log('Response not ok, parsing error...')
+        try {
+          const data = await response.json()
+          console.log('Login response error:', data)
+          setError(data.error || 'Credenciales inválidas')
+        } catch (jsonError) {
+          console.error('Error parsing error response JSON:', jsonError)
+          setError('Error en la respuesta del servidor')
+        }
+        return
       }
+
+      console.log('Response ok, parsing JSON...')
+      let data
+      try {
+        data = await response.json()
+        console.log('Login response parsed successfully:', data)
+        console.log('Success response data:', data)
+      } catch (jsonError) {
+        console.error('Error parsing success response JSON:', jsonError)
+        console.error('Response text:', await response.text())
+        setError('Error al procesar la respuesta del servidor')
+        return
+      }
+
+      console.log('Login successful - processing success response')
+      console.log('Data.message:', data.message)
+
+      // Set loading to false
+      setLoading(false)
+
+      console.log('About to redirect to dashboard...')
+      console.log('Current location:', window.location.href)
+      console.log('Setting window.location.href to /dashboard')
+
+      // Small delay to ensure cookie is set
+      setTimeout(() => {
+        console.log('Redirecting now...')
+        window.location.href = '/dashboard'
+      }, 100)
     } catch (err) {
-      setError('Ocurrió un error. Por favor intente nuevamente.')
-      console.error(err)
+      console.error('handleSubmit error:', err)
+      console.error('Error details:', {
+        name: err instanceof Error ? err.name : 'Unknown',
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined
+      })
+      
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('La solicitud tardó demasiado. Por favor intenta nuevamente.')
+      } else {
+        setError(`Ocurrió un error: ${err instanceof Error ? err.message : 'Error desconocido'}. Por favor intente nuevamente.`)
+      }
     } finally {
       setLoading(false)
     }
@@ -98,91 +147,34 @@ export default function LoginPage() {
             <p className="text-gray-500 text-xs mt-1">Ingresa tus credenciales para continuar</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!requires2FA ? (
-              <>
-                <div>
-                  <label htmlFor="username" className="block text-xs font-bold text-gray-700 mb-1">
-                    👤 Usuario
-                  </label>
-                  <input
-                    id="username"
-                    name="username"
-                    type="text"
-                    required
-                    className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm"
-                    placeholder="Ingresa tu usuario"
-                  />
-                </div>
+          <form onSubmit={(e) => { console.log('Form onSubmit triggered'); handleSubmit(e); }} className="space-y-4">
+            <div>
+              <label htmlFor="username" className="block text-xs font-bold text-gray-700 mb-1">
+                👤 Usuario
+              </label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm"
+                placeholder="Ingresa tu usuario"
+              />
+            </div>
 
-                <div>
-                  <label htmlFor="password" className="block text-xs font-bold text-gray-700 mb-1">
-                    🔒 Contraseña
-                  </label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    required
-                    className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm"
-                    placeholder="Ingresa tu contraseña"
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="text-center mb-4">
-                  <div className="text-2xl mb-2">🔐</div>
-                  <h3 className="text-lg font-semibold text-gray-800">Verificación de Dos Factores</h3>
-                  <p className="text-sm text-gray-600">Ingresa el código de tu app autenticadora</p>
-                </div>
-
-                <div>
-                  <label htmlFor="twoFactorToken" className="block text-xs font-bold text-gray-700 mb-1">
-                    📱 Código de 6 dígitos
-                  </label>
-                  <input
-                    id="twoFactorToken"
-                    name="twoFactorToken"
-                    type="text"
-                    required
-                    maxLength={6}
-                    className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm text-center text-lg font-mono"
-                    placeholder="000000"
-                  />
-                </div>
-
-                <div className="text-center">
-                  <span className="text-xs text-gray-500">¿No tienes acceso a tu app?</span>
-                  <details className="mt-2">
-                    <summary className="text-xs text-indigo-600 hover:text-indigo-800 cursor-pointer">
-                      Usar código de respaldo
-                    </summary>
-                    <div className="mt-2">
-                      <input
-                        id="backupCode"
-                        name="backupCode"
-                        type="text"
-                        className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm font-mono"
-                        placeholder="Ingresa código de respaldo"
-                      />
-                    </div>
-                  </details>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRequires2FA(false)
-                    setTempCredentials(null)
-                    setError('')
-                  }}
-                  className="w-full text-indigo-600 hover:text-indigo-800 text-sm font-semibold py-2"
-                >
-                  ← Volver al login
-                </button>
-              </>
-            )}
+            <div>
+              <label htmlFor="password" className="block text-xs font-bold text-gray-700 mb-1">
+                🔒 Contraseña
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm"
+                placeholder="Ingresa tu contraseña"
+              />
+            </div>
 
             {error && (
               <div className="bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-300 text-red-700 p-2 rounded-lg text-xs font-semibold flex items-center gap-2">
@@ -194,6 +186,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
+              onClick={() => console.log('Submit button clicked')}
               className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white py-3 rounded-lg font-bold text-base hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               {loading ? (

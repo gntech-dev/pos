@@ -29,9 +29,6 @@ export async function authenticateUser(username: string, password: string) {
       name: user.name,
       role: user.role,
       username: user.username,
-      twoFactorEnabled: user.twoFactorEnabled,
-      twoFactorSecret: user.twoFactorSecret,
-      backupCodes: user.backupCodes,
     }
   } catch (error) {
     console.error('Auth error:', error)
