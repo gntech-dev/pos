@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { formatCedula, formatPhone, formatRNC } from '@/lib/utils'
+import { formatCedula, formatPhone, formatRNC, getInitials } from '@/lib/utils'
 
 interface Customer {
   id: string
@@ -181,12 +181,17 @@ export default function CustomersPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredCustomers.map(customer => (
                   <div key={customer.id} className="bg-gradient-to-br from-white to-orange-50 border-2 border-orange-100 rounded-lg p-4 hover:shadow-lg hover:border-orange-300 transition-all duration-200">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-base text-gray-800 mb-1">{customer.name}</h3>
+                    <div className="flex items-start gap-3 mb-3">
+                      {/* Customer Avatar */}
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md flex-shrink-0">
+                        {getInitials(customer.name)}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-base text-gray-800 mb-1 truncate">{customer.name}</h3>
                         {customer.email && (
-                          <p className="text-xs text-gray-600 flex items-center gap-1">
-                            📧 {customer.email}
+                          <p className="text-xs text-gray-600 flex items-center gap-1 mb-1">
+                            📧 <span className="truncate">{customer.email}</span>
                           </p>
                         )}
                         {customer.phone && (
