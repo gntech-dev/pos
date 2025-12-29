@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSessionFromCookie } from "@/lib/session"
 import { z } from "zod"
+import { PrismaClient } from "@prisma/client"
 
 const UpdateProductBatchSchema = z.object({
   batchNumber: z.string().min(1).optional(),
@@ -107,7 +108,7 @@ export async function PATCH(
 
     const quantityDiff = data.quantity ? data.quantity - currentBatch.quantity : 0
 
-    const batch = await prisma.$transaction(async (tx) => {
+    const batch = await prisma.$transaction(async (tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>) => {
       // Update the batch
       const updatedBatch = await tx.productBatch.update({
         where: { id },
