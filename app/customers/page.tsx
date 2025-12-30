@@ -35,20 +35,6 @@ export default function CustomersPage() {
     address: ''
   })
 
-  useEffect(() => {
-    loadCustomers()
-  }, [currentPage, debouncedSearchQuery, loadCustomers])
-
-  // Debounce search query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery)
-      setCurrentPage(1) // Reset to first page when search changes
-    }, 300)
-
-    return () => clearTimeout(timer)
-  }, [searchQuery])
-
   const loadCustomers = useCallback(async () => {
     setLoading(true)
     try {
@@ -73,6 +59,20 @@ export default function CustomersPage() {
       setLoading(false)
     }
   }, [currentPage, debouncedSearchQuery, pageSize])
+
+  useEffect(() => {
+    loadCustomers()
+  }, [currentPage, debouncedSearchQuery, loadCustomers])
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+      setCurrentPage(1) // Reset to first page when search changes
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   const handleEditCustomer = (customer: Customer) => {
     setEditingCustomer(customer)
