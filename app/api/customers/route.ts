@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSessionFromCookie } from "@/lib/session"
-import { validateRNC, validateCedula } from "@/lib/utils"
+import { validateRNC, validateCedula, arePotentialDuplicates } from "@/lib/utils"
 import { z } from "zod"
 
 const CustomerCreateSchema = z.object({

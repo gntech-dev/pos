@@ -28,6 +28,8 @@ export default function CustomersPage() {
   const [pageSize] = useState(25)
   const [showForm, setShowForm] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false)
+  const [potentialDuplicates, setPotentialDuplicates] = useState<any[]>([])
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -75,6 +77,55 @@ export default function CustomersPage() {
 
     return () => clearTimeout(timer)
   }, [searchQuery])
+
+  const checkForDuplicates = useCallback(async (data: typeof formData) => {
+    if (!data.name.trim()) {
+      setPotentialDuplicates([])
+      return
+    }
+
+    setCheckingDuplicates(true)
+    try {
+      const payload = {
+        name: data.name,
+        ...(data.email && { email: data.email }),
+        ...(data.phone && { phone: data.phone }),
+        ...(data.rnc && { rnc: data.rnc }),
+        ...(data.cedula && { cedula: data.cedula }),
+        ...(editingCustomer && { excludeId: editingCustomer.id })
+      }
+
+      const response = await fetch('/api/customers/check-duplicates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setPotentialDuplicates(result.duplicates)
+      } else {
+        console.error('Error checking for duplicates')
+        setPotentialDuplicates([])
+      }
+    } catch (error) {
+      console.error('Error checking for duplicates:', error)
+      setPotentialDuplicates([])
+    } finally {
+      setCheckingDuplicates(false)
+    }
+  }, [editingCustomer])
+
+  // Debounce duplicate checking
+  useEffect(() => {
+    if (!showForm) return
+
+    const timer = setTimeout(() => {
+      checkForDuplicates(formData)
+    }, 500) // Slightly longer delay for duplicate checking
+
+    return () => clearTimeout(timer)
+  }, [formData, showForm, checkForDuplicates])
 
   const handleEditCustomer = (customer: Customer) => {
     setEditingCustomer(customer)
@@ -150,6 +201,7 @@ export default function CustomersPage() {
         await loadCustomers()
         setShowForm(false)
         setEditingCustomer(null)
+        setPotentialDuplicates([])
         setFormData({ name: '', email: '', phone: '', rnc: '', cedula: '', address: '' })
         alert(editingCustomer ? 'Cliente actualizado exitosamente' : 'Cliente creado exitosamente')
       } else {
@@ -397,6 +449,60 @@ export default function CustomersPage() {
                   />
                 </div>
 
+                {/* Duplicate Warning */}
+                {potentialDuplicates.length > 0 && (
+                  <div className="md:col-span-2">
+                    <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="text-yellow-600 text-xl">⚠️</div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-yellow-800 mb-2">
+                            Posibles Clientes Duplicados Encontrados
+                          </h3>
+                          <p className="text-yellow-700 text-sm mb-3">
+                            Se encontraron {potentialDuplicates.length} cliente(s) similar(es). Revisa si ya existe este cliente:
+                          </p>
+                          <div className="space-y-2 max-h-32 overflow-y-auto">
+                            {potentialDuplicates.map((duplicate) => (
+                              <div key={duplicate.id} className="bg-white rounded border p-2 text-sm">
+                                <div className="font-semibold text-gray-800">{duplicate.name}</div>
+                                <div className="text-gray-600 text-xs space-y-1">
+                                  {duplicate.email && <div>📧 {duplicate.email}</div>}
+                                  {duplicate.phone && <div>📱 {duplicate.phone}</div>}
+                                  {duplicate.rnc && <div>🏢 RNC: {duplicate.rnc}</div>}
+                                  {duplicate.cedula && <div>🪪 Cédula: {duplicate.cedula}</div>}
+                                  <div className="text-gray-500">
+                                    Coincidencia: {Math.round(duplicate.confidence * 100)}% 
+                                    ({duplicate.matchType === 'exact' ? 'Coincidencia exacta' : 'Similitud de nombre'})
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-yellow-700 text-xs mt-2">
+                            Si este no es el mismo cliente, puedes continuar. De lo contrario, considera editar el cliente existente.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Checking duplicates indicator */}
+                {checkingDuplicates && (
+                  <div className="md:col-span-2">
+                    <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-blue-700">
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span className="text-sm">Verificando posibles duplicados...</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">
                     📧 Email
@@ -486,6 +592,7 @@ export default function CustomersPage() {
                   onClick={() => {
                     setShowForm(false)
                     setEditingCustomer(null)
+                    setPotentialDuplicates([])
                     setFormData({ name: '', email: '', phone: '', rnc: '', cedula: '', address: '' })
                   }}
                   className="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white py-3 rounded-lg font-bold hover:from-gray-600 hover:to-gray-700 transition-all duration-200 shadow-lg"

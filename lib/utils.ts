@@ -112,3 +112,59 @@ export function validatePhone(phone: string): boolean {
   const cleaned = phone.replace(/\D/g, '')
   return cleaned.length === 10 && cleaned.startsWith('8')
 }
+
+// Calculate Levenshtein distance between two strings
+export function levenshteinDistance(a: string, b: string): number {
+  const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null))
+
+  for (let i = 0; i <= a.length; i++) matrix[0][i] = i
+  for (let j = 0; j <= b.length; j++) matrix[j][0] = j
+
+  for (let j = 1; j <= b.length; j++) {
+    for (let i = 1; i <= a.length; i++) {
+      const indicator = a[i - 1] === b[j - 1] ? 0 : 1
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1,     // deletion
+        matrix[j - 1][i] + 1,     // insertion
+        matrix[j - 1][i - 1] + indicator // substitution
+      )
+    }
+  }
+
+  return matrix[b.length][a.length]
+}
+
+// Calculate similarity score between two strings (0-1, where 1 is identical)
+export function calculateSimilarity(a: string, b: string): number {
+  if (a === b) return 1
+
+  const maxLength = Math.max(a.length, b.length)
+  if (maxLength === 0) return 1
+
+  const distance = levenshteinDistance(a.toLowerCase(), b.toLowerCase())
+  return 1 - (distance / maxLength)
+}
+
+// Normalize name for comparison (remove accents, extra spaces, etc.)
+export function normalizeName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+    .replace(/\s+/g, ' ') // Normalize spaces
+    .trim()
+}
+
+// Check if two names are potential duplicates
+export function arePotentialDuplicates(name1: string, name2: string, threshold: number = 0.8): boolean {
+  const normalized1 = normalizeName(name1)
+  const normalized2 = normalizeName(name2)
+
+  // Exact match after normalization
+  if (normalized1 === normalized2) return true
+
+  // Check similarity
+  const similarity = calculateSimilarity(normalized1, normalized2)
+  return similarity >= threshold
+}
