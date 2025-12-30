@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import React from 'react'
 import { formatCedula, formatPhone, formatRNC, getInitials } from '@/lib/utils'
 
 interface Customer {
@@ -19,6 +20,10 @@ export default function CustomersPage() {
    const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalCustomers, setTotalCustomers] = useState(0)
+  const [pageSize] = useState(25)
   const [showForm, setShowForm] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [formData, setFormData] = useState({
@@ -32,19 +37,42 @@ export default function CustomersPage() {
 
   useEffect(() => {
     loadCustomers()
-  }, [])
+  }, [currentPage, debouncedSearchQuery, loadCustomers])
 
-  const loadCustomers = async () => {
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+      setCurrentPage(1) // Reset to first page when search changes
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  const loadCustomers = useCallback(async () => {
+    setLoading(true)
     try {
-      const response = await fetch('/api/customers')
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: pageSize.toString()
+      })
+
+      if (debouncedSearchQuery.trim()) {
+        params.set('q', debouncedSearchQuery.trim())
+      }
+
+      const response = await fetch(`/api/customers?${params}`)
       if (response.ok) {
         const data = await response.json()
         setCustomers(data.data)
+        setTotalCustomers(data.total)
       }
     } catch (error) {
       console.error('Error cargando clientes:', error)
+    } finally {
+      setLoading(false)
     }
-  }
+  }, [currentPage, debouncedSearchQuery, pageSize])
 
   const handleEditCustomer = (customer: Customer) => {
     setEditingCustomer(customer)
@@ -122,14 +150,6 @@ export default function CustomersPage() {
     }
   }
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.phone?.includes(searchQuery) ||
-    customer.rnc?.includes(searchQuery) ||
-    customer.cedula?.includes(searchQuery)
-  )
-
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-3">
       <div className="max-w-7xl mx-auto h-full flex flex-col">
@@ -166,20 +186,25 @@ export default function CustomersPage() {
             <h2 className="text-lg font-bold text-gray-800 flex items-center justify-between">
               <span>📋 Lista de Clientes</span>
               <span className="text-sm bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-semibold">
-                {filteredCustomers.length} clientes
+                {totalCustomers} clientes
               </span>
             </h2>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-            {filteredCustomers.length === 0 ? (
+            {customers.length === 0 && totalCustomers === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-400 text-lg">👥 No hay clientes</p>
                 <p className="text-gray-400 text-sm mt-2">Agrega tu primer cliente para comenzar</p>
               </div>
+            ) : customers.length === 0 && debouncedSearchQuery ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 text-lg">🔍 No se encontraron clientes</p>
+                <p className="text-gray-400 text-sm mt-2">Intenta con otros términos de búsqueda</p>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {filteredCustomers.map(customer => (
+                {customers.map(customer => (
                   <div key={customer.id} className="bg-gradient-to-br from-white to-orange-50 border-2 border-orange-100 rounded-lg p-4 hover:shadow-lg hover:border-orange-300 transition-all duration-200">
                     <div className="flex items-start gap-3 mb-3">
                       {/* Customer Avatar */}
@@ -239,6 +264,61 @@ export default function CustomersPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalCustomers > pageSize && (
+              <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
+                <div className="text-sm text-gray-600">
+                  Mostrando {Math.min((currentPage - 1) * pageSize + 1, totalCustomers)} - {Math.min(currentPage * pageSize, totalCustomers)} de {totalCustomers} clientes
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1 || loading}
+                    className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  >
+                    ← Anterior
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.ceil(totalCustomers / pageSize) }, (_, i) => i + 1)
+                      .filter(page => {
+                        const totalPages = Math.ceil(totalCustomers / pageSize)
+                        if (totalPages <= 7) return true
+                        if (page === 1 || page === totalPages) return true
+                        if (Math.abs(page - currentPage) <= 1) return true
+                        return false
+                      })
+                      .map((page, index, array) => (
+                        <React.Fragment key={page}>
+                          {index > 0 && array[index - 1] !== page - 1 && (
+                            <span className="px-2 text-gray-400">...</span>
+                          )}
+                          <button
+                            onClick={() => setCurrentPage(page)}
+                            disabled={loading}
+                            className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 ${
+                              currentPage === page
+                                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
+                                : 'bg-white border border-gray-300 hover:bg-gray-50'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            {page}
+                          </button>
+                        </React.Fragment>
+                      ))}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(totalCustomers / pageSize)))}
+                    disabled={currentPage === Math.ceil(totalCustomers / pageSize) || loading}
+                    className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  >
+                    Siguiente →
+                  </button>
+                </div>
               </div>
             )}
           </div>
