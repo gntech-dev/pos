@@ -100,3 +100,15 @@ export function getInitials(name: string): string {
     .slice(0, 2)
     .join('')
 }
+
+// Validate email address
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+// Validate Dominican phone number
+export function validatePhone(phone: string): boolean {
+  const cleaned = phone.replace(/\D/g, '')
+  return cleaned.length === 10 && cleaned.startsWith('8')
+}

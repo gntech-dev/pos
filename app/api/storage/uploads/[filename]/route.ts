@@ -13,12 +13,15 @@ export async function GET(
     const resolvedParams = await params
     const filename = resolvedParams.filename
 
-    // Validate filename to prevent directory traversal
-    if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    // Allow subdirectories like logos/filename
+    const pathParts = filename.split('/')
+    const cleanParts = pathParts.filter(part => part && !part.includes('..'))
+
+    if (cleanParts.length === 0) {
       return new NextResponse('Invalid filename', { status: 400 })
     }
 
-    const filePath = join(UPLOAD_DIR, filename)
+    const filePath = join(UPLOAD_DIR, ...cleanParts)
 
     // Check if file exists
     try {

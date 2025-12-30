@@ -13,7 +13,12 @@ export async function GET() {
     const settings = await prisma.setting.findMany({
       where: {
         key: {
-          in: ['business_name', 'business_rnc', 'business_address', 'business_phone', 'business_email', 'business_logo']
+          in: [
+            'business_name', 'business_rnc', 'business_address', 'business_phone', 'business_email', 'business_logo',
+            'business_facebook', 'business_instagram', 'business_twitter', 'business_linkedin',
+            'business_hours_monday', 'business_hours_tuesday', 'business_hours_wednesday', 'business_hours_thursday',
+            'business_hours_friday', 'business_hours_saturday', 'business_hours_sunday'
+          ]
         }
       }
     })
@@ -26,13 +31,39 @@ export async function GET() {
       phone: string
       email: string
       logo?: string
+      facebook: string
+      instagram: string
+      twitter: string
+      linkedin: string
+      businessHours: {
+        monday: { open: string; close: string; closed: boolean }
+        tuesday: { open: string; close: string; closed: boolean }
+        wednesday: { open: string; close: string; closed: boolean }
+        thursday: { open: string; close: string; closed: boolean }
+        friday: { open: string; close: string; closed: boolean }
+        saturday: { open: string; close: string; closed: boolean }
+        sunday: { open: string; close: string; closed: boolean }
+      }
     } = {
       name: 'GNTech Demo',
       rnc: '000-00000-0',
       address: 'Santo Domingo, República Dominicana',
       phone: '809-555-5555',
       email: 'info@gntech.com',
-      logo: undefined
+      logo: undefined,
+      facebook: '',
+      instagram: '',
+      twitter: '',
+      linkedin: '',
+      businessHours: {
+        monday: { open: '09:00', close: '18:00', closed: false },
+        tuesday: { open: '09:00', close: '18:00', closed: false },
+        wednesday: { open: '09:00', close: '18:00', closed: false },
+        thursday: { open: '09:00', close: '18:00', closed: false },
+        friday: { open: '09:00', close: '18:00', closed: false },
+        saturday: { open: '09:00', close: '18:00', closed: false },
+        sunday: { open: '09:00', close: '18:00', closed: true }
+      }
     }
 
     // Override with database values
@@ -55,6 +86,67 @@ export async function GET() {
           break
         case 'business_logo':
           businessData.logo = setting.value
+          break
+        case 'business_facebook':
+          businessData.facebook = setting.value
+          break
+        case 'business_instagram':
+          businessData.instagram = setting.value
+          break
+        case 'business_twitter':
+          businessData.twitter = setting.value
+          break
+        case 'business_linkedin':
+          businessData.linkedin = setting.value
+          break
+        case 'business_hours_monday':
+          try {
+            businessData.businessHours.monday = JSON.parse(setting.value)
+          } catch (_) {
+            // Keep default if parsing fails
+          }
+          break
+        case 'business_hours_tuesday':
+          try {
+            businessData.businessHours.tuesday = JSON.parse(setting.value)
+          } catch (_) {
+            // Keep default if parsing fails
+          }
+          break
+        case 'business_hours_wednesday':
+          try {
+            businessData.businessHours.wednesday = JSON.parse(setting.value)
+          } catch (_) {
+            // Keep default if parsing fails
+          }
+          break
+        case 'business_hours_thursday':
+          try {
+            businessData.businessHours.thursday = JSON.parse(setting.value)
+          } catch (_) {
+            // Keep default if parsing fails
+          }
+          break
+        case 'business_hours_friday':
+          try {
+            businessData.businessHours.friday = JSON.parse(setting.value)
+          } catch (_) {
+            // Keep default if parsing fails
+          }
+          break
+        case 'business_hours_saturday':
+          try {
+            businessData.businessHours.saturday = JSON.parse(setting.value)
+          } catch (_) {
+            // Keep default if parsing fails
+          }
+          break
+        case 'business_hours_sunday':
+          try {
+            businessData.businessHours.sunday = JSON.parse(setting.value)
+          } catch (_) {
+            // Keep default if parsing fails
+          }
           break
       }
     })
@@ -87,7 +179,18 @@ export async function POST(request: NextRequest) {
       { key: 'business_address', value: businessData.address || '', description: 'Dirección de la empresa' },
       { key: 'business_phone', value: businessData.phone || '', description: 'Teléfono de la empresa' },
       { key: 'business_email', value: businessData.email || '', description: 'Email de la empresa' },
-      { key: 'business_logo', value: businessData.logo || '', description: 'Logo de la empresa' }
+      { key: 'business_logo', value: businessData.logo || '', description: 'Logo de la empresa' },
+      { key: 'business_facebook', value: businessData.facebook || '', description: 'Facebook de la empresa' },
+      { key: 'business_instagram', value: businessData.instagram || '', description: 'Instagram de la empresa' },
+      { key: 'business_twitter', value: businessData.twitter || '', description: 'Twitter de la empresa' },
+      { key: 'business_linkedin', value: businessData.linkedin || '', description: 'LinkedIn de la empresa' },
+      { key: 'business_hours_monday', value: JSON.stringify(businessData.businessHours?.monday || { open: '09:00', close: '18:00', closed: false }), description: 'Horario de lunes' },
+      { key: 'business_hours_tuesday', value: JSON.stringify(businessData.businessHours?.tuesday || { open: '09:00', close: '18:00', closed: false }), description: 'Horario de martes' },
+      { key: 'business_hours_wednesday', value: JSON.stringify(businessData.businessHours?.wednesday || { open: '09:00', close: '18:00', closed: false }), description: 'Horario de miércoles' },
+      { key: 'business_hours_thursday', value: JSON.stringify(businessData.businessHours?.thursday || { open: '09:00', close: '18:00', closed: false }), description: 'Horario de jueves' },
+      { key: 'business_hours_friday', value: JSON.stringify(businessData.businessHours?.friday || { open: '09:00', close: '18:00', closed: false }), description: 'Horario de viernes' },
+      { key: 'business_hours_saturday', value: JSON.stringify(businessData.businessHours?.saturday || { open: '09:00', close: '18:00', closed: false }), description: 'Horario de sábado' },
+      { key: 'business_hours_sunday', value: JSON.stringify(businessData.businessHours?.sunday || { open: '09:00', close: '18:00', closed: true }), description: 'Horario de domingo' }
     ]
 
     // Use upsert to create or update each setting

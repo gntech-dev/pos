@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import LogoSelector from '../../components/LogoSelector'
-import { getInitials } from '@/lib/utils'
+import { getInitials, validateEmail, validatePhone, validateRNC } from '@/lib/utils'
 
 interface User {
   id: string
@@ -270,7 +270,22 @@ export default function SettingsPage() {
     address: 'Santo Domingo, República Dominicana',
     phone: '809-555-5555',
     email: 'info@gntech.com',
-    logo: ''
+    logo: '',
+    // Social media links
+    facebook: '',
+    instagram: '',
+    twitter: '',
+    linkedin: '',
+    // Business hours (24-hour format)
+    businessHours: {
+      monday: { open: '09:00', close: '18:00', closed: false },
+      tuesday: { open: '09:00', close: '18:00', closed: false },
+      wednesday: { open: '09:00', close: '18:00', closed: false },
+      thursday: { open: '09:00', close: '18:00', closed: false },
+      friday: { open: '09:00', close: '18:00', closed: false },
+      saturday: { open: '09:00', close: '18:00', closed: false },
+      sunday: { open: '09:00', close: '18:00', closed: true }
+    }
   })
 
   const [ncfData, setNcfData] = useState({
@@ -395,6 +410,117 @@ export default function SettingsPage() {
       }
     } catch (error) {
       console.error('Error loading business config:', error)
+    }
+  }
+
+  const handleSaveBusiness = async () => {
+    // Validation
+    if (!businessData.name.trim()) {
+      alert('El nombre de la empresa es requerido')
+      return
+    }
+
+    if (!businessData.rnc.trim()) {
+      alert('El RNC es requerido')
+      return
+    }
+
+    if (!validateRNC(businessData.rnc.replace(/[-\s]/g, ''))) {
+      alert('El RNC debe tener 9 o 11 dígitos')
+      return
+    }
+
+    if (!businessData.phone.trim()) {
+      alert('El teléfono es requerido')
+      return
+    }
+
+    if (!validatePhone(businessData.phone.replace(/[-\s]/g, ''))) {
+      alert('El teléfono debe ser un número válido de República Dominicana (809, 829, 849)')
+      return
+    }
+
+    if (businessData.email && !validateEmail(businessData.email)) {
+      alert('El email debe tener un formato válido')
+      return
+    }
+
+    // Validate social media URLs
+    const urlRegex = /^https?:\/\/.+$/
+    const socialFields = ['facebook', 'instagram', 'twitter', 'linkedin']
+    for (const field of socialFields) {
+      const value = businessData[field as keyof typeof businessData] as string
+      if (value && !urlRegex.test(value)) {
+        alert(`La URL de ${field} debe comenzar con http:// o https://`)
+        return
+      }
+    }
+
+    // Validate business hours
+    for (const [day, hours] of Object.entries(businessData.businessHours)) {
+      if (!hours.closed && hours.open >= hours.close) {
+        alert(`El horario de ${day} no es válido: la hora de apertura debe ser anterior a la hora de cierre`)
+        return
+      }
+    }
+
+    try {
+      const response = await fetch('/api/settings/business', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(businessData)
+      })
+
+      if (response.ok) {
+        alert('✅ Configuración de empresa guardada exitosamente')
+        // Reload to ensure we have the latest data
+        loadBusinessConfig()
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error saving business config:', error)
+      alert('Error al guardar la configuración')
+    }
+  }
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor selecciona un archivo de imagen válido')
+      return
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('El archivo es demasiado grande. Tamaño máximo: 5MB')
+      return
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append('logo', file)
+
+      const response = await fetch('/api/upload/logo', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setBusinessData({ ...businessData, logo: result.logoPath })
+        alert('✅ Logo subido exitosamente')
+      } else {
+        const error = await response.json()
+        alert(`Error al subir el logo: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error uploading logo:', error)
+      alert('Error al subir el logo')
     }
   }
 
@@ -583,53 +709,6 @@ export default function SettingsPage() {
       alert('Ocurrió un error al crear el usuario')
     } finally {
       setLoadingUsers(false)
-    }
-  }
-
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        setBusinessData({ ...businessData, logo: result.filePath })
-        alert('✅ Logo subido exitosamente')
-      } else {
-        const error = await response.json()
-        alert(`Error al subir el logo: ${error.error}`)
-      }
-    } catch (error) {
-      console.error('Error uploading logo:', error)
-      alert('Error al subir el logo')
-    }
-  }
-
-  const handleSaveBusiness = async () => {
-    try {
-      const response = await fetch('/api/settings/business', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(businessData)
-      })
-
-      if (response.ok) {
-        alert('✅ Configuración de empresa guardada exitosamente')
-      } else {
-        const error = await response.json()
-        alert(`Error: ${error.error}`)
-      }
-    } catch (error) {
-      console.error('Error saving business config:', error)
-      alert('Error al guardar la configuración de empresa')
     }
   }
 
@@ -837,6 +916,139 @@ export default function SettingsPage() {
                       className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 resize-none"
                       rows={3}
                     />
+                  </div>
+
+                  {/* Social Media Links */}
+                  <div className="md:col-span-2">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                      🌐 Redes Sociales
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Facebook
+                        </label>
+                        <input
+                          type="url"
+                          value={businessData.facebook}
+                          onChange={(e) => setBusinessData({ ...businessData, facebook: e.target.value })}
+                          className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                          placeholder="https://facebook.com/tuempresa"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Instagram
+                        </label>
+                        <input
+                          type="url"
+                          value={businessData.instagram}
+                          onChange={(e) => setBusinessData({ ...businessData, instagram: e.target.value })}
+                          className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                          placeholder="https://instagram.com/tuempresa"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Twitter/X
+                        </label>
+                        <input
+                          type="url"
+                          value={businessData.twitter}
+                          onChange={(e) => setBusinessData({ ...businessData, twitter: e.target.value })}
+                          className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                          placeholder="https://twitter.com/tuempresa"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          LinkedIn
+                        </label>
+                        <input
+                          type="url"
+                          value={businessData.linkedin}
+                          onChange={(e) => setBusinessData({ ...businessData, linkedin: e.target.value })}
+                          className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                          placeholder="https://linkedin.com/company/tuempresa"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Business Hours */}
+                  <div className="md:col-span-2">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                      🕒 Horario de Atención
+                    </h3>
+                    <div className="space-y-3">
+                      {Object.entries(businessData.businessHours).map(([day, hours]) => (
+                        <div key={day} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                          <div className="w-24 font-medium text-gray-700 capitalize">
+                            {day === 'monday' ? 'Lunes' :
+                             day === 'tuesday' ? 'Martes' :
+                             day === 'wednesday' ? 'Miércoles' :
+                             day === 'thursday' ? 'Jueves' :
+                             day === 'friday' ? 'Viernes' :
+                             day === 'saturday' ? 'Sábado' : 'Domingo'}
+                          </div>
+
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={hours.closed}
+                              onChange={(e) => setBusinessData({
+                                ...businessData,
+                                businessHours: {
+                                  ...businessData.businessHours,
+                                  [day]: { ...hours, closed: e.target.checked }
+                                }
+                              })}
+                              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <span className="text-sm text-gray-600">Cerrado</span>
+                          </label>
+
+                          {!hours.closed && (
+                            <>
+                              <div className="flex items-center gap-2">
+                                <label className="text-sm text-gray-600">Abre:</label>
+                                <input
+                                  type="time"
+                                  value={hours.open}
+                                  onChange={(e) => setBusinessData({
+                                    ...businessData,
+                                    businessHours: {
+                                      ...businessData.businessHours,
+                                      [day]: { ...hours, open: e.target.value }
+                                    }
+                                  })}
+                                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500"
+                                />
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <label className="text-sm text-gray-600">Cierra:</label>
+                                <input
+                                  type="time"
+                                  value={hours.close}
+                                  onChange={(e) => setBusinessData({
+                                    ...businessData,
+                                    businessHours: {
+                                      ...businessData.businessHours,
+                                      [day]: { ...hours, close: e.target.value }
+                                    }
+                                  })}
+                                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-500"
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
