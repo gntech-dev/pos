@@ -124,9 +124,18 @@ export default function CustomersPage() {
       const trimmedData = Object.fromEntries(
         Object.entries(formData).map(([key, value]) => [key, value.trim()])
       )
-      const payload = Object.fromEntries(
-        Object.entries(trimmedData).filter(([key, value]) => key === 'name' || value !== '')
-      )
+      
+      let payload: Record<string, string>
+      
+      if (editingCustomer) {
+        // For updates, send all fields (including empty ones to allow clearing)
+        payload = trimmedData
+      } else {
+        // For creates, only send non-empty optional fields
+        payload = Object.fromEntries(
+          Object.entries(trimmedData).filter(([key, value]) => key === 'name' || value !== '')
+        )
+      }
 
       const url = editingCustomer ? `/api/customers/${editingCustomer.id}` : '/api/customers'
       const method = editingCustomer ? 'PUT' : 'POST'
