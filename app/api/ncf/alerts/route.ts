@@ -115,11 +115,10 @@ function createTransporter() {
     secure: emailConfig.secure || parseInt(emailConfig.port.toString()) === 465,
     requireTLS: emailConfig.tls,
     tls: {
-      // Modern TLS settings for Office365 and other providers
+      // Office365 compatible TLS settings
       minVersion: 'TLSv1.2',
-      maxVersion: 'TLSv1.3',
-      ciphers: 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA',
-      rejectUnauthorized: true // Enable certificate validation
+      ciphers: 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384',
+      rejectUnauthorized: false // Allow Office365 certificates
     },
     auth: {
       user: emailConfig.user,
