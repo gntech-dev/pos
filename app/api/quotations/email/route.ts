@@ -211,8 +211,11 @@ export async function POST(req: NextRequest) {
       secure: emailConfig.secure || parseInt(emailConfig.port.toString()) === 465,
       requireTLS: emailConfig.tls,
       tls: {
-        ciphers: 'SSLv3',
-        rejectUnauthorized: false // For self-signed certificates
+        // Modern TLS settings for Office365 and other providers
+        minVersion: 'TLSv1.2',
+        maxVersion: 'TLSv1.3',
+        ciphers: 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA',
+        rejectUnauthorized: true // Enable certificate validation
       },
       auth: {
         user: emailConfig.user,
